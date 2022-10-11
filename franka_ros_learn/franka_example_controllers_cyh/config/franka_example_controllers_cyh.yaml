@@ -1,0 +1,37 @@
+elbow_example_controller_cyh:
+    type: franka_example_controllers_cyh/ElbowExampleController_cyh
+    arm_id: $(arg arm_id)
+
+joint_position_example_controller_cyh:
+    type: franka_example_controllers_cyh/JointPositionExampleController_cyh
+    joint_names:
+        - $(arg arm_id)_joint1
+        - $(arg arm_id)_joint2
+        - $(arg arm_id)_joint3
+        - $(arg arm_id)_joint4
+        - $(arg arm_id)_joint5
+        - $(arg arm_id)_joint6
+        - $(arg arm_id)_joint7
+
+joint_velocity_example_controller:_cyh
+    type: franka_example_controllers_cyh/JointVelocityExampleController_cyh
+    arm_id: $(arg arm_id)
+    joint_names:
+        - $(arg arm_id)_joint1
+        - $(arg arm_id)_joint2
+        - $(arg arm_id)_joint3
+        - $(arg arm_id)_joint4
+        - $(arg arm_id)_joint5
+        - $(arg arm_id)_joint6
+        - $(arg arm_id)_joint7
+
+cartesian_pose_example_controller_cyh:
+    type: franka_example_controllers_cyh/CartesianPoseExampleController_cyh
+    arm_id: $(arg arm_id)
+
+
+
+cartesian_velocity_example_controller_cyh:
+    type: franka_example_controllers/CartesianVelocityExampleController_cyh
+    arm_id: $(arg arm_id)
+

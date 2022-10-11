@@ -5,7 +5,7 @@
 
     <include file= "$(find franka_control)/launch/franka_control.launch" />
 
-    <rosparam command="load" file="$(find franka_example_controllers_cyh)/config/franka_example_controllers.yaml" subst_value="true" />
+    <rosparam command="load" file="$(find franka_example_controllers_cyh)/config/franka_example_controllers_cyh.yaml" subst_value="true" />
 
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="joint_position_example_controller_cyh"/>
 

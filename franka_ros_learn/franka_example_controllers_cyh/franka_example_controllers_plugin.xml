@@ -32,5 +32,12 @@
     </description>
   </class>
 
+  <class name="franka_example_controllers_cyh/CartesianVelocityExampleController_cyh" 
+         type="franka_example_controllers_cyh::CartesianVelocityExampleController_cyh" 
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+      A controller that executes a short motion based on cartesian velocities to demonstrate correct usage
+    </description>
+  </class>
 
 </library>

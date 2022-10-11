@@ -73,6 +73,7 @@ add_library(franka_example_controllers_cyh
   src/joint_position_example_controller_cyh.cpp
   src/joint_velocity_example_controller_cyh.cpp
   src/cartesian_pose_example_controller_cyh.cpp
+  src/cartesian_velocity_example_controller_cyh.cpp
 )
 
 add_dependencies(franka_example_controllers_cyh
