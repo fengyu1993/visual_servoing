@@ -49,14 +49,18 @@ namespace franka_example_controllers_cyh
         try{
             auto state_handle = state_interface->getHandle(arm_id + "_robot");
 
-            std::array<double, 7> q_start{{0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4}};
+            std::array<double, 7> q_start = {{0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4}};
             for(size_t i=0; i < q_start.size(); i++)
             {
-                ROS_ERROR_STREAM(
-                    "CartesianPoseExampleController_cyh: Robot is not in the expected starting position for "
-                    "running this example. Run `roslaunch franka_example_controllers_cyh move_to_start_cyh.launch "
-                    "robot_ip:=<robot-ip> load_gripper:=<has-attached-gripper>` first.");
-                return false;   
+                if(std::abs(state_handle.getRobotState().q_d[i] - q_start[i])  > 0.1)
+                {
+                    ROS_ERROR_STREAM(
+                        "CartesianVelocityExampleController: Robot is not in the expected starting position "
+                        "for running this example. Run `roslaunch franka_example_controllers_cyh "
+                        "move_to_start_cyh.launch robot_ip:=<robot-ip> load_gripper:=<has-attached-gripper>` "
+                        "first.");
+                    return false;   
+                }     
             }
         }catch (const hardware_interface::HardwareInterfaceException& e) {
             ROS_ERROR_STREAM(

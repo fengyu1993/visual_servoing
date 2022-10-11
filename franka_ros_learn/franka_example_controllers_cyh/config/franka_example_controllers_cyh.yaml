@@ -13,7 +13,7 @@ joint_position_example_controller_cyh:
         - $(arg arm_id)_joint6
         - $(arg arm_id)_joint7
 
-joint_velocity_example_controller:_cyh
+joint_velocity_example_controller_cyh:
     type: franka_example_controllers_cyh/JointVelocityExampleController_cyh
     arm_id: $(arg arm_id)
     joint_names:
@@ -32,6 +32,6 @@ cartesian_pose_example_controller_cyh:
 
 
 cartesian_velocity_example_controller_cyh:
-    type: franka_example_controllers/CartesianVelocityExampleController_cyh
+    type: franka_example_controllers_cyh/CartesianVelocityExampleController_cyh
     arm_id: $(arg arm_id)
 

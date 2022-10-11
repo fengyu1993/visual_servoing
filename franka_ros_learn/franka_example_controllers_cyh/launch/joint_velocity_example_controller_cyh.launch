@@ -7,3 +7,6 @@
   <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="joint_velocity_example_controller_cyh"/>
   <node pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_example_controllers_cyh)/launch/robot.rviz"/>
 </launch>
+
+
+<!--  roslaunch franka_example_controllers move_to_start.launch robot_ip:=172.16.0.2 load_gripper:=false robot:=panda -->
