@@ -40,4 +40,12 @@
     </description>
   </class>
 
+  <class name="franka_example_controllers_cyh/ModelExampleController_cyh" 
+    type="franka_example_controllers_cyh::ModelExampleController_cyh" 
+    base_class_type="controller_interface::ControllerBase">
+    <description>
+      A controller that evaluates and prints the dynamic model of Franka
+    </description>
+  </class>
+
 </library>
