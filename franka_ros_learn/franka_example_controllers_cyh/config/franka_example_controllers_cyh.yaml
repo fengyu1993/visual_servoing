@@ -35,3 +35,8 @@ cartesian_velocity_example_controller_cyh:
     type: franka_example_controllers_cyh/CartesianVelocityExampleController_cyh
     arm_id: $(arg arm_id)
 
+
+
+model_example_controller_cyh:
+    type: franka_example_controllers_cyh/ModelExampleController_cyh
+    arm_id: $(arg arm_id)
