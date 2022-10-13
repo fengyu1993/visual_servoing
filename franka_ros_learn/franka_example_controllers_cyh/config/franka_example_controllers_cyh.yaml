@@ -43,8 +43,8 @@ model_example_controller_cyh:
 
 
 
-teleop_velocity_example_controller_cyh:
-    type: franka_example_controllers_cyh/TeleopVelocityExampleController_cyh
+teleop_example_controller_cyh:
+    type: franka_example_controllers_cyh/TeleopExampleController_cyh
     arm_id: $(arg arm_id)
 
 

@@ -17,7 +17,7 @@
 
 namespace franka_example_controllers_cyh
 {
-    class TeleopVelocityExampleController_cyh : public controller_interface::MultiInterfaceController
+    class TeleopExampleController_cyh : public controller_interface::MultiInterfaceController
         <franka_hw::FrankaPoseCartesianInterface, franka_hw::FrankaStateInterface>
     {
         public:
@@ -29,7 +29,11 @@ namespace franka_example_controllers_cyh
         private:
         franka_hw::FrankaVelocityCartesianInterface* velocity_cartesian_interface_;
         std::unique_ptr<franka_hw::FrankaCartesianVelocityHandle> velocity_cartesian_handle_;
+        hardware_interface::PositionJointInterface* position_joint_interface_;
+        std::vector<hardware_interface::JointHandle> position_joint_handles_;
         ros::Duration elapsed_time_;
+        std::array<double,7> q_current_{};
+        std::array<double,7> q_home_{};    
     };
 }
 

@@ -48,4 +48,12 @@
     </description>
   </class>
 
+  <class name="franka_example_controllers_cyh/TeleopExampleController_cyh" 
+    type="franka_example_controllers_cyh::TeleopExampleController_cyh" 
+    base_class_type="controller_interface::ControllerBase">
+    <description>
+      Return to home pose
+    </description>
+  </class>
+
 </library>
