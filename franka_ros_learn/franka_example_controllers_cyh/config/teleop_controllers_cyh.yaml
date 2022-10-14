@@ -1,0 +1,23 @@
+teleop_example_controller_cyh:
+    type: franka_example_controllers_cyh/TeleopExampleController_cyh
+    arm_id: $(arg arm_id)
+    joint_names:
+        - $(arg arm_id)_joint1
+        - $(arg arm_id)_joint2
+        - $(arg arm_id)_joint3
+        - $(arg arm_id)_joint4
+        - $(arg arm_id)_joint5
+        - $(arg arm_id)_joint6
+        - $(arg arm_id)_joint7
+    joint_start_pose:
+        - 0.0
+        - -0.785398163397
+        - 0.0
+        - -2.35619449019
+        - 0.0
+        - 1.57079632679
+        - 0.785398163397
+    lambda_joint_velocity:
+        - 0.5
+    dq_max:
+        - 1

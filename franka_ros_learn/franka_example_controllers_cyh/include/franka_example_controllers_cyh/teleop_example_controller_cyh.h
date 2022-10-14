@@ -8,6 +8,7 @@
 
 #include <controller_interface/multi_interface_controller.h>
 #include <franka_hw/franka_state_interface.h>
+#include <franka_hw/franka_model_interface.h>
 #include <franka_hw/franka_cartesian_command_interface.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
@@ -18,7 +19,9 @@
 namespace franka_example_controllers_cyh
 {
     class TeleopExampleController_cyh : public controller_interface::MultiInterfaceController
-        <franka_hw::FrankaPoseCartesianInterface, franka_hw::FrankaStateInterface>
+        <   franka_hw::FrankaModelInterface,
+            hardware_interface::VelocityJointInterface, 
+            franka_hw::FrankaStateInterface >
     {
         public:
         bool init(hardware_interface::RobotHW* robot_hardware, ros::NodeHandle& node_handle) override;
@@ -27,13 +30,15 @@ namespace franka_example_controllers_cyh
         void stopping(const ros::Time&) override;
 
         private:
-        franka_hw::FrankaVelocityCartesianInterface* velocity_cartesian_interface_;
-        std::unique_ptr<franka_hw::FrankaCartesianVelocityHandle> velocity_cartesian_handle_;
-        hardware_interface::PositionJointInterface* position_joint_interface_;
-        std::vector<hardware_interface::JointHandle> position_joint_handles_;
+        hardware_interface::VelocityJointInterface* velocity_joint_interface_;
+        std::vector<hardware_interface::JointHandle> velocity_joint_handles_;
+        franka::RobotState robot_state_;
         ros::Duration elapsed_time_;
-        std::array<double,7> q_current_{};
-        std::array<double,7> q_home_{};    
+
+        std::vector<double> q_home_{};
+        std::vector<double> q_current_{};
+        double lambda_joint_velocity_;
+        double dq_max_;
     };
 }
 
