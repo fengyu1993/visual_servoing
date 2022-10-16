@@ -34,7 +34,8 @@ namespace franka_example_controllers_cyh
         std::vector<hardware_interface::JointHandle> position_joint_handles_;
         franka::RobotState robot_state_;
         ros::Duration elapsed_time_;
-        
+        double move_time_;
+
         std::vector<double> q_home_{};
         std::vector<double> q_current_{};
         double dq_max_;

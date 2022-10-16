@@ -76,6 +76,12 @@ namespace franka_example_controllers_cyh
             return false;
         }     
 
+        if (!node_handle.getParam("move_time", move_time_))
+        {
+            ROS_ERROR("MoveToStart_cyh: Invalid or no move_time_ parameters provided, aborting controller init!");
+            return false;
+        }        
+
         return true;
     }
 
@@ -98,7 +104,7 @@ namespace franka_example_controllers_cyh
         int cnt = 0;
         for(size_t i = 0; i < 7; i++)
         {
-            q_error[i] = q_current_[i] - q_home_[i];
+            q_error[i] = q_home_[i] - q_current_[i];
             if (q_error[i] <= 0.005)
             {
                 cnt = cnt + 1;
@@ -106,8 +112,15 @@ namespace franka_example_controllers_cyh
             }
             else
             {
-                lambda = 1 - std::cos(M_PI / 5.0 * elapsed_time_.toSec());
-                position_joint_handles_[i].setCommand(q_error[i]*lambda + q_home_[i]);
+                lambda = 10*pow(elapsed_time_.toSec() / move_time_, 3) 
+                            - 15*pow(elapsed_time_.toSec() / move_time_, 4) 
+                            + 6*pow(elapsed_time_.toSec() / move_time_, 5);  
+                double step = q_error[i]*lambda;
+                if (step > 0.1)
+                {
+                    step = 0.1;
+                    position_joint_handles_[i].setCommand(step + q_current_[i]);
+                }   
             }
         }  
         if(cnt == 7)
