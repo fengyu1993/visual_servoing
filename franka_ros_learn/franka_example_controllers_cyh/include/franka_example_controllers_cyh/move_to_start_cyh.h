@@ -18,9 +18,9 @@
 
 namespace franka_example_controllers_cyh
 {
-    class TeleopExampleController_cyh : public controller_interface::MultiInterfaceController
+    class MoveToStart_cyh : public controller_interface::MultiInterfaceController
         <   franka_hw::FrankaModelInterface,
-            hardware_interface::VelocityJointInterface, 
+            hardware_interface::PositionJointInterface, 
             franka_hw::FrankaStateInterface >
     {
         public:
@@ -30,14 +30,13 @@ namespace franka_example_controllers_cyh
         void stopping(const ros::Time&) override;
 
         private:
-        hardware_interface::VelocityJointInterface* velocity_joint_interface_;
-        std::vector<hardware_interface::JointHandle> velocity_joint_handles_;
+        hardware_interface::PositionJointInterface* position_joint_interface_;
+        std::vector<hardware_interface::JointHandle> position_joint_handles_;
         franka::RobotState robot_state_;
         ros::Duration elapsed_time_;
-
+        
         std::vector<double> q_home_{};
         std::vector<double> q_current_{};
-        double lambda_joint_velocity_;
         double dq_max_;
     };
 }

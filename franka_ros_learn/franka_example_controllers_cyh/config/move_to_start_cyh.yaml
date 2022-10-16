@@ -1,5 +1,5 @@
-teleop_example_controller_cyh:
-    type: franka_example_controllers_cyh/TeleopExampleController_cyh
+move_to_start_cyh:
+    type: franka_example_controllers_cyh/MoveToStart_cyh
     arm_id: $(arg arm_id)
     joint_names:
         - $(arg arm_id)_joint1
@@ -17,7 +17,3 @@ teleop_example_controller_cyh:
         - 0.0
         - 1.57079632679
         - 0.785398163397
-    lambda_joint_velocity:
-        - 0.5
-    dq_max:
-        - 1
