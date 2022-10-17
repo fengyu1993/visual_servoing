@@ -17,5 +17,4 @@ move_to_start_cyh:
         - 0.0
         - 1.57079632679
         - 0.785398163397
-    move_time:
-        - 6
+    move_time: 6

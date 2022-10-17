@@ -57,14 +57,13 @@ namespace franka_example_controllers_cyh
         }
 
         auto* state_interface = robot_hardware->get<franka_hw::FrankaStateInterface>();
-        if (state_interface == nullptr) {
+        if (not state_interface) {
             ROS_ERROR("MoveToStart_cyh: Could not get state interface from hardware");
             return false;
         }
-
         try {
-            auto state_handle = state_interface->getHandle(arm_id + "_robot");
-            robot_state_ = state_handle.getRobotState();
+            state_handle_ = std::make_unique<franka_hw::FrankaStateHandle>(
+                state_interface->getHandle(arm_id + "_robot"));
         } catch (hardware_interface::HardwareInterfaceException& ex) {
             ROS_ERROR_STREAM("MoveToStart_cyh: Exception getting state handle from interface: " << ex.what());
             return false;
@@ -88,54 +87,62 @@ namespace franka_example_controllers_cyh
     void MoveToStart_cyh::starting(const ros::Time&)
     {
         elapsed_time_ = ros::Duration(0.0);
+        num_control = 0;
     }
 
     void MoveToStart_cyh::update(const ros::Time& time_0, const ros::Duration& period)
     {
         elapsed_time_ += period;
-        double lambda;
+        num_control += 1;
+        double t = num_control * period.toSec();
+        printf("t=%0.5f\n", t);
+        if (t > move_time_) 
+        {
+            t = move_time_;
+        }
         std::array<double,7> q_error = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
+        franka::RobotState robot_state = state_handle_->getRobotState();
         for(size_t i = 0; i < 7; ++i)
         {
-            q_current_[i] = robot_state_.q[i];
+            printf("cyh_%ld\n", i);
+            q_current_[i] = robot_state.q.at(i);
         }
-
+        printf("cyh\n");
         int cnt = 0;
         for(size_t i = 0; i < 7; i++)
         {
             q_error[i] = q_home_[i] - q_current_[i];
+
             if (q_error[i] <= 0.005)
             {
+                printf("cyh_a\n");
                 cnt = cnt + 1;
                 position_joint_handles_[i].setCommand(q_home_[i]);
             }
             else
             {
-                lambda = 10*pow(elapsed_time_.toSec() / move_time_, 3) 
-                            - 15*pow(elapsed_time_.toSec() / move_time_, 4) 
-                            + 6*pow(elapsed_time_.toSec() / move_time_, 5);  
+                printf("cyh_b\n");
+                double lambda = 10*pow(t / move_time_, 3) 
+                            - 15*pow(t / move_time_, 4) 
+                            + 6*pow(t / move_time_, 5);  
                 double step = q_error[i]*lambda;
+                printf("step=%0.5f\n", step);
                 if (step > 0.1)
                 {
                     step = 0.1;
-                    position_joint_handles_[i].setCommand(step + q_current_[i]);
                 }   
+                position_joint_handles_[i].setCommand(step + q_current_[i]);
             }
         }  
         if(cnt == 7)
         {
-            stopping(time_0);
+            ROS_INFO("Return to start: Done");
         }     
     }
 
     void MoveToStart_cyh::stopping(const ros::Time&) 
     {
-        for (size_t i=0; i < 7; i++)
-        {
-            position_joint_handles_[i].setCommand(q_home_[i]);
-        }
-        ROS_INFO("Return to start: Done");
+
     }
 
 }
