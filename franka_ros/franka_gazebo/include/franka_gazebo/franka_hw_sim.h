@@ -1,10 +1,14 @@
 #pragma once
 
+#include <actionlib/server/simple_action_server.h>
 #include <franka/robot_state.h>
+#include <franka_gazebo/controller_verifier.h>
 #include <franka_gazebo/joint.h>
+#include <franka_gazebo/statemachine.h>
 #include <franka_hw/franka_model_interface.h>
 #include <franka_hw/franka_state_interface.h>
 #include <franka_hw/model_base.h>
+#include <franka_msgs/ErrorRecoveryAction.h>
 #include <gazebo_ros_control/robot_hw_sim.h>
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include <hardware_interface/joint_command_interface.h>
@@ -12,13 +16,18 @@
 #include <pluginlib/class_list_macros.h>
 #include <ros/ros.h>
 #include <urdf/model.h>
+#include <boost/optional.hpp>
+#include <boost_sml/sml.hpp>
 #include <cmath>
 #include <gazebo/common/common.hh>
 #include <gazebo/physics/physics.hh>
 #include <map>
 #include <memory>
+#include <mutex>
 
 namespace franka_gazebo {
+
+const double kDefaultTauExtLowpassFilter = 1.0;  // no filtering per default of tau_ext_hat_filtered
 
 /**
  * A custom implementation of a [gazebo_ros_control](http://wiki.ros.org/gazebo_ros_control) plugin,
@@ -29,6 +38,8 @@ namespace franka_gazebo {
  * ### transmission_interface/SimpleTransmission
  * - hardware_interface/JointStateInterface
  * - hardware_interface/EffortJointInterface
+ * - hardware_interface/PositionJointInterface
+ * - hardware_interface/VelocityJointInterface
  *
  * ### franka_hw/FrankaStateInterface
  * ### franka_hw/FrankaModelInterface
@@ -38,6 +49,11 @@ namespace franka_gazebo {
  */
 class FrankaHWSim : public gazebo_ros_control::RobotHWSim {
  public:
+  /**
+   * Create a new FrankaHWSim instance
+   */
+  FrankaHWSim();
+
   /**
    * Initialize the simulated robot hardware and parse all supported transmissions.
    *
@@ -89,36 +105,75 @@ class FrankaHWSim : public gazebo_ros_control::RobotHWSim {
    */
   void eStopActive(const bool active) override;
 
+  /**
+   * Switches the control mode of the robot arm
+   * @param start_list list of controllers to start
+   * @param stop_list list of controllers to stop
+   */
+  void doSwitch(const std::list<hardware_interface::ControllerInfo>& start_list,
+                const std::list<hardware_interface::ControllerInfo>& stop_list) override;
+
+  /**
+   * Check (in non-realtime) if given controllers could be started and stopped from the current
+   * state of the RobotHW with regard to necessary hardware interface switches and prepare the
+   * switching. Start and stop list are disjoint. This handles the check and preparation, the actual
+   * switch is commited in doSwitch().
+   */
+  bool prepareSwitch(const std::list<hardware_interface::ControllerInfo>& start_list,
+                     const std::list<hardware_interface::ControllerInfo>& /*stop_list*/) override;
+
  private:
+  /// If gazebo::Joint::GetForceTorque() yielded already a non-zero value
+  bool robot_initialized_;
+
+  std::unique_ptr<ControllerVerifier> verifier_;
+
+  std::array<double, 3> gravity_earth_;
+
   std::string arm_id_;
   gazebo::physics::ModelPtr robot_;
   std::map<std::string, std::shared_ptr<franka_gazebo::Joint>> joints_;
 
   hardware_interface::JointStateInterface jsi_;
   hardware_interface::EffortJointInterface eji_;
+  hardware_interface::PositionJointInterface pji_;
+  hardware_interface::VelocityJointInterface vji_;
   franka_hw::FrankaStateInterface fsi_;
   franka_hw::FrankaModelInterface fmi_;
 
+  boost::sml::sm<franka_gazebo::StateMachine, boost::sml::thread_safe<std::mutex>> sm_;
   franka::RobotState robot_state_;
   std::unique_ptr<franka_hw::ModelBase> model_;
 
+  double tau_ext_lowpass_filter_;
+
+  ros::Publisher robot_initialized_pub_;
   ros::ServiceServer service_set_ee_;
   ros::ServiceServer service_set_k_;
   ros::ServiceServer service_set_load_;
   ros::ServiceServer service_collision_behavior_;
+  ros::ServiceServer service_user_stop_;
+  ros::ServiceClient service_controller_list_;
+  ros::ServiceClient service_controller_switch_;
+  std::unique_ptr<actionlib::SimpleActionServer<franka_msgs::ErrorRecoveryAction>> action_recovery_;
 
   std::vector<double> lower_force_thresholds_nominal_;
   std::vector<double> upper_force_thresholds_nominal_;
 
   void initJointStateHandle(const std::shared_ptr<franka_gazebo::Joint>& joint);
   void initEffortCommandHandle(const std::shared_ptr<franka_gazebo::Joint>& joint);
+  void initPositionCommandHandle(const std::shared_ptr<franka_gazebo::Joint>& joint);
+  void initVelocityCommandHandle(const std::shared_ptr<franka_gazebo::Joint>& joint);
   void initFrankaStateHandle(const std::string& robot,
                              const urdf::Model& urdf,
                              const transmission_interface::TransmissionInfo& transmission);
   void initFrankaModelHandle(const std::string& robot,
                              const urdf::Model& urdf,
-                             const transmission_interface::TransmissionInfo& transmission);
+                             const transmission_interface::TransmissionInfo& transmission,
+                             double singularity_threshold);
   void initServices(ros::NodeHandle& nh);
+
+  void restartControllers();
 
   void updateRobotState(ros::Time time);
   void updateRobotStateDynamics();
@@ -126,6 +181,9 @@ class FrankaHWSim : public gazebo_ros_control::RobotHWSim {
   bool readParameters(const ros::NodeHandle& nh, const urdf::Model& urdf);
 
   void guessEndEffector(const ros::NodeHandle& nh, const urdf::Model& urdf);
+
+  static double positionControl(Joint& joint, double setpoint, const ros::Duration& period);
+  static double velocityControl(Joint& joint, double setpoint, const ros::Duration& period);
 
   template <int N>
   std::array<double, N> readArray(std::string param, std::string name = "") {
@@ -182,6 +240,10 @@ class FrankaHWSim : public gazebo_ros_control::RobotHWSim {
     Eigen::Matrix3d Ip = I + m * P.transpose() * P;
     return Ip;
   }
+
+  void forControlledJoint(
+      const std::list<hardware_interface::ControllerInfo>& controllers,
+      const std::function<void(franka_gazebo::Joint& joint, const ControlMethod&)>& f);
 };
 
 }  // namespace franka_gazebo

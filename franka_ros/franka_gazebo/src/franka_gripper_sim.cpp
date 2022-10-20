@@ -138,7 +138,7 @@ void FrankaGripperSim::update(const ros::Time& now, const ros::Duration& period)
     w1_d = this->finger2_.getPosition();
     w2_d = this->finger1_.getPosition();
     std::lock_guard<std::mutex> lock(this->mutex_);
-    f_d = -this->config_.force_desired / 2.0;
+    f_d = this->config_.force_desired / 2.0;
   }
 
   control(this->finger1_, this->pid1_, w1_d, 0.5 * dw_d, f_d, period);
@@ -152,23 +152,11 @@ void FrankaGripperSim::update(const ros::Time& now, const ros::Duration& period)
                                      .speed_desired = 0,
                                      .force_desired = 0,
                                      .tolerance = this->config_.tolerance});
-    }
-
-    if (state == State::HOMING) {
-      if (this->config_.width_desired == 0) {
-        // Finger now open, first part of homing done, switch direction
-        setConfig(Config{.width_desired = kMaxFingerWidth,
-                         .speed_desired = this->config_.speed_desired,
-                         .force_desired = this->config_.force_desired,
-                         .tolerance = this->config_.tolerance});
-      } else {
-        // Finger now closed again, homing finished
-        setState(State::IDLE);
-      }
+      return;
     }
   }
 
-  if (state == State::GRASPING) {
+  if (state == State::GRASPING or state == State::MOVING) {
     // Since the velocity signal is noisy it can easily happen that one sample is below the
     // threshold To avoid abortion because of noise, we have to read at least N consecutive number
     // of samples before interpreting something was grasped (or not)
@@ -181,11 +169,19 @@ void FrankaGripperSim::update(const ros::Time& now, const ros::Duration& period)
     }
 
     if (speed_threshold_counter >= this->speed_samples_) {
-      // Done with grasp motion, switch to holding, i.e. keep position & force
-      transition(State::HOLDING, Config{.width_desired = width,
-                                        .speed_desired = 0,
-                                        .force_desired = this->config_.force_desired,
-                                        .tolerance = this->config_.tolerance});
+      if (state == State::GRASPING) {
+        // Done with grasp motion, switch to holding, i.e. keep position & force
+        transition(State::HOLDING, Config{.width_desired = width,
+                                          .speed_desired = 0,
+                                          .force_desired = this->config_.force_desired,
+                                          .tolerance = this->config_.tolerance});
+      } else {
+        // Moving failed due to object between fingers. Switch to idle.
+        transition(State::IDLE, Config{.width_desired = width,
+                                       .speed_desired = 0,
+                                       .force_desired = 0,
+                                       .tolerance = this->config_.tolerance});
+      }
       speed_threshold_counter = 0;
     }
   }
@@ -233,7 +229,7 @@ void FrankaGripperSim::interrupt(const std::string& message, const State& except
     result.error = message;
     this->action_grasp_->setAborted(result, result.error);
   }
-  if (except != State::HOMING and this->action_homing_ != nullptr and
+  if (except != State::MOVING and this->action_homing_ != nullptr and
       this->action_homing_->isActive()) {
     franka_gripper::HomingResult result;
     result.success = static_cast<decltype(result.success)>(false);
@@ -276,18 +272,29 @@ void FrankaGripperSim::onHomingGoal(const franka_gripper::HomingGoalConstPtr& /*
   ROS_INFO_STREAM_NAMED("FrankaGripperSim", "New Homing Action goal received");
 
   if (this->state_ != State::IDLE) {
-    this->interrupt("Command interrupted, because new homing action called", State::HOMING);
+    this->interrupt("Command interrupted, because new homing action called", State::MOVING);
   }
 
   franka_gripper::GraspEpsilon eps;
   eps.inner = this->tolerance_move_;
   eps.outer = this->tolerance_move_;
   transition(
-      State::HOMING,
-      Config{.width_desired = 0, .speed_desired = -0.02, .force_desired = 0, .tolerance = eps});
+      State::MOVING,
+      Config{.width_desired = 0, .speed_desired = 0.02, .force_desired = 0, .tolerance = eps});
 
   waitUntilStateChange();
 
+  if (not this->action_homing_->isActive()) {
+    // Homing Action was interrupted from another action goal callback and already preempted.
+    // Don't try to resend result now
+    return;
+  }
+  transition(State::MOVING, Config{.width_desired = kMaxFingerWidth,
+                                   .speed_desired = 0.02,
+                                   .force_desired = 0,
+                                   .tolerance = eps});
+
+  waitUntilStateChange();
   if (not this->action_homing_->isActive()) {
     // Homing Action was interrupted from another action goal callback and already preempted.
     // Don't try to resend result now
@@ -317,7 +324,7 @@ void FrankaGripperSim::onMoveGoal(const franka_gripper::MoveGoalConstPtr& goal) 
     return;
   }
 
-  if (goal->width < 0 or goal->width > kMaxFingerWidth) {
+  if (goal->width < 0 or goal->width > kMaxFingerWidth or not std::isfinite(goal->width)) {
     franka_gripper::MoveResult result;
     result.success = static_cast<decltype(result.success)>(false);
     result.error = "Target width has to lie between 0 .. " + std::to_string(kMaxFingerWidth);
@@ -329,15 +336,7 @@ void FrankaGripperSim::onMoveGoal(const franka_gripper::MoveGoalConstPtr& goal) 
     interrupt("Command interrupted, because new move action called", State::MOVING);
   }
 
-  franka_gripper::GraspEpsilon eps;
-  eps.inner = this->tolerance_move_;
-  eps.outer = this->tolerance_move_;
-  transition(State::MOVING, Config{.width_desired = goal->width,
-                                   .speed_desired = goal->speed,
-                                   .force_desired = 0,
-                                   .tolerance = eps});
-
-  waitUntilStateChange();
+  bool move_succeeded = move(goal->width, goal->speed);
 
   if (not this->action_move_->isActive()) {
     // Move Action was interrupted from another action goal callback and already preempted.
@@ -346,14 +345,19 @@ void FrankaGripperSim::onMoveGoal(const franka_gripper::MoveGoalConstPtr& goal) 
   }
 
   franka_gripper::MoveResult result;
-  if (this->state_ != State::IDLE) {
+  if (not move_succeeded) {
     result.success = static_cast<decltype(result.success)>(false);
     result.error = "Unexpected state transistion: The gripper not in IDLE as expected";
     action_move_->setAborted(result, result.error);
     return;
   }
+  franka_gripper::GraspEpsilon eps;
+  eps.inner = this->tolerance_move_;
+  eps.outer = this->tolerance_move_;
 
-  result.success = static_cast<decltype(result.success)>(true);
+  double width = this->finger1_.getPosition() + this->finger2_.getPosition();  // recalculate
+  bool ok = goal->width - eps.inner < width and width < goal->width + eps.outer;
+  result.success = static_cast<decltype(result.success)>(ok);
   action_move_->setSucceeded(result);
 }
 
@@ -381,13 +385,7 @@ void FrankaGripperSim::onGraspGoal(const franka_gripper::GraspGoalConstPtr& goal
     interrupt("Command interrupted, because new grasp action called", State::GRASPING);
   }
 
-  double width = this->finger1_.getPosition() + this->finger2_.getPosition();
-  transition(State::GRASPING, Config{.width_desired = goal->width < width ? 0 : kMaxFingerWidth,
-                                     .speed_desired = goal->speed,
-                                     .force_desired = goal->force,
-                                     .tolerance = goal->epsilon});
-
-  waitUntilStateChange();
+  bool grasp_succeeded = grasp(goal->width, goal->speed, goal->force, goal->epsilon);
 
   if (not this->action_grasp_->isActive()) {
     // Grasping Action was interrupted from another action goal callback and already preempted.
@@ -403,70 +401,108 @@ void FrankaGripperSim::onGraspGoal(const franka_gripper::GraspGoalConstPtr& goal
     return;
   }
 
-  width = this->finger1_.getPosition() + this->finger2_.getPosition();  // recalculate
-  bool ok = goal->width - goal->epsilon.inner < width and width < goal->width + goal->epsilon.outer;
-  result.success = static_cast<decltype(result.success)>(ok);
-  if (not ok) {
-    result.error = "When the gripper stopped (below speed of " +
-                   std::to_string(this->speed_threshold_) +
-                   " m/s the width between the fingers was not at " + std::to_string(goal->width) +
-                   "m (-" + std::to_string(goal->epsilon.inner) + "m/+" +
-                   std::to_string(goal->epsilon.outer) + "m) but at " + std::to_string(width) + "m";
-    action_grasp_->setAborted(result, result.error);
+  result.success = static_cast<decltype(result.success)>(grasp_succeeded);
+  if (not grasp_succeeded) {
+    double current_width = this->finger1_.getPosition() + this->finger2_.getPosition();
+    result.error =
+        "When the gripper stopped (below speed of " + std::to_string(this->speed_threshold_) +
+        " m/s the width between the fingers was not at " + std::to_string(goal->width) + "m (-" +
+        std::to_string(goal->epsilon.inner) + "m/+" + std::to_string(goal->epsilon.outer) +
+        "m) but at " + std::to_string(current_width) + "m";
     setState(State::IDLE);
-    return;
   }
 
   action_grasp_->setSucceeded(result);
 }
 
 void FrankaGripperSim::onGripperActionGoal(const control_msgs::GripperCommandGoalConstPtr& goal) {
-  ROS_INFO_STREAM_NAMED("FrankaGripperSim", "New Gripper Command Action Goal received: "
-                                                << goal->command.max_effort << "N");
-
+  control_msgs::GripperCommandResult result;
   // HACK: As one gripper finger is <mimic>, MoveIt!'s trajectory execution manager
   // only sends us the width of one finger. Multiply by 2 to get the intended width.
-  double width = this->finger1_.getPosition() + this->finger2_.getPosition();
+  double width_d = goal->command.position * 2.0;
+
+  ROS_INFO_STREAM_NAMED("FrankaGripperSim", "New Gripper Command Action Goal received: "
+                                                << goal->command.position << "m, "
+                                                << goal->command.max_effort << "N");
+
+  if (width_d > kMaxFingerWidth || width_d < 0.0) {
+    std::string error =
+        "Commanding out of range position! max_position = " + std::to_string(kMaxFingerWidth / 2) +
+        ", commanded position = " + std::to_string(goal->command.position) +
+        ". Be aware that you command the position of"
+        " each finger which is half of the total opening width!";
+    ROS_ERROR_STREAM_NAMED("FrankaGripperSim", error);
+    result.reached_goal = static_cast<decltype(result.reached_goal)>(false);
+    action_gc_->setAborted(result, error);
+    return;
+  }
 
   franka_gripper::GraspEpsilon eps;
   eps.inner = this->tolerance_gripper_action_;
   eps.outer = this->tolerance_gripper_action_;
 
-  transition(State::GRASPING,
-             Config{.width_desired = goal->command.position * 2.0 < width ? 0 : kMaxFingerWidth,
-                    .speed_desired = this->speed_default_,
-                    .force_desired = goal->command.max_effort,
-                    .tolerance = eps});
+  double current_width = this->finger1_.getPosition() + this->finger2_.getPosition();
+  constexpr double kMinimumGraspForce = 1e-4;
+  bool succeeded = false;
 
-  waitUntilStateChange();
-
-  if (not this->action_gc_->isActive()) {
-    // Gripper Action was interrupted from another action goal callback and already preempted.
-    // Don't try to resend result now
-    return;
+  if (std::abs(goal->command.max_effort) < kMinimumGraspForce or width_d > current_width) {
+    succeeded = move(width_d, this->speed_default_);
+    if (not this->action_gc_->isActive()) {
+      // Gripper Action was interrupted from another action goal callback and already preempted.
+      // Don't try to resend result now
+      return;
+    }
+  } else {
+    succeeded = grasp(width_d, this->speed_default_, goal->command.max_effort, eps);
+    if (not this->action_gc_->isActive()) {
+      // Gripper Action was interrupted from another action goal callback and already preempted.
+      // Don't try to resend result now
+      return;
+    }
+    if (this->state_ != State::HOLDING) {
+      result.reached_goal = static_cast<decltype(result.reached_goal)>(false);
+      std::string error = "Unexpected state transition: The gripper not in HOLDING as expected";
+      action_gc_->setAborted(result, error);
+      return;
+    }
   }
 
-  control_msgs::GripperCommandResult result;
-  if (this->state_ != State::HOLDING) {
-    result.reached_goal = static_cast<decltype(result.reached_goal)>(false);
-    std::string error = "Unexpected state transistion: The gripper not in HOLDING as expected";
-    action_gc_->setAborted(result, error);
-    return;
-  }
-
-  double width_d = goal->command.position * 2.0;
-  width = this->finger1_.getPosition() + this->finger2_.getPosition();  // recalculate
-  bool inside_tolerance = width_d - this->tolerance_gripper_action_ < width and
-                          width < width_d + this->tolerance_gripper_action_;
-  result.position = width;
+  result.position = this->finger1_.getPosition() + this->finger2_.getPosition();
   result.effort = 0;
   result.stalled = static_cast<decltype(result.stalled)>(false);
-  result.reached_goal = static_cast<decltype(result.reached_goal)>(inside_tolerance);
-  if (not inside_tolerance) {
-    std::lock_guard<std::mutex> lock(this->mutex_);
-    this->state_ = State::IDLE;
+  result.reached_goal = static_cast<decltype(result.reached_goal)>(succeeded);
+  if (not succeeded) {
+    setState(State::IDLE);
   }
   action_gc_->setSucceeded(result);
+}
+
+bool FrankaGripperSim::move(double width, double speed) {
+  franka_gripper::GraspEpsilon eps;
+  eps.inner = this->tolerance_move_;
+  eps.outer = this->tolerance_move_;
+  transition(
+      State::MOVING,
+      Config{.width_desired = width, .speed_desired = speed, .force_desired = 0, .tolerance = eps});
+
+  waitUntilStateChange();
+  return this->state_ == State::IDLE;
+}
+
+bool FrankaGripperSim::grasp(double width,
+                             double speed,
+                             double force,
+                             const franka_gripper::GraspEpsilon& epsilon) {
+  double current_width = this->finger1_.getPosition() + this->finger2_.getPosition();
+  double direction = std::copysign(1.0, width - current_width);
+  transition(State::GRASPING, Config{.width_desired = width < current_width ? 0 : kMaxFingerWidth,
+                                     .speed_desired = speed,
+                                     .force_desired = direction * force,
+                                     .tolerance = epsilon});
+
+  waitUntilStateChange();
+  current_width = this->finger1_.getPosition() + this->finger2_.getPosition();  // recalculate
+  return width - epsilon.inner < current_width and current_width < width + epsilon.outer;
 }
 
 }  // namespace franka_gazebo

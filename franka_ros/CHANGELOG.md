@@ -1,5 +1,71 @@
 # CHANGELOG
 
+## 0.XX.YY - UNRELEASED
+
+## 0.9.1 - 2022-08-29
+
+Requires `libfranka` >= 0.8.0
+
+  * `franka_example_controllers`: Extend the `teleop_joint_pd_example_controller` with markers indicating leader and follower roles + consistently use leader and follower as robot names in the example.
+  * `franka_example_controllers`: Extend the `teleop_joint_pd_example_controller` with a finite state machine that aligns the follower robot before starting to track the leader.
+  * `franka_example_controllers`: Extend the `teleop_joint_pd_example_controller` with joint walls to actively avoid position or velocity limit violations.
+  * `franka_example_controllers`: Fix namespacing of dynamic reconfigure node of cartesian impedance example controller
+  * `franka_control`: Configurable `arm_id` in launch & config files
+  * `franka_description`: URDF now contains `$(arm_id)_linkN_sc` links containing the capsule collision modules used for self-collision avoidance (MoveIt).
+  * `franka_description`: Unit test suite for URDFs
+  * `franka_description`: Make `util.xacro` be includable from other packages
+  * `franka_description`: Add `tcp_xyz` & `tcp_rpy` offsets to specify a custom TCP for MoveIT's `$(arm_id)_manipulator` move group
+  * `franka_control`: `franka_control.launch` accepts `xacro_args` to pass down additional arguments to URDF
+  * `franka_gazebo`: `panda.launch` accepts `xacro_args` to pass down additional arguments to URDF
+  * `franka_gazebo`: Fix motion generator config respects `arm_id`
+  *  **BREAKING**: `gripper_action` goes now to the commanded gripper position when `max_effort` is zero
+  * `franka_gazebo`: Drop `delayed_controller_spawner.py` script in favor of `--wait-for TOPIC` flag from controller_manager
+  * `franka_gazebo`: Properly calculate inertial properties of `world/stone/model.sdf`
+  * `franka_gazebo`: `set_user_stop` service to simulate User stop in Gazebo
+  * `franka_gazebo`: `error_recovery` action similar to `franka_control`
+  * **BREAKING**: `franka_gazebo`: Move services like `set_EE_frame`, `set_K_frame` ... into `franka_control` namespace to be more consistent with real robot
+
+## 0.9.0 - 2022-03-29
+
+Requires `libfranka` >= 0.8.0
+
+  * Added support for libfranka 0.9.0
+  * **BREAKING** add base acceleration `O_ddP_O` (will for now always be {0,0,-9.81}) to `FrankaState.msg`
+  * **BREAKING** add  following errors to `Errors.msg`:
+    * `joint_move_in_wrong_direction`
+    * `cartesian_spline_motion_generator_violation`
+    * `joint_via_motion_generator_planning_joint_limit_violation`
+    * `base_acceleration_initialization_timeout`
+    * `base_acceleration_invalid_reading`
+  * `franka_gazebo`:
+    - Add JointPosition and JointVelocity Interface
+    - Fix: Robot now keeps position when no controller is running
+    - joint_{position,velocity}_example controller are now available in `franka_gazebo`
+
+## 0.8.2 - 2022-02-22
+
+Requires `libfranka` >= 0.8.0
+
+  * `franka_gazebo`:
+    - Fix: homing action works again
+    - Fix: move action can fail instead of blocking indefinitely
+    - Fix: align behavior of grasping action with `franka_gripper`
+    - Add `joint_state_desired` publisher
+    - Add singularity warning  if Jacobian becomes singular
+    - Make `/panda` namespace optional
+    - Make finger collisions primitive in `franka_gazebo`
+    - Add 'gravity_vector' gravity ROS parameter to FrankaHWSim
+    - Improve Gazebo 'stone' world objects
+    - Introduce new `tau_ext_lowpass_filter` parameter for `franka_gazebo` to configure the filtering of `tau_ext_hat_filtered`
+    - Add realistic hand/finger collision geometries to the Gazebo robot description
+  * Fix: Allow interactive marker server to shut down if not initialized
+  * No further ROS Kinetic support, since [End-of-Life was in April 2021](http://wiki.ros.org/Distributions)
+  * Make position + orientation targets threadsafe in cartesian example controller
+  * Add effort joint trajectory controller to be used by MoveIT
+  * Fix "Failed to create robot simulation interface loader" bug when installing from APT
+  * Add `connected_to` option to `panda_gazebo.xacro` macro, similar to `panda_arm.xacro`
+  * Rename `ns` -> `arm_id` in `hand.xacro` macros to be consistent with the other xacro files
+
 ## 0.8.1 - 2021-09-08
 
 Requires `libfranka` >= 0.8.0
