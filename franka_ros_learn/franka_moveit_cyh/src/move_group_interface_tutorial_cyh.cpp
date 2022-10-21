@@ -48,7 +48,10 @@ int main(int argc, char** argv)
 
     // Planning to a Pose goal
     geometry_msgs::Pose target_pose1;
-    target_pose1.orientation.w = 1.0;
+    target_pose1.orientation.x = 0;
+    target_pose1.orientation.y = 1;
+    target_pose1.orientation.z = 0;   
+    target_pose1.orientation.w = 0;
     target_pose1.position.x = 0.28;
     target_pose1.position.y = -0.2;
     target_pose1.position.z = 0.5; 
@@ -71,42 +74,85 @@ int main(int argc, char** argv)
     
     move_group_interface.move();
 
-    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start planning to a Joint goal");
+    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start planning to joint space");
 
-    // Plannint to Cartesian paths
-    std::vector<geometry_msgs::Pose> waypoints;
-    waypoints.push_back(target_pose1);
-
-    geometry_msgs::Pose target_pose2;
-
-    target_pose2.position.z -= 0.1;
-    waypoints.push_back(target_pose2);  // down
-
-    target_pose2.position.y -= 0.1;
-    waypoints.push_back(target_pose2);  // right
-
-    target_pose2.position.z += 0.1;
-    target_pose2.position.y += 0.1;
-    target_pose2.position.x -= 0.1;
-    waypoints.push_back(target_pose2);  // up and left   
-
-
-
-
-
-
-
-
-
-
-
-
-    // Planning to a joint goal
+    // Plannint to joint space
     moveit::core::RobotStatePtr current_state = move_group_interface.getCurrentState();
 
-    std::vector<double> joint_group_positions = {0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4};
+    std::vector<double> joint_group_positions;
+    current_state->copyJointGroupPositions(joint_model_group, joint_group_positions);
 
+    joint_group_positions[0] -= tau/12;
     move_group_interface.setJointValueTarget(joint_group_positions);
+
+    move_group_interface.setMaxVelocityScalingFactor(0.05);
+    move_group_interface.setMaxAccelerationScalingFactor(0.05);
+
+    success = (move_group_interface.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    ROS_INFO_NAMED("tutorial", "Visualizing plan 2 (joint space goal) %s", success ? "" : "FAILED");
+
+    visual_tools.deleteAllMarkers();
+    visual_tools.publishText(text_pose, "Joint Space Goal", rvt::WHITE, rvt::XLARGE);
+    visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
+    visual_tools.trigger();
+    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start to joint space");  
+
+    move_group_interface.move();
+
+    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start to Cartesian paths");  
+
+    // // Plannint to Cartesian paths
+    // geometry_msgs::Pose start_pose2;
+
+    // start_pose2.orientation.x = 0.22;
+    // start_pose2.orientation.y = 0.96;
+    // start_pose2.orientation.z = 0.09;   
+    // start_pose2.orientation.w = 0.1;
+    // start_pose2.position.x = 0.55;
+    // start_pose2.position.y = -0.05;
+    // start_pose2.position.z = 0.8;
+
+    // std::vector<geometry_msgs::Pose> waypoints;
+    // waypoints.push_back(start_pose2);
+
+    // geometry_msgs::Pose target_pose3 = start_pose2;
+
+    // target_pose3.position.z -= 0.1;
+    // waypoints.push_back(target_pose3);  // down
+
+    // target_pose3.position.y -= 0.1;
+    // waypoints.push_back(target_pose3);  // right
+
+    // target_pose3.position.z += 0.1;
+    // target_pose3.position.y += 0.1;
+    // target_pose3.position.x -= 0.1;
+    // waypoints.push_back(target_pose3);  // up and left   
+
+    // moveit_msgs::RobotTrajectory trajectory;
+    // const double jump_threshod = 0.0;
+    // const double eef_step = 0.01;
+    // double fraction = move_group_interface.computeCartesianPath(waypoints, eef_step, jump_threshod, trajectory);
+
+    // visual_tools.deleteAllMarkers();
+    // visual_tools.publishText(text_pose, "Cartesian Path", rvt::WHITE, rvt::XLARGE);
+    // visual_tools.publishPath(waypoints, rvt::LIME_GREEN, rvt::SMALL);   
+    // for (std::size_t i=0; i < waypoints.size(); ++i)
+    // {
+    //     visual_tools.publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::SMALL);
+    // }
+    // visual_tools.trigger();
+    // visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start Cartesian paths");
+
+    // move_group_interface.execute(trajectory);
+
+    // visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to return to start");
+
+    // Planning to a joint goal
+    current_state = move_group_interface.getCurrentState();
+
+    std::vector<double> joint_group_positions_start = {0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4};
+
+    move_group_interface.setJointValueTarget(joint_group_positions_start);
     move_group_interface.setMaxAccelerationScalingFactor(0.05);
     move_group_interface.setMaxVelocityScalingFactor(0.05);
 

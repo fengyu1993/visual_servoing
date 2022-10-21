@@ -1,0 +1,8 @@
+<launch>
+
+  <node name="move_group_interface_tutorial_cyh" 
+        pkg="franka_moveit_cyh" 
+        type="move_group_interface_tutorial_cyh" respawn="false" output="screen">
+  </node>
+
+</launch>
