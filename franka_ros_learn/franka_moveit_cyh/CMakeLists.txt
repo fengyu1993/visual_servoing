@@ -45,8 +45,15 @@ include_directories(${THIS_PACKAGE_INCLUDE_DIRS})
 include_directories(SYSTEM ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIRS})
 
 add_executable(move_group_interface_tutorial_cyh src/move_group_interface_tutorial_cyh.cpp)
+add_executable(track_marker_cyh src/track_marker_cyh.cpp)
+add_executable(marker_pose_cyh src/marker_pose_cyh.cpp)
 
 target_link_libraries(move_group_interface_tutorial_cyh ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(track_marker_cyh ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(marker_pose_cyh ${catkin_LIBRARIES})
+
 install(TARGETS move_group_interface_tutorial_cyh DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+install(TARGETS track_marker_cyh DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+install(TARGETS marker_pose_cyh DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

@@ -101,52 +101,6 @@ int main(int argc, char** argv)
 
     visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start to Cartesian paths");  
 
-    // // Plannint to Cartesian paths
-    // geometry_msgs::Pose start_pose2;
-
-    // start_pose2.orientation.x = 0.22;
-    // start_pose2.orientation.y = 0.96;
-    // start_pose2.orientation.z = 0.09;   
-    // start_pose2.orientation.w = 0.1;
-    // start_pose2.position.x = 0.55;
-    // start_pose2.position.y = -0.05;
-    // start_pose2.position.z = 0.8;
-
-    // std::vector<geometry_msgs::Pose> waypoints;
-    // waypoints.push_back(start_pose2);
-
-    // geometry_msgs::Pose target_pose3 = start_pose2;
-
-    // target_pose3.position.z -= 0.1;
-    // waypoints.push_back(target_pose3);  // down
-
-    // target_pose3.position.y -= 0.1;
-    // waypoints.push_back(target_pose3);  // right
-
-    // target_pose3.position.z += 0.1;
-    // target_pose3.position.y += 0.1;
-    // target_pose3.position.x -= 0.1;
-    // waypoints.push_back(target_pose3);  // up and left   
-
-    // moveit_msgs::RobotTrajectory trajectory;
-    // const double jump_threshod = 0.0;
-    // const double eef_step = 0.01;
-    // double fraction = move_group_interface.computeCartesianPath(waypoints, eef_step, jump_threshod, trajectory);
-
-    // visual_tools.deleteAllMarkers();
-    // visual_tools.publishText(text_pose, "Cartesian Path", rvt::WHITE, rvt::XLARGE);
-    // visual_tools.publishPath(waypoints, rvt::LIME_GREEN, rvt::SMALL);   
-    // for (std::size_t i=0; i < waypoints.size(); ++i)
-    // {
-    //     visual_tools.publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::SMALL);
-    // }
-    // visual_tools.trigger();
-    // visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start Cartesian paths");
-
-    // move_group_interface.execute(trajectory);
-
-    // visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to return to start");
-
     // Planning to a joint goal
     current_state = move_group_interface.getCurrentState();
 

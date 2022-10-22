@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<launch>
+ 
+<include file="$(find panda_moveit_config)/launch/demo.launch" />
+
+ <node name="marker_control_cyh" pkg="franka_moveit_cyh"  type="marker_pose_cyh"  output="screen" />
+
+
+</launch>
