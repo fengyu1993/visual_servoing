@@ -1,5 +1,6 @@
 #include <iostream>
 #include <ros/ros.h>
+#include <moveit/move_group_interface/move_group_interface.h>
 #include <interactive_markers/interactive_marker_server.h>
 #include <interactive_markers/menu_handler.h>
 #include <tf/transform_broadcaster.h>
@@ -43,27 +44,66 @@ InteractiveMarkerControl& makeBoxControl( InteractiveMarker &msg )
 
 void processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
 {
-  server->applyChanges();
+
+    std::ostringstream s;
+    s << "Feedback from marker '" << feedback->marker_name << "' "
+        << " / control '" << feedback->control_name << "'";
+
+    std::ostringstream mouse_point_ss;
+    if( feedback->mouse_point_valid )
+    {
+        mouse_point_ss << " at " << feedback->mouse_point.x
+                    << ", " << feedback->mouse_point.y
+                    << ", " << feedback->mouse_point.z
+                    << " in frame " << feedback->header.frame_id;
+    }
+
+    switch ( feedback->event_type )
+    {
+        case visualization_msgs::InteractiveMarkerFeedback::BUTTON_CLICK:
+        ROS_INFO_STREAM( s.str() << ": button click" << mouse_point_ss.str() << "." );
+        break;
+
+        case visualization_msgs::InteractiveMarkerFeedback::MENU_SELECT:
+        ROS_INFO_STREAM( s.str() << ": menu item " << feedback->menu_entry_id << " clicked" << mouse_point_ss.str() << "." );
+        break;
+
+        case visualization_msgs::InteractiveMarkerFeedback::POSE_UPDATE:
+        {
+            ROS_INFO_STREAM( s.str() << ": pose changed"
+                << "\nposition = "
+                << feedback->pose.position.x
+                << ", " << feedback->pose.position.y
+                << ", " << feedback->pose.position.z
+                << "\norientation = "
+                << feedback->pose.orientation.w
+                << ", " << feedback->pose.orientation.x
+                << ", " << feedback->pose.orientation.y
+                << ", " << feedback->pose.orientation.z
+                << "\nframe: " << feedback->header.frame_id
+                << " time: " << feedback->header.stamp.sec << "sec, "
+                << feedback->header.stamp.nsec << " nsec" );
+            break;
+        }
+
+        case visualization_msgs::InteractiveMarkerFeedback::MOUSE_DOWN:
+        ROS_INFO_STREAM( s.str() << ": mouse down" << mouse_point_ss.str() << "." );
+        break;
+
+        case visualization_msgs::InteractiveMarkerFeedback::MOUSE_UP:
+        ROS_INFO_STREAM( s.str() << ": mouse up" << mouse_point_ss.str() << "." );      
+        break;
+    }
+
+    server->applyChanges();
 }
 
-void make6DofMarker(bool fixed, unsigned int interaction_mode, const Matrix4d T, std::string name, bool show_6dof)
+void make6DofMarker(bool fixed, unsigned int interaction_mode, geometry_msgs::Pose pose_marker, std::string name, bool show_6dof)
 {
-    Matrix3d R; Vector3d p;
-
-    R << T.block<3,3>(0,0);
-    p << T.block<3,1>(0,3);
-
-    Eigen::Quaterniond quater =  Eigen::Quaterniond(R);
-
     InteractiveMarker int_marker;  tf::Vector3 position;
     int_marker.header.frame_id = "panda_link0";
-    position = tf::Vector3(p(0), p(1), p(2));
 
-    int_marker.pose.position.x = p(0); int_marker.pose.position.y = p(1); int_marker.pose.position.z = p(2);
-    int_marker.pose.orientation.x = quater.x();
-    int_marker.pose.orientation.y = quater.y();
-    int_marker.pose.orientation.z = quater.z();
-    int_marker.pose.orientation.w = quater.w();
+    int_marker.pose = pose_marker;
     int_marker.scale = 0.15;
 
     int_marker.name = name.c_str();
@@ -134,22 +174,33 @@ int main(int argc, char** argv)
 {    
     ros::init(argc, argv, "marker_pose_cyh");
     ros::NodeHandle n;
+    ros::AsyncSpinner spinner(1);
+    spinner.start();
 
     server.reset( new interactive_markers::InteractiveMarkerServer("basic_controls", "", false));
 
     ros::Duration(0.1).sleep();
 
-    Matrix4d Pose = Matrix4d::Ones();
-    Pose(0,1) = 1.0;
-    Pose(0,2) = 1.0;
-    Pose(0,3) = 1.0;
+    static const std::string PLANNING_GROUP = "panda_arm";
+    moveit::planning_interface::MoveGroupInterface move_group_interface(PLANNING_GROUP);
+    geometry_msgs::Pose current_pose = move_group_interface.getCurrentPose().pose;
 
+    std::ostringstream s;
+    ROS_INFO_STREAM( s.str() << "position = "
+                << current_pose.position.x
+                << ", " << current_pose.position.y
+                << ", " << current_pose.position.z
+                << "\norientation = "
+                << current_pose.orientation.w
+                << ", " << current_pose.orientation.x
+                << ", " << current_pose.orientation.y
+                << ", " << current_pose.orientation.z);
 
-    make6DofMarker(false, visualization_msgs::InteractiveMarkerControl::NONE, Pose, "marker_cyh", true);
+    make6DofMarker(false, visualization_msgs::InteractiveMarkerControl::NONE, current_pose, "marker_cyh", true);
  
     server->applyChanges();
 
-    ros::spin();
+    ros::waitForShutdown();
 
     server.reset();
 }
