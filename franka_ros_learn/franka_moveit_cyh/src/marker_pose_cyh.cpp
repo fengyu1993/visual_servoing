@@ -14,25 +14,27 @@ using namespace Eigen;
 
 boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server;
 interactive_markers::MenuHandler menu_handler;
+ros::Publisher Pose_pub;
 
 Marker makeBox(InteractiveMarker &msg)
 {
     Marker marker;
 
-    marker.type = Marker::CUBE;
-    marker.scale.x = msg.scale * 0.5;
-    marker.scale.y = msg.scale * 0.5;
-    marker.scale.z = msg.scale * 0.5;
+    // marker.type = Marker::CUBE;
+    marker.type = Marker::SPHERE;
+    marker.scale.x = msg.scale ;
+    marker.scale.y = msg.scale ;
+    marker.scale.z = msg.scale ;
 
-    marker.color.r = 0.5;
-    marker.color.g = 0.5;
-    marker.color.b = 0.5;
-    marker.color.a = 1.0;
+    marker.color.r = 0.0;
+    marker.color.g = 1.0;
+    marker.color.b = 1.0;
+    marker.color.a = 0.8;
 
     return marker;
 }
 
-InteractiveMarkerControl& makeBoxControl( InteractiveMarker &msg )
+InteractiveMarkerControl& makeBoxControl( InteractiveMarker &msg)
 {
   InteractiveMarkerControl control;
   control.always_visible = true;
@@ -48,53 +50,12 @@ void processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPt
     std::ostringstream s;
     s << "Feedback from marker '" << feedback->marker_name << "' "
         << " / control '" << feedback->control_name << "'";
-
-    std::ostringstream mouse_point_ss;
-    if( feedback->mouse_point_valid )
-    {
-        mouse_point_ss << " at " << feedback->mouse_point.x
-                    << ", " << feedback->mouse_point.y
-                    << ", " << feedback->mouse_point.z
-                    << " in frame " << feedback->header.frame_id;
+    
+    
+    if(feedback->event_type == visualization_msgs::InteractiveMarkerFeedback::POSE_UPDATE)
+    { 
+        Pose_pub.publish(feedback->pose);   
     }
-
-    switch ( feedback->event_type )
-    {
-        case visualization_msgs::InteractiveMarkerFeedback::BUTTON_CLICK:
-        ROS_INFO_STREAM( s.str() << ": button click" << mouse_point_ss.str() << "." );
-        break;
-
-        case visualization_msgs::InteractiveMarkerFeedback::MENU_SELECT:
-        ROS_INFO_STREAM( s.str() << ": menu item " << feedback->menu_entry_id << " clicked" << mouse_point_ss.str() << "." );
-        break;
-
-        case visualization_msgs::InteractiveMarkerFeedback::POSE_UPDATE:
-        {
-            ROS_INFO_STREAM( s.str() << ": pose changed"
-                << "\nposition = "
-                << feedback->pose.position.x
-                << ", " << feedback->pose.position.y
-                << ", " << feedback->pose.position.z
-                << "\norientation = "
-                << feedback->pose.orientation.w
-                << ", " << feedback->pose.orientation.x
-                << ", " << feedback->pose.orientation.y
-                << ", " << feedback->pose.orientation.z
-                << "\nframe: " << feedback->header.frame_id
-                << " time: " << feedback->header.stamp.sec << "sec, "
-                << feedback->header.stamp.nsec << " nsec" );
-            break;
-        }
-
-        case visualization_msgs::InteractiveMarkerFeedback::MOUSE_DOWN:
-        ROS_INFO_STREAM( s.str() << ": mouse down" << mouse_point_ss.str() << "." );
-        break;
-
-        case visualization_msgs::InteractiveMarkerFeedback::MOUSE_UP:
-        ROS_INFO_STREAM( s.str() << ": mouse up" << mouse_point_ss.str() << "." );      
-        break;
-    }
-
     server->applyChanges();
 }
 
@@ -173,7 +134,7 @@ void make6DofMarker(bool fixed, unsigned int interaction_mode, geometry_msgs::Po
 int main(int argc, char** argv)
 {    
     ros::init(argc, argv, "marker_pose_cyh");
-    ros::NodeHandle n;
+    ros::NodeHandle nh;
     ros::AsyncSpinner spinner(1);
     spinner.start();
 
@@ -199,6 +160,8 @@ int main(int argc, char** argv)
     make6DofMarker(false, visualization_msgs::InteractiveMarkerControl::NONE, current_pose, "marker_cyh", true);
  
     server->applyChanges();
+
+    Pose_pub = nh.advertise<geometry_msgs::Pose>("target_pose", 100);
 
     ros::waitForShutdown();
 
