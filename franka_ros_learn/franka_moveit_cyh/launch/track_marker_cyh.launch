@@ -3,8 +3,11 @@
  
 <include file="$(find panda_moveit_config)/launch/demo.launch" />
 
+
 <node name="marker_pose_cyh" pkg="franka_moveit_cyh"  type="marker_pose_cyh"  output="screen" />
 
-<node name="track_marker_cyh" pkg="franka_moveit_cyh"  type="track_marker_cyh"  output="screen" />
+<node name="track_marker_cyh" pkg="franka_moveit_cyh"  type="track_marker_cyh"  output="screen" >
+    <rosparam command="load" file="$(find franka_moveit_cyh)/config/track_marker_cyh.yaml" subst_value="true" />
+</node>
 
 </launch>
