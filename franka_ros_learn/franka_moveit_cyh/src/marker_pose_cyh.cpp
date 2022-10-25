@@ -8,13 +8,15 @@
 #include <math.h>
 #include <string>
 #include <Eigen/Dense>
+#include <iostream>
+#include <vector>
 
 using namespace visualization_msgs;
 using namespace Eigen;
+using namespace std;
 
 boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server;
 interactive_markers::MenuHandler menu_handler;
-ros::Publisher Pose_pub;
 
 Marker makeBox(InteractiveMarker &msg)
 {
@@ -44,17 +46,35 @@ InteractiveMarkerControl& makeBoxControl( InteractiveMarker &msg)
   return msg.controls.back();
 }
 
-void processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
+bool set_rosparam_target_pose(geometry_msgs::Pose target_pose)
 {
+    ros::NodeHandle node_handle;
+    vector<double> target_position;
+    vector<double> target_orientation;
+    target_position.resize(3);
+    target_orientation.resize(4);
 
-    std::ostringstream s;
-    s << "Feedback from marker '" << feedback->marker_name << "' "
-        << " / control '" << feedback->control_name << "'";
-    
-    
+    target_position[0] = target_pose.position.x;
+    target_position[1] = target_pose.position.y;
+    target_position[2] = target_pose.position.z;
+
+    target_orientation[0] = target_pose.orientation.x;
+    target_orientation[1] = target_pose.orientation.y;
+    target_orientation[2] = target_pose.orientation.z;
+    target_orientation[3] = target_pose.orientation.w;
+
+    node_handle.setParam("/target_pose/position", target_position);
+
+    node_handle.setParam("/target_pose/orientation", target_orientation);
+
+    return true;
+}
+
+void processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
+{  
     if(feedback->event_type == visualization_msgs::InteractiveMarkerFeedback::POSE_UPDATE)
     { 
-        Pose_pub.publish(feedback->pose);   
+        set_rosparam_target_pose(feedback->pose);
     }
     server->applyChanges();
 }
@@ -146,22 +166,11 @@ int main(int argc, char** argv)
     moveit::planning_interface::MoveGroupInterface move_group_interface(PLANNING_GROUP);
     geometry_msgs::Pose current_pose = move_group_interface.getCurrentPose().pose;
 
-    std::ostringstream s;
-    ROS_INFO_STREAM( s.str() << "position = "
-                << current_pose.position.x
-                << ", " << current_pose.position.y
-                << ", " << current_pose.position.z
-                << "\norientation = "
-                << current_pose.orientation.w
-                << ", " << current_pose.orientation.x
-                << ", " << current_pose.orientation.y
-                << ", " << current_pose.orientation.z);
+    set_rosparam_target_pose(current_pose);
 
     make6DofMarker(false, visualization_msgs::InteractiveMarkerControl::NONE, current_pose, "marker_cyh", true);
  
     server->applyChanges();
-
-    Pose_pub = nh.advertise<geometry_msgs::Pose>("target_pose", 100);
 
     ros::waitForShutdown();
 

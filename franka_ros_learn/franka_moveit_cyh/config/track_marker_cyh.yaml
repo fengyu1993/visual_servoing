@@ -1,4 +1,3 @@
-track_marker_cyh:
-  target_pose:
-    position: [0.306891, 0, 0.590282] # [x, y, z]
-    orientation: [0.92388, -0.382683, 0, 0] # [x, y, z, w]
+target_pose:
+  position: [0.306891, 0, 0.590282] # [x, y, z]
+  orientation: [0.92388, -0.382683, 0, 0] # [x, y, z, w]
