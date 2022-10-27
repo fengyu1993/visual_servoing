@@ -50,7 +50,7 @@ add_executable(marker_pose_cyh src/marker_pose_cyh.cpp)
 
 target_link_libraries(move_group_interface_tutorial_cyh ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 target_link_libraries(track_marker_cyh ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(marker_pose_cyh ${catkin_LIBRARIES})
+target_link_libraries(marker_pose_cyh ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 install(TARGETS move_group_interface_tutorial_cyh DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(TARGETS track_marker_cyh DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
