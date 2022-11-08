@@ -33,15 +33,14 @@ include_directories(SYSTEM  ${catkin_INCLUDE_DIRS}
 
 
 add_executable(read_image_realsense src/read_image_realsense.cpp)
+add_executable(test_DOM src/test_DOM.cpp)
 
-
-target_link_libraries(read_image_realsense  ${catkin_LIBRARIES} 
-                                            ${Boost_LIBRARIES}
-                                            ${EIGEN3_INCLUDE_DIRS}
-                                            ${OpenCV_LIBRARIES})
+target_link_libraries(read_image_realsense  ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
+target_link_libraries(test_DOM  ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
 
 
 install(TARGETS read_image_realsense DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+install(TARGETS test_DOM DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 
 install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
