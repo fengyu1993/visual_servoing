@@ -18,6 +18,7 @@ class Direct_Visual_Servoing
         Mat L_e_;
         Mat error_s_;
         Mat camera_intrinsic_;
+        Mat camera_velocity_;
         double lambda_;
         double epsilon_; 
         int resolution_x_;
@@ -36,14 +37,30 @@ class Direct_Visual_Servoing
     public: 
         Direct_Visual_Servoing(double lambda, double epsilon, Mat camera_intrinsic, int resolution_x, int resolution_y);
 
-        void get_FeaturesError_InteractionMatrix_DVS(Mat image_gray_new, Mat image_depth_new, 
-                Mat image_gray_old, Mat image_depth_old, Mat Camera_Intrinsic, Mat& error_s, Mat& L_e);
+        Mat get_camera_velocity();
 
-        void get_feature_error_gray(Mat image_gray_new, Mat image_gray_old, Mat& error_s);
+        Mat get_feature_error_gray();
 
-        void get_interaction_matrix_gray_depth(Mat image_gray, Mat image_depth, Mat Camera_Intrinsic, Mat& L_e);
+        Mat get_interaction_matrix_gray();
+
+        Mat get_interaction_matrix(Mat image_gray, Mat image_depth, Mat Camera_Intrinsic);
 
         void get_image_gradient(Mat image, Mat Camera_Intrinsic, Mat& I_x, Mat& I_y);
+
+        // void get_camera_velocity(double )
+
+
+        void set_image_gray_desired(Mat image_gray_desired);
+
+        void set_image_gray_initial(Mat image_gray_initial);
+
+        void set_image_gray_current(Mat image_gray_current);
+
+        void set_image_depth_desired(Mat image_depth_desired);
+
+        void set_image_depth_initial(Mat image_depth_initial);
+
+        void set_image_depth_current(Mat image_depth_current);
 };
 
 
