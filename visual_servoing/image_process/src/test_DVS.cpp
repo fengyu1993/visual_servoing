@@ -30,7 +30,6 @@ int main()
         DVS.set_image_depth_current(depth_new);
         DVS.set_image_gray_current(img_new);
         camera_velocity = DVS.get_camera_velocity();
-
         cout << "camera_velocity = \n" << camera_velocity.t() << endl;
         
     }

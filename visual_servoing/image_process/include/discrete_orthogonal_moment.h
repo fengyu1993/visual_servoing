@@ -6,7 +6,7 @@
 
 using namespace cv;
 
-class Discrete_Orthogonal_Moment_VS
+class Discrete_Orthogonal_Moment
 {
 
 

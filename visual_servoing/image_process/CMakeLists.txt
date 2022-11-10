@@ -23,7 +23,7 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-add_library(DVS src/direct_visual_servoing.cpp)
+add_library(DVS src/direct_visual_servoing.cpp src/visual_servoing.cpp)
 
 include_directories(${THIS_PACKAGE_INCLUDE_DIRS})
 include_directories(SYSTEM  ${catkin_INCLUDE_DIRS} 
