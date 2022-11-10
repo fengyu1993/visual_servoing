@@ -1,9 +1,7 @@
-#include "discrete_orthogonal_moment.h"
+
 #include "direct_visual_servoing.h"
 #include <iostream>
 #include <opencv2/opencv.hpp>
-
-using namespace std;
 
 int main()
 {
@@ -12,10 +10,14 @@ int main()
     Mat img_old, img_new, depth_old, depth_new;
     Mat camera_velocity;
 
-    img_old = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_old.jpg", IMREAD_GRAYSCALE);
-    img_new = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_new.jpg", IMREAD_GRAYSCALE);
-    depth_old = img_old.clone();
-    depth_new = img_new.clone();
+    img_old = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_old_5.jpg", IMREAD_GRAYSCALE);
+    img_new = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_new_5.jpg", IMREAD_GRAYSCALE);  
+    img_old.convertTo(img_old, CV_64FC1);
+    img_new.convertTo(img_new, CV_64FC1);
+    img_old = img_old / 255.0;
+    img_new = img_new / 255.0;
+    depth_old = img_old * 100 + 1;
+    depth_new = img_new * 100 + 1;
 
     if(img_old.empty() || img_new.empty())
     {
@@ -23,12 +25,14 @@ int main()
         return 0;
     }else
     {
-        Direct_Visual_Servoing DVS(5e-2, 0.1, camera_intrinsic, img_old.rows, img_old.cols);
+        Direct_Visual_Servoing DVS(img_old.rows, img_old.cols);
+        DVS.init_VS(5e-2, 0.1, img_old, depth_old, camera_intrinsic);
         DVS.set_image_depth_current(depth_new);
         DVS.set_image_gray_current(img_new);
-        DVS.set_image_depth_desired(depth_old);
-        DVS.set_image_gray_desired(img_old);
         camera_velocity = DVS.get_camera_velocity();
+
+        cout << "camera_velocity = \n" << camera_velocity.t() << endl;
+        
     }
     
 

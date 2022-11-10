@@ -2,60 +2,61 @@
 #include <opencv2/imgproc.hpp>
 #include <math.h>
 
-using namespace std;
-
-Direct_Visual_Servoing::Direct_Visual_Servoing(double lambda, double epsilon, Mat camera_intrinsic, int resolution_x=640, int resolution_y=480)
+Direct_Visual_Servoing::Direct_Visual_Servoing(int resolution_x=640, int resolution_y=480)
 {
-    this->lambda_ = lambda;
-    this->epsilon_ = epsilon;
+
     this->resolution_x_ = resolution_x;
     this->resolution_y_ = resolution_y;
     this->image_gray_desired_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
-    this->image_gray_initial_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
     this->image_gray_current_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
     this->image_depth_desired_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
-    this->image_depth_initial_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
     this->image_depth_current_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
     this->L_e_ = Mat::zeros(this->resolution_x_*this->resolution_y_, 6, CV_64FC1); 
     this->error_s_ = Mat::zeros(this->resolution_x_*this->resolution_y_, 1, CV_64FC1);  
-    this->camera_intrinsic_ = camera_intrinsic;
+    this->camera_intrinsic_ = Mat::zeros(3, 3, CV_64FC1);
     this->camera_velocity_ = Mat::zeros(6, 1, CV_64FC1);
+}
+
+// 初始化
+void Direct_Visual_Servoing::init_VS(double lambda, double epsilon, Mat image_gray_desired, Mat image_depth_desired, Mat camera_intrinsic)
+{
+    this->lambda_ = lambda;
+    this->epsilon_ = epsilon;
+    set_camera_intrinsic(camera_intrinsic);
+    set_image_depth_desired(image_depth_desired);
+    set_image_gray_desired(image_gray_desired);
 }
 
 // 计算相机速度
 Mat Direct_Visual_Servoing::get_camera_velocity()
 {
     Mat L_e_inv;
-    get_feature_error_gray();
-    get_interaction_matrix_gray();
+    get_feature_error();
+    get_interaction_matrix();
     invert(this->L_e_, L_e_inv, DECOMP_SVD);
-    cout << "L_e = " << L_e_.rows << ", " << L_e_.cols << endl;
-    cout << "L_e_inv = " << L_e_inv.rows << ", " << L_e_inv.cols << endl;
-    cout << "error_s_ = " << error_s_.rows << ", " << error_s_.cols << endl;
     this->camera_velocity_ = -this->lambda_ * L_e_inv * this->error_s_;
-    cout << "cyh" << endl;
     return this->camera_velocity_;
 }
 
 
 // 计算直接视觉伺服特征误差
-Mat Direct_Visual_Servoing::get_feature_error_gray()
+Mat Direct_Visual_Servoing::get_feature_error()
 {
     this->error_s_ = this->image_gray_current_.reshape(0, this->image_gray_current_.rows*this->image_gray_current_.cols)
                 - this->image_gray_desired_.reshape(0, this->image_gray_desired_.rows*this->image_gray_desired_.cols);
-    
     return this->error_s_;
 }
 
 // 计算灰度误差的交互矩阵（直接视觉伺服DVS）
-Mat Direct_Visual_Servoing::get_interaction_matrix_gray()
+Mat Direct_Visual_Servoing::get_interaction_matrix()
 {
-    Mat Le_new = get_interaction_matrix(this->image_gray_current_, this->image_depth_current_, this->camera_intrinsic_);
-    Mat Le_old = get_interaction_matrix(this->image_gray_desired_, this->image_depth_desired_, this->camera_intrinsic_);
-    return 0.5*(Le_new + Le_old);
+    Mat Le_new = get_interaction_matrix_gray(this->image_gray_current_, this->image_depth_current_, this->camera_intrinsic_);  
+    Mat Le_old = get_interaction_matrix_gray(this->image_gray_desired_, this->image_depth_desired_, this->camera_intrinsic_);
+    this->L_e_ = 0.5*(Le_new + Le_old);
+    return this->L_e_;
 }
 
-Mat Direct_Visual_Servoing::get_interaction_matrix(Mat image_gray, Mat image_depth, Mat Camera_Intrinsic)
+Mat Direct_Visual_Servoing::get_interaction_matrix_gray(Mat image_gray, Mat image_depth, Mat Camera_Intrinsic)
 {
     Mat I_x, I_y;
     int cnt = 0;
@@ -66,6 +67,7 @@ Mat Direct_Visual_Servoing::get_interaction_matrix(Mat image_gray, Mat image_dep
     Mat L_e = Mat::zeros(image_gray.rows*image_gray.cols, 6, CV_64FC1); 
 
     get_image_gradient(image_gray, Camera_Intrinsic, I_x, I_y);
+
     for(int i = 0; i < image_gray.rows; i++)
     {
         point_image.at<double>(1,0) = i;
@@ -74,14 +76,14 @@ Mat Direct_Visual_Servoing::get_interaction_matrix(Mat image_gray, Mat image_dep
             point_image.at<double>(0,0) = j;
             xy = Camera_Intrinsic.inv() * point_image;
             x = xy.at<double>(0,0);
-            y = xy.at<double>(0,1);
-            Z_inv = 1.0/image_depth.at<double>(j, i);
-            L_e.at<double>(0, cnt) = I_x.at<double>(j, i)*Z_inv;
-            L_e.at<double>(1, cnt) = I_y.at<double>(j, i)*Z_inv;
-            L_e.at<double>(2, cnt) = -(x*I_x.at<double>(j, i) + y*I_y.at<double>(j, i))*Z_inv;
-            L_e.at<double>(3, cnt) = -x*y*I_x.at<double>(j, i) - (1+y*y)*I_y.at<double>(j, i);
-            L_e.at<double>(4, cnt) = (1+x*x)*I_x.at<double>(j, i) + x*y*I_y.at<double>(j, i);
-            L_e.at<double>(5, cnt) = -y*I_x.at<double>(j, i) + x*I_y.at<double>(j, i);   
+            y = xy.at<double>(1,0);
+            Z_inv = 1.0/image_depth.at<double>(i, j);
+            L_e.at<double>(cnt, 0) = I_x.at<double>(i, j)*Z_inv;
+            L_e.at<double>(cnt, 1) = I_y.at<double>(i, j)*Z_inv;
+            L_e.at<double>(cnt, 2) = -(x*I_x.at<double>(i, j) + y*I_y.at<double>(i, j))*Z_inv;
+            L_e.at<double>(cnt, 3) = -x*y*I_x.at<double>(i, j) - (1+y*y)*I_y.at<double>(i, j);
+            L_e.at<double>(cnt, 4) = (1+x*x)*I_x.at<double>(i, j) + x*y*I_y.at<double>(i, j);
+            L_e.at<double>(cnt, 5) = -y*I_x.at<double>(i, j) + x*I_y.at<double>(i, j);   
             cnt++;        
         }
     }
@@ -92,22 +94,69 @@ Mat Direct_Visual_Servoing::get_interaction_matrix(Mat image_gray, Mat image_dep
 // 计算图像梯度
 void Direct_Visual_Servoing::get_image_gradient(Mat image, Mat Camera_Intrinsic, Mat& I_x, Mat& I_y)
 {
-    Sobel(image, I_x, -1, 1, 0);
-    Sobel(image, I_y, -1, 0, 1);
-    I_x = I_x * Camera_Intrinsic.at<double>(0, 0);
-    I_y = I_y * Camera_Intrinsic.at<double>(1, 1);
+    I_x = get_image_gradient_x(image) * Camera_Intrinsic.at<double>(0, 0);
+    I_y = get_image_gradient_y(image) * Camera_Intrinsic.at<double>(1, 1);
+}
+
+// 计算矩阵x方向上的梯度
+Mat Direct_Visual_Servoing::get_image_gradient_x(Mat image)
+{
+    Mat I_x = Mat::zeros(image.rows, image.cols, CV_64FC1);
+    Mat temp = Mat::zeros(image.rows, 1, CV_64FC1);
+    int up, down;
+    for(int i = 0; i < image.cols; i++)
+    {
+        up = i+1;
+        down = i-1;
+        if (up > image.cols-1) 
+            up = image.cols-1;
+        if (down < 0) 
+            down = 0;
+        temp = (image.col(up) - image.col(down)) / (up - down); 
+        temp.copyTo(I_x.col(i));
+    }
+
+    return I_x;
+}
+
+// 计算矩阵y方向上的梯度
+Mat Direct_Visual_Servoing::get_image_gradient_y(Mat image)
+{
+    Mat I_y = Mat::zeros(image.rows, image.cols, CV_64FC1);
+    Mat temp = Mat::zeros(1, image.cols, CV_64FC1);
+    int up, down;
+    for(int i = 0; i < image.rows; i++)
+    {
+        up = i+1;
+        down = i-1;
+        if (up > image.rows-1) 
+            up = image.rows-1;
+        if (down < 0) 
+            down = 0;
+        temp = (image.row(up) - image.row(down)) / (up - down); 
+        temp.copyTo(I_y.row(i));
+    }
+    return I_y;
+}
+
+// 计算矩阵的广义逆
+Mat Direct_Visual_Servoing::get_pinv(Mat M)
+{
+    Mat Mt = M.t();
+    Mat temp = Mt * M;
+    return temp.inv() * Mt;
+}
+
+// 设置相机内参
+void Direct_Visual_Servoing::set_camera_intrinsic(Mat camera_intrinsic)
+{
+    camera_intrinsic.copyTo(this->camera_intrinsic_);
 }
 
 // 设置期望灰度图像
 void Direct_Visual_Servoing::set_image_gray_desired(Mat image_gray_desired)
 {
     image_gray_desired.copyTo(this->image_gray_desired_);
-}
-
-// 设置初始灰度图像
-void Direct_Visual_Servoing::set_image_gray_initial(Mat image_gray_initial)
-{
-    image_gray_initial.copyTo(this->image_gray_initial_);
 }
 
 // 设置当前灰度图像
@@ -122,14 +171,9 @@ void Direct_Visual_Servoing::set_image_depth_desired(Mat image_depth_desired)
     image_depth_desired.copyTo(this->image_depth_desired_);
 }
 
-// 设置初始深度图像
-void Direct_Visual_Servoing::set_image_depth_initial(Mat image_depth_initial)
-{
-    image_depth_initial.copyTo(this->image_depth_initial_);
-}
-
 // 设置当前深度图像
 void Direct_Visual_Servoing::set_image_depth_current(Mat image_depth_current)
 {
     image_depth_current.copyTo(this->image_depth_current_);
 }
+

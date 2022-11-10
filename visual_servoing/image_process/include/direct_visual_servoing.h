@@ -5,15 +5,14 @@
 #include <opencv2/opencv.hpp>
 
 using namespace cv;
+using namespace std;
 
 class Direct_Visual_Servoing
 {
     private:
         Mat image_gray_desired_;
-        Mat image_gray_initial_;
         Mat image_gray_current_; 
         Mat image_depth_desired_;
-        Mat image_depth_initial_;
         Mat image_depth_current_; 
         Mat L_e_;
         Mat error_s_;
@@ -35,30 +34,33 @@ class Direct_Visual_Servoing
         };
 
     public: 
-        Direct_Visual_Servoing(double lambda, double epsilon, Mat camera_intrinsic, int resolution_x, int resolution_y);
+        Direct_Visual_Servoing(int resolution_x, int resolution_y);
+
+        void init_VS(double lambda, double epsilon, Mat image_gray_desired, Mat image_depth_desired, Mat camera_intrinsic);
 
         Mat get_camera_velocity();
 
-        Mat get_feature_error_gray();
+        Mat get_feature_error();
 
-        Mat get_interaction_matrix_gray();
+        Mat get_interaction_matrix();
 
-        Mat get_interaction_matrix(Mat image_gray, Mat image_depth, Mat Camera_Intrinsic);
+        Mat get_interaction_matrix_gray(Mat image_gray, Mat image_depth, Mat Camera_Intrinsic);
 
         void get_image_gradient(Mat image, Mat Camera_Intrinsic, Mat& I_x, Mat& I_y);
 
-        // void get_camera_velocity(double )
+        Mat get_image_gradient_x(Mat image);
 
+        Mat get_image_gradient_y(Mat image);
+
+        Mat get_pinv(Mat M);
+
+        void set_camera_intrinsic(Mat camera_intrinsic);
 
         void set_image_gray_desired(Mat image_gray_desired);
-
-        void set_image_gray_initial(Mat image_gray_initial);
 
         void set_image_gray_current(Mat image_gray_current);
 
         void set_image_depth_desired(Mat image_depth_desired);
-
-        void set_image_depth_initial(Mat image_depth_initial);
 
         void set_image_depth_current(Mat image_depth_current);
 };
