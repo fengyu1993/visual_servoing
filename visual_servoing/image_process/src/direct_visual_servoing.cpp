@@ -8,21 +8,15 @@ Direct_Visual_Servoing::Direct_Visual_Servoing(int resolution_x, int resolution_
     this->error_s_ = Mat::zeros(resolution_x*resolution_y, 1, CV_64FC1);
 }
 
-// 计算直接视觉伺服特征误差
-Mat Direct_Visual_Servoing::get_feature_error()
+// 计算直接视觉伺服特征误差 交互矩阵
+void Direct_Visual_Servoing::get_feature_error_interaction_matrix()
 {
     this->error_s_ = this->image_gray_current_.reshape(0, this->image_gray_current_.rows*this->image_gray_current_.cols)
                 - this->image_gray_desired_.reshape(0, this->image_gray_desired_.rows*this->image_gray_desired_.cols);
-    return this->error_s_;
-}
-
-// 计算灰度误差的交互矩阵（直接视觉伺服DVS）
-Mat Direct_Visual_Servoing::get_interaction_matrix()
-{
+    
     Mat Le_new = get_interaction_matrix_gray(this->image_gray_current_, this->image_depth_current_, this->camera_intrinsic_);  
     Mat Le_old = get_interaction_matrix_gray(this->image_gray_desired_, this->image_depth_desired_, this->camera_intrinsic_);
     this->L_e_ = 0.5*(Le_new + Le_old);
-    return this->L_e_;
 }
 
 Mat Direct_Visual_Servoing::get_interaction_matrix_gray(Mat image_gray, Mat image_depth, Mat Camera_Intrinsic)

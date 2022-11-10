@@ -12,6 +12,7 @@ class Visual_Servoing
     protected:
         Mat image_gray_desired_;
         Mat image_gray_current_; 
+        Mat image_gray_initial_;
         Mat image_depth_desired_;
         Mat image_depth_current_; 
         Mat camera_intrinsic_;
@@ -37,19 +38,19 @@ class Visual_Servoing
     public: 
         Visual_Servoing(int resolution_x, int resolution_y);
 
-        void init_VS(double lambda, double epsilon, Mat image_gray_desired, Mat image_depth_desired, Mat camera_intrinsic);
+        void init_VS(double lambda, double epsilon, Mat image_gray_desired, Mat image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic);
 
         Mat get_camera_velocity();
 
-        virtual Mat get_feature_error() = 0;
-
-        virtual Mat get_interaction_matrix() = 0;
+        virtual void get_feature_error_interaction_matrix(){};
 
         void set_camera_intrinsic(Mat camera_intrinsic);
 
         void set_image_gray_desired(Mat image_gray_desired);
 
         void set_image_gray_current(Mat image_gray_current);
+
+        void set_image_gray_initial(Mat image_gray_initial);
 
         void set_image_depth_desired(Mat image_depth_desired);
 

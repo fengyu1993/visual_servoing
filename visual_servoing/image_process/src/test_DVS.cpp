@@ -10,10 +10,11 @@ int main()
     Mat img_old, img_new, depth_old, depth_new;
     Mat camera_velocity;
 
-    img_old = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_old_5.jpg", IMREAD_GRAYSCALE);
-    img_new = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_new_5.jpg", IMREAD_GRAYSCALE);  
+    img_old = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_old_640_480.jpg", IMREAD_GRAYSCALE);
+    img_new = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_new_640_480.jpg", IMREAD_GRAYSCALE);  
     img_old.convertTo(img_old, CV_64FC1);
     img_new.convertTo(img_new, CV_64FC1);
+
     img_old = img_old / 255.0;
     img_new = img_new / 255.0;
     depth_old = img_old * 100 + 1;
@@ -26,7 +27,7 @@ int main()
     }else
     {
         Direct_Visual_Servoing DVS(img_old.rows, img_old.cols);
-        DVS.init_VS(5e-2, 0.1, img_old, depth_old, camera_intrinsic);
+        DVS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic);
         DVS.set_image_depth_current(depth_new);
         DVS.set_image_gray_current(img_new);
         camera_velocity = DVS.get_camera_velocity();
@@ -67,3 +68,9 @@ int main()
         // cout << "img_old = " << img_old.rows << ", " << img_old.cols << endl;
         // imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_new.jpg", img_new);
         // imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_old.jpg", img_old);
+
+    // Size dsize = Size(640, 480);
+    // resize(img_old, img_old, dsize, 0, 0, INTER_AREA);
+    // resize(img_new, img_new, dsize, 0, 0, INTER_AREA);
+    // imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_new_640_480.jpg", img_new);
+    // imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_old_640_480.jpg", img_old);

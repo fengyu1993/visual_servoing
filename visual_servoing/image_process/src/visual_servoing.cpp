@@ -15,21 +15,21 @@ Visual_Servoing::Visual_Servoing(int resolution_x=640, int resolution_y=480)
 }
 
 // 初始化
-void Visual_Servoing::init_VS(double lambda, double epsilon, Mat image_gray_desired, Mat image_depth_desired, Mat camera_intrinsic)
+void Visual_Servoing::init_VS(double lambda, double epsilon, Mat image_gray_desired, Mat image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic)
 {
     this->lambda_ = lambda;
     this->epsilon_ = epsilon;
     set_camera_intrinsic(camera_intrinsic);
     set_image_depth_desired(image_depth_desired);
     set_image_gray_desired(image_gray_desired);
+    set_image_gray_initial(image_gray_initial);
 }
 
 // 计算相机速度
 Mat Visual_Servoing::get_camera_velocity()
 {
     Mat L_e_inv;
-    get_feature_error();
-    get_interaction_matrix();
+    get_feature_error_interaction_matrix();
     invert(this->L_e_, L_e_inv, DECOMP_SVD);
     this->camera_velocity_ = -this->lambda_ * L_e_inv * this->error_s_;
     return this->camera_velocity_;
@@ -50,7 +50,14 @@ void Visual_Servoing::set_image_gray_desired(Mat image_gray_desired)
 // 设置当前灰度图像
 void Visual_Servoing::set_image_gray_current(Mat image_gray_current)
 {
-    image_gray_current.copyTo(this->image_gray_current_);
+    // image_gray_current.copyTo(this->image_gray_current_);
+    this->image_gray_current_ = image_gray_current;
+}
+
+// 设置初始图像
+void Visual_Servoing::set_image_gray_initial(Mat image_gray_initial)
+{
+    image_gray_initial.copyTo(this->image_gray_initial_);
 }
 
 // 设置期望深度图像
@@ -62,6 +69,7 @@ void Visual_Servoing::set_image_depth_desired(Mat image_depth_desired)
 // 设置当前深度图像
 void Visual_Servoing::set_image_depth_current(Mat image_depth_current)
 {
-    image_depth_current.copyTo(this->image_depth_current_);
+    // image_depth_current.copyTo(this->image_depth_current_);
+    this->image_depth_current_ = image_depth_current;
 }
 

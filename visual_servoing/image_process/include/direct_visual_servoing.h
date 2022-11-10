@@ -13,9 +13,7 @@ class Direct_Visual_Servoing: public Visual_Servoing
     public: 
         Direct_Visual_Servoing(int resolution_x, int resolution_y);
 
-        virtual Mat get_feature_error();
-
-        virtual Mat get_interaction_matrix();
+        virtual void get_feature_error_interaction_matrix();
 
         Mat get_interaction_matrix_gray(Mat image_gray, Mat image_depth, Mat Camera_Intrinsic);
 
