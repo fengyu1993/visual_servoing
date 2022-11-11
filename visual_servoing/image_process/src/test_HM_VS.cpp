@@ -1,5 +1,5 @@
 
-#include "discrete_cosine_transform_vs.h"
+#include "Tchebichef_moments_visual_servoing.h"
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
@@ -27,13 +27,14 @@ int main()
         return 0;
     }else
     {
-        Direct_Cosine_Transform_VS DCT_VS(order_min, order_max, img_old.rows, img_old.cols);
-        DCT_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic);
-        DCT_VS.set_image_depth_current(depth_new);
-        DCT_VS.set_image_gray_current(img_new);
-        camera_velocity = DCT_VS.get_camera_velocity();
-        cout << "camera_velocity = \n" << camera_velocity.t() << endl;
+        Techebichef_Moments_VS HM_VS(order_min, order_max, img_old.rows, img_old.cols);
+        HM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic);
+        HM_VS.set_image_depth_current(depth_new);
+        HM_VS.set_image_gray_current(img_new);
+        camera_velocity = HM_VS.get_camera_velocity();
+        cout << "camera_velocity = \n" << camera_velocity.t() << endl;  
     }
+    
 
     return 1;
 }
@@ -50,13 +51,3 @@ int main()
 
 
 
-
-
-
-    // Mat M = Mat::ones(3,3, CV_64FC1)*2;
-    // cout << "sum_M = \n" << sum(M)[0] << endl;
-    // Mat M_rep;
-    // repeat(M.reshape(0, M.rows*M.cols), 1, 3, M_rep);
-    // cout << "M_rep = \n" << M_rep << endl;
-    // Mat M_mulit = M.reshape(0, M.rows*M.cols).mul(M_rep);
-    // cout << "M_mulit = \n" << M_mulit << endl;

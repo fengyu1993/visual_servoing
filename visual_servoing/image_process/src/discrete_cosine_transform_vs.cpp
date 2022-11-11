@@ -5,8 +5,8 @@
 
 void Direct_Cosine_Transform_VS::get_DOM_matrix()
 {
-    this->DOM_x_ = get_orthogonal_polynomial_DCT(this->M_, this->order_);
-    this->DOM_y_ = get_orthogonal_polynomial_DCT(this->N_, this->order_);
+    this->DOM_x_ = get_orthogonal_polynomial_DCT(this->N_, this->order_);
+    this->DOM_y_ = get_orthogonal_polynomial_DCT(this->M_, this->order_);
 }
 
 // 计算DCT正交多项式 

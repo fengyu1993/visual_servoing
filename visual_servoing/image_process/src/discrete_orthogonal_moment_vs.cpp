@@ -39,8 +39,10 @@ void Discrete_Orthogonal_Moment_VS::get_feature_error_interaction_matrix()
                 continue;
             }else{
                 // 准备  
-                DOM_XY = repeat(this->DOM_x_.row(l).t(), 1, this->M_).mul(
-                    repeat(this->DOM_y_.row(k), this->N_, 1));       
+                Mat M_xx = repeat(this->DOM_x_.row(l), this->M_, 1);
+                Mat M_yy = repeat(this->DOM_y_.row(k).t(), 1, this->N_);
+                DOM_XY = repeat(this->DOM_x_.row(l), this->M_, 1).mul(
+                    repeat(this->DOM_y_.row(k).t(), 1, this->N_));       
                 // 计算特征
                 feature_new.at<double>(cnt, 0) = sum(DOM_XY.mul(this->image_gray_current_))[0];
                 feature_old.at<double>(cnt, 0) = sum(DOM_XY.mul(this->image_gray_desired_))[0];
