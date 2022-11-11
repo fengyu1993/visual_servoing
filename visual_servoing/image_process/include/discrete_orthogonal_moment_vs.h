@@ -16,8 +16,8 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
         int order_min_;
         int order_max_;
         int order_;
-        Mat DOM_X_;
-        Mat DOM_Y_;
+        Mat DOM_x_;
+        Mat DOM_y_;
 
         
     public: 
@@ -25,9 +25,12 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
 
         virtual void get_feature_error_interaction_matrix();
 
-        void get_DOM_matrix(){}; // º∆À„ DOM_X_ DOM_Y_
+        virtual void get_DOM_matrix() = 0; // º∆À„ DOM_x_ DOM_y_
 
         int get_order_adaption();
+
+        Mat get_interaction_matrix_DOM_once(Mat DOM_XY, Mat L_I);
+
 };
 
 

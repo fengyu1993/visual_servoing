@@ -3,7 +3,7 @@
 #include <opencv2/imgproc.hpp>
 #include <math.h>
 
-Discrete_Orthogonal_Moment_VS::Discrete_Orthogonal_Moment_VS(int order_min, int order_max, int resolution_x, int resolution_y):Direct_Visual_Servoing(resolution_x, resolution_y)
+Discrete_Orthogonal_Moment_VS::Discrete_Orthogonal_Moment_VS(int order_min, int order_max, int resolution_x=640, int resolution_y=480):Direct_Visual_Servoing(resolution_x, resolution_y)
 {
     this->N_ = resolution_y;
     this->M_ = resolution_x;
@@ -19,12 +19,13 @@ void Discrete_Orthogonal_Moment_VS::get_feature_error_interaction_matrix()
     int num = int((double(this->order_) + 2) * (double(this->order_) + 1) / 2.0);
     this->L_e_ = Mat::zeros(num, 6, CV_64FC1); 
     this->error_s_ = Mat::zeros(num, 1, CV_64FC1); 
-    Mat DOM_new= Mat::zeros(num, 1, CV_64FC1); 
-    Mat DOM_old= Mat::zeros(num, 1, CV_64FC1); 
+    Mat feature_new= Mat::zeros(num, 1, CV_64FC1); 
+    Mat feature_old= Mat::zeros(num, 1, CV_64FC1); 
     Mat Le_new =  Mat::zeros(num, 6, CV_64FC1);
     Mat Le_old =  Mat::zeros(num, 6, CV_64FC1);
-    int cnt = 1;
-    // 计算离散正交矩所需矩阵 DOM_X_ DOM_Y_
+    Mat DOM_XY = Mat::zeros(this->N_, this->M_, CV_64FC1);
+    int cnt = 0;
+    // 计算离散正交矩所需矩阵 DOM_x_ DOM_y_
     get_DOM_matrix();
     // 计算灰度交互矩阵
     Mat L_I_new = get_interaction_matrix_gray(this->image_gray_current_, this->image_depth_current_, this->camera_intrinsic_);
@@ -37,46 +38,43 @@ void Discrete_Orthogonal_Moment_VS::get_feature_error_interaction_matrix()
             if(l + k > this->order_){
                 continue;
             }else{
-                // 
+                // 准备  
+                DOM_XY = repeat(this->DOM_x_.row(l).t(), 1, this->M_).mul(
+                    repeat(this->DOM_y_.row(k), this->N_, 1));       
+                // 计算特征
+                feature_new.at<double>(cnt, 0) = sum(DOM_XY.mul(this->image_gray_current_))[0];
+                feature_old.at<double>(cnt, 0) = sum(DOM_XY.mul(this->image_gray_desired_))[0];
+                // 计算交互矩阵
+                get_interaction_matrix_DOM_once(DOM_XY, L_I_new).copyTo(Le_new.row(cnt));
+                get_interaction_matrix_DOM_once(DOM_XY, L_I_old).copyTo(Le_old.row(cnt));
+                // 计数
+                cnt++;
             }
-
         }
     }
     // 计算特征误差 交互矩阵
-    this->error_s_ = DOM_new - DOM_old;
-    this->L_e_ = 0.5*(Le_new + Le_old);
+    this->error_s_ = feature_new.rowRange(0, cnt) - feature_old.rowRange(0, cnt);
+    this->L_e_ = 0.5*(Le_new.rowRange(0, cnt) + Le_old.rowRange(0, cnt));
 }
 
-// for l = 0 : order
-//     for k = 0 : order
-//         if l + k > order
-//             continue;
-//         else 
-//             %%
-//             % 准备
-//             DnX = repmat(Dnx(l+1,:)', 1, M); % 图像横坐标为X,纵坐标为Y
-//             DnY = repmat(Dny(k+1,:), N, 1);
-//             DnXY = DnX .* DnY;
-//             % 计算特征
-//             Product_new = DnXY .* image_gray_new;
-//             Product_old = DnXY .* image_gray_old;
-//             Dnm_new(cnt, 1) = sum(Product_new(:));
-//             Dnm_old(cnt, 1) = sum(Product_old(:));
-//             % 计算交互矩阵
-//             L_e_new(cnt, :) = sum(DnXY(:) .* L_I_new);
-//             L_e_old(cnt, :) = sum(DnXY(:) .* L_I_old);
-//             % 计数
-//             cnt = cnt + 1;            
-//         end
-//     end
-// end
+// 计算每个特征就交互矩阵
+Mat Discrete_Orthogonal_Moment_VS::get_interaction_matrix_DOM_once(Mat DOM_XY, Mat L_I)
+{
+    Mat DOM_XY_Vec = DOM_XY.reshape(0, DOM_XY.rows*DOM_XY.cols);
+    Mat L_once = Mat::zeros(1, L_I.cols, CV_64FC1);
+    for(int i = 0; i < L_I.rows; i++)
+    {
+        L_once = L_once + DOM_XY_Vec.at<double>(i,0) * L_I.row(i);
+    }
+    return L_once;
+}
 
 // 计算离散正交矩所需阶数
 int Discrete_Orthogonal_Moment_VS::get_order_adaption()
 {
-    Mat vec_image_new = this->image_gray_current_.reshape(0, this->image_gray_current_.rows*this->image_gray_current_.cols);
-    Mat vec_image_old = this->image_gray_desired_.reshape(0, this->image_gray_desired_.rows*this->image_gray_desired_.cols);
-    Mat vec_image_init = this->image_gray_initial_.reshape(0, this->image_gray_initial_.rows*this->image_gray_initial_.cols);
+    Mat vec_image_new = this->image_gray_current_.reshape(0, this->N_*this->M_);
+    Mat vec_image_old = this->image_gray_desired_.reshape(0, this->N_*this->M_);
+    Mat vec_image_init = this->image_gray_initial_.reshape(0, this->N_*this->M_);
     
     Mat err = vec_image_new - vec_image_old;
     Mat err_0 = vec_image_init - vec_image_old;

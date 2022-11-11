@@ -1,11 +1,11 @@
 
-#include "discrete_orthogonal_moment_vs.h"
+#include "discrete_cosine_transform_vs.h"
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
 int main()
 {
-    // test Direct_Visual_Servoing class
+    // test Direct_Cosine_Transform_VS class
     Mat camera_intrinsic = (Mat_<double>(3,3) << 1000, 0, 320, 0, 1000, 240, 0, 0, 1);
     Mat img_old, img_new, depth_old, depth_new;
     Mat camera_velocity;
@@ -27,15 +27,15 @@ int main()
         return 0;
     }else
     {
-        Discrete_Orthogonal_Moment_VS DOM_VS(order_min, order_max, img_old.rows, img_old.cols);
-        DOM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic);
-        DOM_VS.set_image_depth_current(depth_new);
-        DOM_VS.set_image_gray_current(img_new);
-        // camera_velocity = DOM_VS.get_camera_velocity();
-        // cout << "camera_velocity = \n" << camera_velocity.t() << endl;
-        
+        Direct_Cosine_Transform_VS DCT_VS(order_min, order_max, img_old.rows, img_old.cols);
+        DCT_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic);
+        DCT_VS.set_image_depth_current(depth_new);
+        DCT_VS.set_image_gray_current(img_new);
+        camera_velocity = DCT_VS.get_camera_velocity();
+        cout << "error = \n" << DCT_VS.error_s_ << endl;
+        cout << "Le = \n" << DCT_VS.L_e_ << endl;
+        cout << "camera_velocity = \n" << camera_velocity.t() << endl;
     }
-    
 
     return 1;
 }
@@ -55,3 +55,10 @@ int main()
 
 
 
+    // Mat M = Mat::ones(3,3, CV_64FC1)*2;
+    // cout << "sum_M = \n" << sum(M)[0] << endl;
+    // Mat M_rep;
+    // repeat(M.reshape(0, M.rows*M.cols), 1, 3, M_rep);
+    // cout << "M_rep = \n" << M_rep << endl;
+    // Mat M_mulit = M.reshape(0, M.rows*M.cols).mul(M_rep);
+    // cout << "M_mulit = \n" << M_mulit << endl;
