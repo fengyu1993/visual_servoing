@@ -1,5 +1,5 @@
 
-#include "Hahn_moments_vs.h"
+#include "Krawtchouk_moments_vs.h"
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
@@ -30,11 +30,11 @@ int main()
         return 0;
     }else
     {
-        Hahn_Moments_VS HM_VS(order_min, order_max, img_old.rows, img_old.cols);
-        HM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic);
-        HM_VS.set_image_depth_current(depth_new);
-        HM_VS.set_image_gray_current(img_new);
-        camera_velocity = HM_VS.get_camera_velocity();
+        Krawtchouk_Moments_VS KM_VS(order_min, order_max, img_old.rows, img_old.cols);
+        KM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic);
+        KM_VS.set_image_depth_current(depth_new);
+        KM_VS.set_image_gray_current(img_new);
+        camera_velocity = KM_VS.get_camera_velocity();
         cout << "camera_velocity = \n" << camera_velocity.t() << endl;  
     }
     

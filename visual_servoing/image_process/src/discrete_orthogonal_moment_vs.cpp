@@ -23,7 +23,7 @@ void Discrete_Orthogonal_Moment_VS::get_feature_error_interaction_matrix()
     Mat feature_old= Mat::zeros(num, 1, CV_64FC1); 
     Mat Le_new =  Mat::zeros(num, 6, CV_64FC1);
     Mat Le_old =  Mat::zeros(num, 6, CV_64FC1);
-    Mat DOM_XY = Mat::zeros(this->N_, this->M_, CV_64FC1);
+    Mat DOM_XY;
     int cnt = 0;
     // 计算离散正交矩所需矩阵 DOM_x_ DOM_y_
     get_DOM_matrix();
@@ -38,11 +38,9 @@ void Discrete_Orthogonal_Moment_VS::get_feature_error_interaction_matrix()
             if(l + k > this->order_){
                 continue;
             }else{
-                // 准备  
-                Mat M_xx = repeat(this->DOM_x_.row(l), this->M_, 1);
-                Mat M_yy = repeat(this->DOM_y_.row(k).t(), 1, this->N_);
+                // 准备            
                 DOM_XY = repeat(this->DOM_x_.row(l), this->M_, 1).mul(
-                    repeat(this->DOM_y_.row(k).t(), 1, this->N_));       
+                    repeat(this->DOM_y_.row(k).t(), 1, this->N_));                     
                 // 计算特征
                 feature_new.at<double>(cnt, 0) = sum(DOM_XY.mul(this->image_gray_current_))[0];
                 feature_old.at<double>(cnt, 0) = sum(DOM_XY.mul(this->image_gray_desired_))[0];
@@ -97,4 +95,18 @@ int Discrete_Orthogonal_Moment_VS::get_order_adaption()
 
     return this->order_;
 }
+
+// matlab中linspace函数
+Mat Discrete_Orthogonal_Moment_VS::linspace(double begin, double finish, int number) 
+{
+     	double interval = (finish - begin) / (number - 1);
+     	Mat f(1, number, CV_64FC1);
+     	for (int j = 0; j < f.cols; j++) 
+        {
+      		f.at<double>(0,j)=begin+j*interval;
+      	}
+     	return f;
+}
+  
+
 

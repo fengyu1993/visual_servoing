@@ -25,11 +25,13 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
 
         virtual void get_feature_error_interaction_matrix();
 
-        virtual void get_DOM_matrix() = 0; // º∆À„ DOM_x_ DOM_y_
+        virtual void get_DOM_matrix() = 0; //  DOM_x_ DOM_y_
 
         int get_order_adaption();
 
         Mat get_interaction_matrix_DOM_once(Mat DOM_XY, Mat L_I);
+
+        Mat linspace(double begin, double finish, int number);
 
 };
 

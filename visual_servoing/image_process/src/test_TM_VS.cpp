@@ -1,11 +1,11 @@
 
-#include "Hahn_moments_vs.h"
+#include "Tchebichef_moments_vs.h"
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
 int main()
 {
-    // test Direct_Cosine_Transform_VS class
+    // test Techebichef_Moments_VS class
     Mat camera_intrinsic = (Mat_<double>(3,3) << 1000, 0, 320, 0, 1000, 240, 0, 0, 1);
     Mat img_old, img_new, depth_old, depth_new;
     Mat camera_velocity;
@@ -30,11 +30,11 @@ int main()
         return 0;
     }else
     {
-        Hahn_Moments_VS HM_VS(order_min, order_max, img_old.rows, img_old.cols);
-        HM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic);
-        HM_VS.set_image_depth_current(depth_new);
-        HM_VS.set_image_gray_current(img_new);
-        camera_velocity = HM_VS.get_camera_velocity();
+        Techebichef_Moments_VS TM_VS(order_min, order_max, img_old.rows, img_old.cols);
+        TM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic);
+        TM_VS.set_image_depth_current(depth_new);
+        TM_VS.set_image_gray_current(img_new);
+        camera_velocity = TM_VS.get_camera_velocity();
         cout << "camera_velocity = \n" << camera_velocity.t() << endl;  
     }
     

@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<launch>
+ 
+<node name="test_KM_VS" pkg="image_process"  type="test_KM_VS"  output="screen"/>
+
+</launch>
