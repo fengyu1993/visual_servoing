@@ -21,9 +21,11 @@ class Hahn_Moments_VS: public Discrete_Orthogonal_Moment_VS
         
         virtual void get_DOM_matrix(); //  DOM_x_ DOM_y_
 
-        Mat get_orthogonal_polynomial_HM(int N, int order, double p);
+        Mat get_orthogonal_polynomial_HM(int N, int order, double ax, double bx);
 
         void get_Hahn_Moments_parameters();
+
+        void get_image_spread(Mat img, int xc, int yc, int& sx, int& sy);
 
         inline double w_x_x_1_Hahn(int N, int x, double p);
        
