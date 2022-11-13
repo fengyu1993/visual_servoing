@@ -22,13 +22,14 @@ void Hahn_Moments_VS::get_DOM_matrix()
     this->DOM_y_ = get_orthogonal_polynomial_HM(this->M_, this->order_, this->ay, this->by);
 }
 
+
 // 自适应计算Hahn矩参数
 void Hahn_Moments_VS::get_Hahn_Moments_parameters()
 {
     // 准备
     Mat image_gray_new_x, image_gray_new_y, image_gray_old_x, image_gray_old_y;   
-    Mat X = linspace(0, this->image_gray_current_.cols-1, this->image_gray_current_.cols);
-    Mat Y = linspace(0, this->image_gray_current_.rows-1, this->image_gray_current_.rows);
+    Mat X = linspace(0, this->N_-1, this->N_);
+    Mat Y = linspace(0, this->M_-1, this->M_);
     reduce(this->image_gray_current_, image_gray_new_x, 0, REDUCE_SUM);
     reduce(this->image_gray_current_, image_gray_new_y, 1, REDUCE_SUM);
     reduce(this->image_gray_desired_, image_gray_old_x, 0, REDUCE_SUM);
@@ -38,19 +39,60 @@ void Hahn_Moments_VS::get_Hahn_Moments_parameters()
     Mat yc_new = image_gray_new_y.t() * Y.t() / sum(image_gray_new_x)[0] ;
     Mat xc_old = image_gray_old_x * X.t() / sum(image_gray_old_x)[0];
     Mat yc_old = image_gray_old_y.t() * Y.t() / sum(image_gray_old_x)[0] ;  
-    double xc = (xc_new.at<double>(0,0) + xc_old.at<double>(0,0)) / (2*this->image_gray_current_.cols);
-    double yc = (yc_new.at<double>(0,0) + yc_old.at<double>(0,0)) / (2*this->image_gray_current_.rows);
+    double xc = (xc_new.at<double>(0,0) + xc_old.at<double>(0,0)) / (2*this->N_);
+    double yc = (yc_new.at<double>(0,0) + yc_old.at<double>(0,0)) / (2*this->M_);
     // 计算散度
     int sx_new, sy_new, sx_old, sy_old;
-    get_image_spread(this->image_gray_current_, round(xc*this->image_gray_current_.cols), 
-                            round(yc*this->image_gray_current_.rows), sx_new, sy_new);
-    get_image_spread(this->image_gray_desired_, round(xc*this->image_gray_desired_.cols), 
-                            round(yc*this->image_gray_desired_.rows), sx_old, sy_old);
+    get_image_spread(this->image_gray_current_, round(xc*this->N_), 
+                            round(yc*this->M_), sx_new, sy_new);
+    get_image_spread(this->image_gray_desired_, round(xc*this->N_), 
+                            round(yc*this->M_), sx_old, sy_old);
     // 计算new图像的Hahn参数a,b
-
-
-
+    double multiple = 20.0;
+    double infinitesimal = 0.01;
+    Mat temp;
+    // x
+    Mat A_x_new = (cv::Mat_<double>(2, 2) << 
+            3.0*sqrt(this->N_*xc*(1.0-xc)), 1.0, this->N_-1.0, 1.0);
+    Mat k_x_new = A_x_new.inv() * (cv::Mat_<double>(2, 1) << log(multiple*(N_-1)), log(infinitesimal));
+    temp = k_x_new.t() * (cv::Mat_<double>(2, 1) << double(sx_new), 1.0);
+    double tx_new = exp(temp.at<double>(0,0));
+    // y
+    Mat A_y_new = (cv::Mat_<double>(2, 2) << 
+            3.0*sqrt(this->M_*yc*(1.0-yc)), 1.0, this->M_-1.0, 1.0);
+    Mat k_y_new = A_y_new.inv() * (cv::Mat_<double>(2, 1) << log(multiple*(M_-1)), log(infinitesimal));
+    temp = k_y_new.t() * (cv::Mat_<double>(2, 1) << double(sy_new), 1.0);
+    double ty_new = exp(temp.at<double>(0,0));
+    // 
+    double b_x_new = xc * tx_new;
+    double a_x_new = (1.0 - xc) * tx_new;
+    double b_y_new = yc * ty_new;
+    double a_y_new = (1.0 - yc) * ty_new;
+    // 计算old图像的Hahn参数a,b
+    // x
+    Mat A_x_old = (cv::Mat_<double>(2, 2) << 
+            3.0*sqrt(this->N_*xc*(1.0-xc)), 1.0, this->N_-1.0, 1.0);
+    Mat k_x_old = A_x_old.inv() * (cv::Mat_<double>(2, 1) << log(multiple*(N_-1)), log(infinitesimal));
+    temp = k_x_old.t() * (cv::Mat_<double>(2, 1) << double(sx_old), 1.0);
+    double tx_old = exp(temp.at<double>(0,0));
+    // y
+    Mat A_y_old = (cv::Mat_<double>(2, 2) << 
+            3.0*sqrt(this->M_*yc*(1.0-yc)), 1.0, this->M_-1.0, 1.0);
+    Mat k_y_old = A_y_old.inv() * (cv::Mat_<double>(2, 1) << log(multiple*(M_-1)), log(infinitesimal));
+    temp = k_y_old.t() * (cv::Mat_<double>(2, 1) << double(sy_old), 1.0);
+    double ty_old = exp(temp.at<double>(0,0));
+    //
+    double b_x_old = xc * tx_old;
+    double a_x_old = (1.0 - xc) * tx_old;
+    double b_y_old = yc * ty_old;
+    double a_y_old = (1.0 - yc) * ty_old;
+    // 输出
+    this->ax = round((a_x_new + a_x_old) / 2.0);
+    this->bx = round((b_x_new + b_x_old) / 2.0);
+    this->ay = round((a_y_new + a_y_old) / 2.0);
+    this->by = round((b_y_new + b_y_old) / 2.0);
 }
+
 
 // 计算散度
 void Hahn_Moments_VS::get_image_spread(Mat img, int xc, int yc, int& sx, int& sy)
@@ -92,7 +134,7 @@ void Hahn_Moments_VS::get_image_spread(Mat img, int xc, int yc, int& sx, int& sy
     // y方向
     int sy_right = 0, sy_left = 0, num_right_y = 0, num_left_y = 0;
     p = p_gray_y.at<double>(yc, 0);
-    for(int i = 1; i <= img.cols; i++)
+    for(int i = 1; i <= img.rows; i++)
     {
         if(p <= p_n_sigma)
         {
@@ -105,7 +147,7 @@ void Hahn_Moments_VS::get_image_spread(Mat img, int xc, int yc, int& sx, int& sy
             num_left_y = yc - i;
             if(num_left_y >= 0)
             {
-                p = p + p_gray_y.at<double>(num_right_y, 0);
+                p = p + p_gray_y.at<double>(num_left_y, 0);
                 sy_left = sy_left + 1;
             }
         }
@@ -114,7 +156,7 @@ void Hahn_Moments_VS::get_image_spread(Mat img, int xc, int yc, int& sx, int& sy
             break;
         }
     }
-    sy = std::max(sx_right, sx_left); 
+    sy = std::max(sy_right, sy_left); 
 }
 
 
@@ -127,18 +169,70 @@ void Hahn_Moments_VS::get_image_spread(Mat img, int xc, int yc, int& sx, int& sy
 //       .
 //       .
 //       n     ...   ]
-Mat Hahn_Moments_VS::get_orthogonal_polynomial_HM(int N, int order, double ax, double bx)
+Mat Hahn_Moments_VS::get_orthogonal_polynomial_HM(int N, int order, int a, int b)
 {
-  
+    // 初始化
+    Mat Hn = Mat::zeros(order+1, N, CV_64FC1);
+    double lambda=0.0, sigma=0.0, tao=0.0;
+    double w_x_x_1, w_x_x_2;
+    double e = 1e-6, h, dh, ddh;
+    bool flag_1, flag_2;  
+    double temp;
+    // 计算第1列
+    temp = 1;
+    for(int i = 1; i <= b+1; i++)
+    {
+        temp = temp * double(a+i)/double(N+a-1.0+i);
+    }    
+    Hn.at<double>(0,0) = sqrt(temp);
+    for(int n = 1; n <= order; n++)
+    {
+        Hn.at<double>(n,0) = -sqrt(double(N-n)*(n+b)*(a+b+n) / double(n*(a+n)*(a+b+N+n))) * sqrt(double(2*n+1+a+b) / double(2*n-1+a+b)) * Hn.at<double>(n-1,0);
+    }
+    // 计算第2列
+    for(int n = 0; n <= order; n++)
+    {
+        Hn.at<double>(n,1) = (1 - double(n*(n+a+b+1)) / double((b+1)*(N-1))) * sqrt(w_x_x_1_Hahn(N, 1, a, b)) * Hn.at<double>(n,0);
+    } 
+    // 计算第3...N列
+    for(int n = 0; n <= order; n++)
+    {
+        lambda =  n * (a + b + n + 1);
+        for(int x = 2; x < N; x++)
+        {
+            sigma = double((x-1) * (N +a - x + 1));
+            tao = double((b+1)*(N-1) - (2+a+b)*(x-1));
+            w_x_x_1 = w_x_x_1_Hahn(N, x, a, b);
+            w_x_x_2 = w_x_x_2_Hahn(N, x, a, b);
+            Hn.at<double>(n,x) = 1.0 / (sigma + tao) * 
+                    ((2*sigma + tao - lambda) * sqrt(w_x_x_1) * Hn.at<double>(n,x-1) 
+                        - sigma * sqrt(w_x_x_2) * Hn.at<double>(n,x-2));    
+            // 抑制数值不稳定 
+            h = Hn.at<double>(n,x); 
+            dh = Hn.at<double>(n,x) - Hn.at<double>(n,x-1);
+            ddh = Hn.at<double>(n,x) - 2*Hn.at<double>(n,x-1) + Hn.at<double>(n,x-2);
+            flag_1 = (h>0) && (h<e) && (dh>-e) && (dh<0) && (ddh>0) && (ddh<e); // 0<h<e, -e<dh<0, 0<ddh<e
+            flag_2 = (h>-e) && (h<0) && (dh>0) && (dh<e) && (ddh>-e) && (ddh<0);// -e<h<0, 0<dh<e, -e<ddh< 0
+            if (flag_1 || flag_2)
+            {
+                Hn.rowRange(n, n+1).colRange(x, N) = 0;
+                break;
+            }
+        }
+        temp = temp + 1;
+    }
+    return Hn;  
 }
 
-double Hahn_Moments_VS::w_x_x_1_Hahn(int N, int x, double p)
+
+double Hahn_Moments_VS::w_x_x_1_Hahn(int N, int x, int a, int b)
 {
-    
+    return double(b+x) * double(N-x) / double((N+a-x)*x);
 }
 
-double Hahn_Moments_VS::w_x_x_2_Hahn(int N, int x, double p)
+double Hahn_Moments_VS::w_x_x_2_Hahn(int N, int x, int a, int b)
 {
-    
+    return double((b+x)*(b+x-1)) / double((x*(x-1))) * double((N-x)*(N-x+1)) / double((N-x+a)*(N-x+a+1));
 }
 
+// ((b+x)*(b+x-1) / (x*(x-1))) * ((N-x)*(N-x+1) / ((N-x+a)*(N-x+a+1)));

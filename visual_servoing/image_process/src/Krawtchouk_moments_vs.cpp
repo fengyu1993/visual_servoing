@@ -23,8 +23,8 @@ void Krawtchouk_Moments_VS::get_Krawtchouk_Moments_parameters()
 {
     Mat image_gray_new_x, image_gray_new_y, image_gray_old_x, image_gray_old_y;
     
-    Mat X = linspace(0, this->image_gray_current_.cols-1, this->image_gray_current_.cols);
-    Mat Y = linspace(0, this->image_gray_current_.rows-1, this->image_gray_current_.rows);
+    Mat X = linspace(0, this->N_-1, this->N_);
+    Mat Y = linspace(0, this->M_-1, this->M_);
 
     reduce(this->image_gray_current_, image_gray_new_x, 0, REDUCE_SUM);
     reduce(this->image_gray_current_, image_gray_new_y, 1, REDUCE_SUM);
@@ -36,8 +36,8 @@ void Krawtchouk_Moments_VS::get_Krawtchouk_Moments_parameters()
     Mat xc_old = image_gray_old_x * X.t() / sum(image_gray_old_x)[0];
     Mat yc_old = image_gray_old_y.t() * Y.t() / sum(image_gray_old_x)[0] ;
 
-    this->px = (xc_new.at<double>(0,0) + xc_old.at<double>(0,0)) / (2*this->image_gray_current_.cols);
-    this->py = (yc_new.at<double>(0,0) + yc_old.at<double>(0,0)) / (2*this->image_gray_current_.rows);
+    this->px = (xc_new.at<double>(0,0) + xc_old.at<double>(0,0)) / (2*this->N_);
+    this->py = (yc_new.at<double>(0,0) + yc_old.at<double>(0,0)) / (2*this->M_);
 }
 
 // 计算Krawtchouk正交多项式 
