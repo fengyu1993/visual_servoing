@@ -234,5 +234,3 @@ double Hahn_Moments_VS::w_x_x_2_Hahn(int N, int x, int a, int b)
 {
     return double((b+x)*(b+x-1)) / double((x*(x-1))) * double((N-x)*(N-x+1)) / double((N-x+a)*(N-x+a+1));
 }
-
-// ((b+x)*(b+x-1) / (x*(x-1))) * ((N-x)*(N-x+1) / ((N-x+a)*(N-x+a+1)));

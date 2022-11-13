@@ -21,16 +21,14 @@ class Visual_Servoing
         double epsilon_; 
         int resolution_x_;
         int resolution_y_;
-        struct sava_data
+        struct data
         {
-            Mat error_pose_;
             Mat velocity_;
-            Mat pose_camera_;
-            Mat error_pixel_ave_;
-            Mat error_feature_;
+            Mat error_feature_ave_;
             Mat image_gray_init_;
             Mat image_gray_desired_;
-        };
+        } data_vs;
+
     public:
         Mat L_e_;
         Mat error_s_;
@@ -42,7 +40,7 @@ class Visual_Servoing
 
         Mat get_camera_velocity();
 
-        virtual void get_feature_error_interaction_matrix(){};
+        virtual void get_feature_error_interaction_matrix() = 0;
 
         void set_camera_intrinsic(Mat camera_intrinsic);
 
@@ -55,6 +53,16 @@ class Visual_Servoing
         void set_image_depth_desired(Mat image_depth_desired);
 
         void set_image_depth_current(Mat image_depth_current);
+
+        void save_data_image();
+
+        void save_data_image_gray_desired();
+
+        void save_data_image_gray_initial();
+
+        void save_data_camera_velocity();
+
+        void save_data_error_feature_ave();
 };
 
 

@@ -23,6 +23,7 @@ void Visual_Servoing::init_VS(double lambda, double epsilon, Mat image_gray_desi
     set_image_depth_desired(image_depth_desired);
     set_image_gray_desired(image_gray_desired);
     set_image_gray_initial(image_gray_initial);
+    save_data_image();
 }
 
 // 计算相机速度
@@ -73,3 +74,29 @@ void Visual_Servoing::set_image_depth_current(Mat image_depth_current)
     this->image_depth_current_ = image_depth_current;
 }
 
+// 
+void Visual_Servoing::save_data_image()
+{
+    save_data_image_gray_desired();
+    save_data_image_gray_initial();
+}
+
+void Visual_Servoing::save_data_image_gray_desired()
+{
+    this->image_gray_desired_.copyTo(this->data_vs.image_gray_desired_);
+}
+
+void Visual_Servoing::save_data_image_gray_initial()
+{
+    this->image_gray_initial_.copyTo(this->data_vs.image_gray_init_);
+}
+
+void Visual_Servoing::save_data_camera_velocity()
+{
+
+}
+
+void Visual_Servoing::save_data_error_feature_ave()
+{
+
+}
