@@ -1,6 +1,11 @@
 #include "visual_servoing.h"
 #include <opencv2/imgproc.hpp>
 #include <math.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <ctime> 
+#include <chrono>
 
 Visual_Servoing::Visual_Servoing(int resolution_x=640, int resolution_y=480)
 {
@@ -74,42 +79,100 @@ void Visual_Servoing::set_image_depth_current(Mat image_depth_current)
     this->image_depth_current_ = image_depth_current;
 }
 
-// 
+// 保存图像数据
 void Visual_Servoing::save_data_image()
 {
     save_data_image_gray_desired();
     save_data_image_gray_initial();
 }
 
+// 保存期望图像
 void Visual_Servoing::save_data_image_gray_desired()
 {
     this->image_gray_desired_.copyTo(this->data_vs.image_gray_desired_);
 }
 
+// 保存初始图像
 void Visual_Servoing::save_data_image_gray_initial()
 {
     this->image_gray_initial_.copyTo(this->data_vs.image_gray_init_);
 }
 
+// 保存相机速度
 void Visual_Servoing::save_data_camera_velocity()
 {
     this->data_vs.velocity_.push_back(this->camera_velocity_);
 }
 
+// 保存特征误差
 void Visual_Servoing::save_data_error_feature()
 {
     this->data_vs.error_feature_.push_back(this->error_s_);
 }
 
+// 保存相机位姿
 void Visual_Servoing::save_data_camera_pose(Mat pose)
 {
     this->data_vs.pose_.push_back(pose);
 }
 
+// 保存所有数据
 void Visual_Servoing::save_data(Mat pose)
 {
     save_data_camera_velocity();
     save_data_camera_pose(pose);
     save_data_error_feature(); 
-    save_date_other_parameter();
+    save_data_other_parameter();
+}
+
+// 将数据保存在文件中
+void Visual_Servoing::write_data()
+{
+    string name = get_save_file_name();
+    // ofstream oFile;
+    // oFile.open("test.csv",ios::out|ios::trunc);
+
+    write_visual_servoing_data();
+    write_other_data();
+}
+
+
+void Visual_Servoing::write_visual_servoing_data()
+{
+
+}
+
+
+string Visual_Servoing::get_save_file_name()
+{
+    return get_method_name() + get_date_time();
+}
+
+string Visual_Servoing::get_method_name()
+{
+    return "Visual_Servoing";
+}
+
+
+string Visual_Servoing::get_date_time()
+{
+	auto to_string = [](const std::chrono::system_clock::time_point& t)->std::string
+	{
+		auto as_time_t = std::chrono::system_clock::to_time_t(t);
+		struct tm tm;
+#if defined(WIN32) || defined(_WINDLL)
+		localtime_s(&tm, &as_time_t);  //win api，线程安全，而std::localtime线程不安全
+#else
+		localtime_r(&as_time_t, &tm);//linux api，线程安全
+#endif
+
+		std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(t.time_since_epoch());
+		char buf[128];
+		snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",
+			tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+		return buf;
+	};
+
+	std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
+	return to_string(t);
 }

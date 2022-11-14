@@ -24,6 +24,8 @@ class Direct_Visual_Servoing: public Visual_Servoing
         Mat get_image_gradient_y(Mat image);
 
         virtual void save_data_error_feature();
+
+        
 };
 
 

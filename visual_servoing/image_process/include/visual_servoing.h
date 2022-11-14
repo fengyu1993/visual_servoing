@@ -67,10 +67,21 @@ class Visual_Servoing
 
         void save_data_camera_pose(Mat pose);
 
-        virtual void save_date_other_parameter() {};
+        virtual void save_data_other_parameter() {};
 
         void save_data(Mat pose);
-        
+
+        void write_data();
+
+        void write_visual_servoing_data();
+
+        virtual void write_other_data(){};
+
+        string get_save_file_name(); 
+
+        string get_date_time();
+
+        virtual string get_method_name();
 };
 
 

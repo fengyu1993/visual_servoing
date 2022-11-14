@@ -39,7 +39,9 @@ class Hahn_Moments_VS: public Discrete_Orthogonal_Moment_VS
        
         inline double w_x_x_2_Hahn(int N, int x, int a, int b);
 
-        virtual void save_date_moments_parameter();
+        virtual void save_data_moments_parameter();
+
+        virtual void write_data_moments();
 };
 
 

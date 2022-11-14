@@ -107,8 +107,13 @@ double Krawtchouk_Moments_VS::w_x_x_2_Krawtchouk(int N, int x, double p)
 }
 
 
-void Krawtchouk_Moments_VS::save_date_moments_parameter()
+void Krawtchouk_Moments_VS::save_data_moments_parameter()
 {
     this->data_km.px_list_.push_back(this->px);
     this->data_km.py_list_.push_back(this->py);
+}
+
+void Krawtchouk_Moments_VS::write_data_moments()
+{
+    
 }

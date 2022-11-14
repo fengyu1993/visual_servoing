@@ -38,11 +38,17 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
 
         Mat linspace(double begin, double finish, int number);
 
-        virtual void save_date_other_parameter();
+        virtual void save_data_other_parameter();
 
-        void save_date_order();
+        void save_data_order();
 
-        virtual void save_date_moments_parameter() {};
+        virtual void save_data_moments_parameter() {};
+
+        virtual void write_other_data();
+
+        void write_data_order();
+
+        virtual void write_data_moments(){};
 
 };
 
