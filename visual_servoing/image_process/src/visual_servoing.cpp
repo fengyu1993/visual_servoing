@@ -41,6 +41,21 @@ Mat Visual_Servoing::get_camera_velocity()
     return this->camera_velocity_;
 }
 
+// 判断是否伺服成功
+bool Visual_Servoing::is_success()
+{
+	Mat error_ave = this->error_s_.t() * this->error_s_ / (this->error_s_.rows*this->error_s_.cols);
+	if(error_ave.at<double>(0,0) < this->epsilon_)
+	{
+		cout << "Visual Servoing Success" << endl;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 // 设置相机内参
 void Visual_Servoing::set_camera_intrinsic(Mat camera_intrinsic)
 {

@@ -41,6 +41,8 @@ class Visual_Servoing
 
         Mat get_camera_velocity();
 
+        virtual bool is_success();
+
         virtual void get_feature_error_interaction_matrix() = 0;
 
         void set_camera_intrinsic(Mat camera_intrinsic);
