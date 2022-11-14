@@ -73,15 +73,17 @@ class Visual_Servoing
 
         void write_data();
 
-        void write_visual_servoing_data();
+        void write_visual_servoing_data(ofstream& oFile);
 
-        virtual void write_other_data(){};
+        virtual void write_other_data(ofstream& oFile){};
 
         string get_save_file_name(); 
 
         string get_date_time();
 
         virtual string get_method_name();
+
+        void write_to_excel(Mat data, ofstream& oFile);
 };
 
 

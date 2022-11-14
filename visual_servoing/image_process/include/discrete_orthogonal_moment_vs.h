@@ -4,6 +4,11 @@
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
 #include "direct_visual_servoing.h"
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <ctime> 
+#include <chrono>
 
 using namespace cv;
 using namespace std;
@@ -21,7 +26,7 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
 
         struct data_dom
         {
-            vector<double> order_list_;
+            Mat order_list_ = Mat::zeros(1,1,CV_64FC1);
         } data_dom;
         
         
@@ -44,11 +49,13 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
 
         virtual void save_data_moments_parameter() {};
 
-        virtual void write_other_data();
+        virtual void write_other_data(ofstream& oFile);
 
-        void write_data_order();
+        void write_data_order(ofstream& oFile);
 
-        virtual void write_data_moments(){};
+        virtual void write_data_moments(ofstream& oFile){};
+
+        virtual string get_method_name();
 
 };
 

@@ -25,7 +25,7 @@ class Direct_Visual_Servoing: public Visual_Servoing
 
         virtual void save_data_error_feature();
 
-        
+        virtual string get_method_name();
 };
 
 

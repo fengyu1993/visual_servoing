@@ -1,6 +1,11 @@
 #include "direct_visual_servoing.h"
 #include <opencv2/imgproc.hpp>
 #include <math.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <ctime> 
+#include <chrono>
 
 Direct_Visual_Servoing::Direct_Visual_Servoing(int resolution_x, int resolution_y):Visual_Servoing(resolution_x, resolution_y)
 {
@@ -107,5 +112,10 @@ void Direct_Visual_Servoing::save_data_error_feature()
 {
     Mat error_ave = (this->error_s_.t() * this->error_s_) / (this->error_s_.rows * this->error_s_.cols);
     this->data_vs.error_feature_.push_back(error_ave);
+}
+
+string Direct_Visual_Servoing::get_method_name()
+{
+    return "Direct_Visual_Servoing";
 }
 

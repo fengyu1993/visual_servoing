@@ -1,6 +1,11 @@
 #include "Tchebichef_moments_vs.h"
 #include <opencv2/imgproc.hpp>
 #include <math.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <ctime> 
+#include <chrono>
 
 
 void Techebichef_Moments_VS::get_DOM_matrix()
@@ -46,4 +51,9 @@ Mat Techebichef_Moments_VS::get_orthogonal_polynomial_HM(int N, int order)
         }
     }
     return Tn;
+}
+
+string Techebichef_Moments_VS::get_method_name()
+{
+    return "TM_VS";
 }

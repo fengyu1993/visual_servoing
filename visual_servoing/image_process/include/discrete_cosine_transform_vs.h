@@ -17,7 +17,8 @@ class Direct_Cosine_Transform_VS: public Discrete_Orthogonal_Moment_VS
         virtual void get_DOM_matrix(); //  DOM_x_ DOM_y_
 
         Mat get_orthogonal_polynomial_DCT(int N, int order);
-
+        
+        virtual string get_method_name();
 };
 
 

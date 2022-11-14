@@ -16,8 +16,8 @@ class Krawtchouk_Moments_VS: public Discrete_Orthogonal_Moment_VS
 
         struct data_km
         {
-            vector<double> px_list_;
-            vector<double> py_list_;
+            Mat px_list_ = Mat::zeros(1,1,CV_64FC1);;
+            Mat py_list_ = Mat::zeros(1,1,CV_64FC1);;
         } data_km;
 
     public: 
@@ -35,7 +35,9 @@ class Krawtchouk_Moments_VS: public Discrete_Orthogonal_Moment_VS
 
         virtual void save_data_moments_parameter();
 
-        virtual void write_data_moments();
+        virtual void write_data_moments(ofstream& oFile);
+
+        virtual string get_method_name();
 };
 
 

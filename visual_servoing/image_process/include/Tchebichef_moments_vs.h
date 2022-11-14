@@ -18,6 +18,8 @@ class Techebichef_Moments_VS: public Discrete_Orthogonal_Moment_VS
 
         Mat get_orthogonal_polynomial_HM(int N, int order);
 
+        virtual string get_method_name();
+
        
 };
 

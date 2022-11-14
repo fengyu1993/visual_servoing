@@ -2,7 +2,11 @@
 #include <opencv2/imgproc.hpp>
 #include <math.h>
 #include <algorithm>
-
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <ctime> 
+#include <chrono>
 
 Hahn_Moments_VS::Hahn_Moments_VS(int order_min, int order_max, int resolution_x, int resolution_y)
             : Discrete_Orthogonal_Moment_VS(order_min, order_max, resolution_x, resolution_y)
@@ -243,7 +247,19 @@ void Hahn_Moments_VS::save_data_moments_parameter()
     this->data_hm.by_list_.push_back(this->by);
 }
 
-void Hahn_Moments_VS::write_data_moments()
+void Hahn_Moments_VS::write_data_moments(ofstream& oFile)
 {
-    
+    oFile << "ax" << endl;
+    write_to_excel(this->data_hm.ax_list_, oFile);     
+    oFile << "bx" << endl;
+    write_to_excel(this->data_hm.bx_list_, oFile);  
+    oFile << "ay" << endl;
+    write_to_excel(this->data_hm.ay_list_, oFile);  
+    oFile << "by" << endl;
+    write_to_excel(this->data_hm.by_list_, oFile);  
+}
+
+string Hahn_Moments_VS::get_method_name()
+{
+    return "HM_VS";
 }

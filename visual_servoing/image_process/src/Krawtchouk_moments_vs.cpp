@@ -1,7 +1,11 @@
 #include "Krawtchouk_moments_vs.h"
 #include <opencv2/imgproc.hpp>
 #include <math.h>
-
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <ctime> 
+#include <chrono>
 
 Krawtchouk_Moments_VS::Krawtchouk_Moments_VS(int order_min, int order_max, int resolution_x, int resolution_y)
             : Discrete_Orthogonal_Moment_VS(order_min, order_max, resolution_x, resolution_y)
@@ -113,7 +117,15 @@ void Krawtchouk_Moments_VS::save_data_moments_parameter()
     this->data_km.py_list_.push_back(this->py);
 }
 
-void Krawtchouk_Moments_VS::write_data_moments()
+void Krawtchouk_Moments_VS::write_data_moments(ofstream& oFile)
 {
-    
+    oFile << "px" << endl;
+    write_to_excel(this->data_km.px_list_, oFile);    
+    oFile << "py" << endl;
+    write_to_excel(this->data_km.py_list_, oFile); 
+}
+
+string Krawtchouk_Moments_VS::get_method_name()
+{
+    return "KM_VS";
 }

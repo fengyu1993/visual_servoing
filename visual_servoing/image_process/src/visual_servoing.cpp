@@ -128,32 +128,46 @@ void Visual_Servoing::save_data(Mat pose)
 // 将数据保存在文件中
 void Visual_Servoing::write_data()
 {
-    string name = get_save_file_name();
-    // ofstream oFile;
-    // oFile.open("test.csv",ios::out|ios::trunc);
-
-    write_visual_servoing_data();
-    write_other_data();
+    string file_name = get_save_file_name();
+    string location = "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/";
+    // 保存图像
+    string saveImage_desired = location + file_name + "_desired_image.png";
+    string saveImage_initial = location + file_name + "_initial_image.png";
+    imwrite(saveImage_desired, this->data_vs.image_gray_desired_);
+    imwrite(saveImage_initial, this->data_vs.image_gray_init_);
+    // 保存数据
+    ofstream oFile;
+    oFile.open(file_name, ios::out|ios::trunc);
+    write_visual_servoing_data(oFile);
+    write_other_data(oFile);
+    // 关闭文件
+    oFile.close();
 }
 
-
-void Visual_Servoing::write_visual_servoing_data()
+// 写入基本视觉伺服数据到文件
+void Visual_Servoing::write_visual_servoing_data(ofstream& oFile)
 {
-
+    oFile << "camera velocity" << endl;
+    write_to_excel(this->data_vs.velocity_, oFile);
+    oFile << "camera pose" << endl;
+    write_to_excel(this->data_vs.pose_, oFile);
+    oFile << "error feature" << endl;
+    write_to_excel(this->data_vs.error_feature_, oFile);
 }
 
-
+// 存储数据文件命名
 string Visual_Servoing::get_save_file_name()
 {
-    return get_method_name() + get_date_time();
+    return get_date_time() + "_" + get_method_name();
 }
 
+// 视觉伺服方法名字
 string Visual_Servoing::get_method_name()
 {
     return "Visual_Servoing";
 }
 
-
+// 获取当前计算机时间
 string Visual_Servoing::get_date_time()
 {
 	auto to_string = [](const std::chrono::system_clock::time_point& t)->std::string
@@ -175,4 +189,83 @@ string Visual_Servoing::get_date_time()
 
 	std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
 	return to_string(t);
+}
+
+void Visual_Servoing::write_to_excel(Mat data, ofstream& oFile)
+{
+		int channels = data.channels();            //获取图像channel  
+		int nrows = data.rows;                     //矩阵的行数  
+		int ncols = data.cols*channels;            //矩阵的总列数=列数*channel分量数  
+ 
+		//循环用变量
+		int i = 0;
+		int j = 0;
+ 
+		if (data.depth() == CV_8U)//uchar
+		{
+			for (i = 0; i<nrows; i++)
+			{
+				for (j = 0; j<ncols; j++)
+				{
+					int tmpVal = (int)data.ptr<uchar>(i)[j];
+					oFile << tmpVal << '\t';
+				}
+				oFile << endl;
+			}
+		}
+		else if (data.depth() == CV_16S)//short
+		{
+			for (i = 0; i<nrows; i++)
+			{
+				for (j = 0; j<ncols; j++)
+				{
+					oFile << (short)data.ptr<short>(i)[j] << '\t';
+				}
+				oFile << endl;
+			}
+		}
+		else if (data.depth() == CV_16U)//unsigned short
+		{
+			for (i = 0; i<nrows; i++)
+			{
+				for (j = 0; j<ncols; j++)
+				{
+					oFile << (unsigned short)data.ptr<unsigned short>(i)[j] << '\t';
+				}
+				oFile << endl;
+			}
+		}
+		else if (data.depth() == CV_32S)//int 
+		{
+			for (i = 0; i<nrows; i++)
+			{
+				for (j = 0; j<ncols; j++)
+				{
+					oFile << (int)data.ptr<int>(i)[j] << '\t';
+				}
+				oFile << endl;
+			}
+		}
+		else if (data.depth() == CV_32F)//float
+		{
+			for (i = 0; i<nrows; i++)
+			{
+				for (j = 0; j<ncols; j++)
+				{
+					oFile << (float)data.ptr<float>(i)[j] << '\t';
+				}
+				oFile << endl;
+			}
+		}
+		else//CV_64F double
+		{
+			for (i = 0; i < nrows; i++)
+			{
+				for (j = 0; j < ncols; j++)
+				{
+					oFile << (double)data.ptr<double>(i)[j] << '\t';
+				}
+				oFile << endl;
+			}
+		}
 }

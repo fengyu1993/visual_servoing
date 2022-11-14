@@ -1,7 +1,11 @@
 #include "discrete_cosine_transform_vs.h"
 #include <opencv2/imgproc.hpp>
 #include <math.h>
-
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <ctime> 
+#include <chrono>
 
 void Direct_Cosine_Transform_VS::get_DOM_matrix()
 {
@@ -32,4 +36,10 @@ Mat Direct_Cosine_Transform_VS::get_orthogonal_polynomial_DCT(int N, int order)
         temp.copyTo(Dn.row(u));
     }
     return Dn;
+}
+
+
+string Direct_Cosine_Transform_VS::get_method_name()
+{
+    return "DCT_VS";
 }

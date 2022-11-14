@@ -18,10 +18,10 @@ class Hahn_Moments_VS: public Discrete_Orthogonal_Moment_VS
 
         struct data_hm
         {
-            vector<int> ax_list_;
-            vector<int> bx_list_;
-            vector<int> ay_list_;
-            vector<int> by_list_;
+            Mat ax_list_ = Mat::zeros(1,1,CV_64FC1);;
+            Mat bx_list_ = Mat::zeros(1,1,CV_64FC1);;
+            Mat ay_list_ = Mat::zeros(1,1,CV_64FC1);;
+            Mat by_list_ = Mat::zeros(1,1,CV_64FC1);;
         } data_hm;
 
     public: 
@@ -41,7 +41,9 @@ class Hahn_Moments_VS: public Discrete_Orthogonal_Moment_VS
 
         virtual void save_data_moments_parameter();
 
-        virtual void write_data_moments();
+        virtual void write_data_moments(ofstream& oFile);
+
+        virtual string get_method_name();
 };
 
 

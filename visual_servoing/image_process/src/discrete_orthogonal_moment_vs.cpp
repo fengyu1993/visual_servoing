@@ -3,6 +3,7 @@
 #include <opencv2/imgproc.hpp>
 #include <math.h>
 
+
 Discrete_Orthogonal_Moment_VS::Discrete_Orthogonal_Moment_VS(int order_min, int order_max, int resolution_x=640, int resolution_y=480):Direct_Visual_Servoing(resolution_x, resolution_y)
 {
     this->N_ = resolution_y;
@@ -121,13 +122,19 @@ void Discrete_Orthogonal_Moment_VS::save_data_order()
     this->data_dom.order_list_.push_back(this->order_);
 }
 
-void Discrete_Orthogonal_Moment_VS::write_other_data()
+void Discrete_Orthogonal_Moment_VS::write_other_data(ofstream& oFile)
 {
-    write_data_order();
-    write_data_moments();
+    write_data_order(oFile);
+    write_data_moments(oFile);
 }
 
-void Discrete_Orthogonal_Moment_VS::write_data_order()
+void Discrete_Orthogonal_Moment_VS::write_data_order(ofstream& oFile)
 {
+    oFile << "order" << endl;
+    write_to_excel(this->data_dom.order_list_, oFile);    
+}
 
+string Discrete_Orthogonal_Moment_VS::get_method_name()
+{
+    return "DOM_VS";
 }
