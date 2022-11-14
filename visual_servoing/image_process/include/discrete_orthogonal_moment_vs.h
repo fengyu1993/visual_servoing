@@ -19,6 +19,11 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
         Mat DOM_x_;
         Mat DOM_y_;
 
+        struct data_dom
+        {
+            vector<double> order_list_;
+        } data_dom;
+        
         
     public: 
         Discrete_Orthogonal_Moment_VS(int order_min, int order_max, int resolution_x, int resolution_y);
@@ -32,6 +37,12 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
         Mat get_interaction_matrix_DOM_once(Mat DOM_XY, Mat L_I);
 
         Mat linspace(double begin, double finish, int number);
+
+        virtual void save_date_other_parameter();
+
+        void save_date_order();
+
+        virtual void save_date_moments_parameter() {};
 
 };
 

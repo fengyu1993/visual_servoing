@@ -9,7 +9,7 @@ using namespace cv;
 using namespace std;
 
 class Direct_Cosine_Transform_VS: public Discrete_Orthogonal_Moment_VS
-{        
+{  
     public: 
         Direct_Cosine_Transform_VS(int order_min, int order_max, int resolution_x, int resolution_y)
             : Discrete_Orthogonal_Moment_VS(order_min, order_max, resolution_x, resolution_y){};

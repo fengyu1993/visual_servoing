@@ -93,10 +93,23 @@ void Visual_Servoing::save_data_image_gray_initial()
 
 void Visual_Servoing::save_data_camera_velocity()
 {
-
+    this->data_vs.velocity_.push_back(this->camera_velocity_);
 }
 
-void Visual_Servoing::save_data_error_feature_ave()
+void Visual_Servoing::save_data_error_feature()
 {
+    this->data_vs.error_feature_.push_back(this->error_s_);
+}
 
+void Visual_Servoing::save_data_camera_pose(Mat pose)
+{
+    this->data_vs.pose_.push_back(pose);
+}
+
+void Visual_Servoing::save_data(Mat pose)
+{
+    save_data_camera_velocity();
+    save_data_camera_pose(pose);
+    save_data_error_feature(); 
+    save_date_other_parameter();
 }

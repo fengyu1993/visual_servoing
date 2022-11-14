@@ -21,17 +21,18 @@ class Visual_Servoing
         double epsilon_; 
         int resolution_x_;
         int resolution_y_;
-        struct data
-        {
-            Mat velocity_;
-            Mat error_feature_ave_;
-            Mat image_gray_init_;
-            Mat image_gray_desired_;
-        } data_vs;
 
     public:
         Mat L_e_;
         Mat error_s_;
+        struct data
+        {
+            Mat velocity_;
+            Mat pose_;
+            Mat error_feature_;
+            Mat image_gray_init_;
+            Mat image_gray_desired_;
+        } data_vs;
 
     public: 
         Visual_Servoing(int resolution_x, int resolution_y);
@@ -62,7 +63,14 @@ class Visual_Servoing
 
         void save_data_camera_velocity();
 
-        void save_data_error_feature_ave();
+        virtual void save_data_error_feature();
+
+        void save_data_camera_pose(Mat pose);
+
+        virtual void save_date_other_parameter() {};
+
+        void save_data(Mat pose);
+        
 };
 
 

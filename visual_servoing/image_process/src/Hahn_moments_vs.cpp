@@ -234,3 +234,11 @@ double Hahn_Moments_VS::w_x_x_2_Hahn(int N, int x, int a, int b)
 {
     return double((b+x)*(b+x-1)) / double((x*(x-1))) * double((N-x)*(N-x+1)) / double((N-x+a)*(N-x+a+1));
 }
+
+void Hahn_Moments_VS::save_date_moments_parameter()
+{
+    this->data_hm.ax_list_.push_back(this->ax);
+    this->data_hm.ay_list_.push_back(this->ay);
+    this->data_hm.bx_list_.push_back(this->bx);
+    this->data_hm.by_list_.push_back(this->by);
+}

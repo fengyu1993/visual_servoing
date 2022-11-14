@@ -16,6 +16,14 @@ class Hahn_Moments_VS: public Discrete_Orthogonal_Moment_VS
         int ay;
         int by;
 
+        struct data_hm
+        {
+            vector<int> ax_list_;
+            vector<int> bx_list_;
+            vector<int> ay_list_;
+            vector<int> by_list_;
+        } data_hm;
+
     public: 
         Hahn_Moments_VS(int order_min, int order_max, int resolution_x, int resolution_y);
         
@@ -30,6 +38,8 @@ class Hahn_Moments_VS: public Discrete_Orthogonal_Moment_VS
         inline double w_x_x_1_Hahn(int N, int x, int a, int b);
        
         inline double w_x_x_2_Hahn(int N, int x, int a, int b);
+
+        virtual void save_date_moments_parameter();
 };
 
 

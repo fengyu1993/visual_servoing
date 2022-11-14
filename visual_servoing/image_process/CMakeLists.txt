@@ -38,11 +38,11 @@ include_directories(SYSTEM  ${catkin_INCLUDE_DIRS}
                             ${OpenCV_INCLUDE_DIRS})
 
 
-add_executable(test_DVS src/test_DVS.cpp)
-add_executable(test_DCT_VS src/test_DCT_VS.cpp)
-add_executable(test_TM_VS src/test_TM_VS.cpp)
-add_executable(test_KM_VS src/test_KM_VS.cpp)
-add_executable(test_HM_VS src/test_HM_VS.cpp)
+add_executable(test_DVS     src/test/test_DVS.cpp)
+add_executable(test_DCT_VS  src/test/test_DCT_VS.cpp)
+add_executable(test_TM_VS   src/test/test_TM_VS.cpp)
+add_executable(test_KM_VS   src/test/test_KM_VS.cpp)
+add_executable(test_HM_VS   src/test/test_HM_VS.cpp)
 
 
 target_link_libraries(test_DVS  DVS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})

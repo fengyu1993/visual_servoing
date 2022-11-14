@@ -106,3 +106,9 @@ double Krawtchouk_Moments_VS::w_x_x_2_Krawtchouk(int N, int x, double p)
     return double(pow((p / (1.0 - p)), 2) * (N - x + 1)*(N - x + 2)) / double(x*(x-1));
 }
 
+
+void Krawtchouk_Moments_VS::save_date_moments_parameter()
+{
+    this->data_km.px_list_.push_back(this->px);
+    this->data_km.py_list_.push_back(this->py);
+}

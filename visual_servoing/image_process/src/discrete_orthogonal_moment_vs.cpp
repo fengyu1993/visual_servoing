@@ -108,5 +108,15 @@ Mat Discrete_Orthogonal_Moment_VS::linspace(double begin, double finish, int num
      	return f;
 }
   
+// 保存其他参数
+void Discrete_Orthogonal_Moment_VS::save_date_other_parameter()
+{
+    save_date_order();
+    save_date_moments_parameter();
+}
 
-
+// 保存阶数
+void Discrete_Orthogonal_Moment_VS::save_date_order()
+{
+    this->data_dom.order_list_.push_back(this->order_);
+}
