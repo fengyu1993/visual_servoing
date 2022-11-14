@@ -16,8 +16,8 @@ class Krawtchouk_Moments_VS: public Discrete_Orthogonal_Moment_VS
 
         struct data_km
         {
-            Mat px_list_ = Mat::zeros(1,1,CV_64FC1);;
-            Mat py_list_ = Mat::zeros(1,1,CV_64FC1);;
+            Mat px_list_;
+            Mat py_list_;
         } data_km;
 
     public: 

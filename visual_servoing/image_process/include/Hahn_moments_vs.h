@@ -18,10 +18,10 @@ class Hahn_Moments_VS: public Discrete_Orthogonal_Moment_VS
 
         struct data_hm
         {
-            Mat ax_list_ = Mat::zeros(1,1,CV_64FC1);;
-            Mat bx_list_ = Mat::zeros(1,1,CV_64FC1);;
-            Mat ay_list_ = Mat::zeros(1,1,CV_64FC1);;
-            Mat by_list_ = Mat::zeros(1,1,CV_64FC1);;
+            Mat ax_list_;
+            Mat bx_list_;
+            Mat ay_list_;
+            Mat by_list_;
         } data_hm;
 
     public: 

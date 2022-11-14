@@ -12,10 +12,10 @@ int main()
     int order_min = 4;
     int order_max = 8;
 
-    img_old = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_old_5.jpg", IMREAD_GRAYSCALE);
-    img_new = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_new_5.jpg", IMREAD_GRAYSCALE);  
-    // img_old = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_old_640_480.jpg", IMREAD_GRAYSCALE);
-    // img_new = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_new_640_480.jpg", IMREAD_GRAYSCALE);    
+    // img_old = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_old_5.jpg", IMREAD_GRAYSCALE);
+    // img_new = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_new_5.jpg", IMREAD_GRAYSCALE);  
+    img_old = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_old_640_480.jpg", IMREAD_GRAYSCALE);
+    img_new = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_new_640_480.jpg", IMREAD_GRAYSCALE);    
     
     img_old.convertTo(img_old, CV_64FC1);
     img_new.convertTo(img_new, CV_64FC1);
@@ -30,12 +30,18 @@ int main()
         return 0;
     }else
     {
-        Techebichef_Moments_VS TM_VS(order_min, order_max, img_old.rows, img_old.cols);
+        Techebichef_Moments_VS TM_VS(order_min, order_max, img_old.cols, img_old.rows);
         TM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic);
-        TM_VS.set_image_depth_current(depth_new);
-        TM_VS.set_image_gray_current(img_new);
-        camera_velocity = TM_VS.get_camera_velocity();
-        cout << "camera_velocity = \n" << camera_velocity.t() << endl;  
+        Mat pose = Mat::ones(4, 4, CV_64FC1);
+        for(int i = 0; i < 10; i++)
+        {
+            TM_VS.set_image_depth_current(depth_new);
+            TM_VS.set_image_gray_current(img_new);
+            camera_velocity = TM_VS.get_camera_velocity();
+            cout << "camera_velocity = \n" << camera_velocity.t() << endl;  
+            TM_VS.save_data(pose*i);
+        }    
+        TM_VS.write_data();  
     }
     
 

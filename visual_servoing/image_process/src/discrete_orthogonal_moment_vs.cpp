@@ -6,8 +6,8 @@
 
 Discrete_Orthogonal_Moment_VS::Discrete_Orthogonal_Moment_VS(int order_min, int order_max, int resolution_x=640, int resolution_y=480):Direct_Visual_Servoing(resolution_x, resolution_y)
 {
-    this->N_ = resolution_y;
-    this->M_ = resolution_x;
+    this->N_ = resolution_x;
+    this->M_ = resolution_y;
     this->order_min_ = order_min;
     this->order_max_ = order_max;   
 }

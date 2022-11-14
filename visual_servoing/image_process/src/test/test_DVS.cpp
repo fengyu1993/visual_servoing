@@ -26,13 +26,18 @@ int main()
         return 0;
     }else
     {
-        Direct_Visual_Servoing DVS(img_old.rows, img_old.cols);
+        Direct_Visual_Servoing DVS(img_old.cols, img_old.rows);
         DVS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic);
-        DVS.set_image_depth_current(depth_new);
-        DVS.set_image_gray_current(img_new);
-        camera_velocity = DVS.get_camera_velocity();
-        cout << "camera_velocity = \n" << camera_velocity.t() << endl;
-        
+        Mat pose = Mat::ones(4, 4, CV_64FC1);
+        for(int i = 0; i < 10; i++)
+        {
+            DVS.set_image_depth_current(depth_new);
+            DVS.set_image_gray_current(img_new);
+            camera_velocity = DVS.get_camera_velocity();
+            cout << "camera_velocity = \n" << camera_velocity.t() << endl;
+            DVS.save_data(pose*i);
+        }    
+        DVS.write_data();    
     }
     
 

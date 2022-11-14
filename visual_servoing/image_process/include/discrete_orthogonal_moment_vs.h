@@ -26,7 +26,7 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
 
         struct data_dom
         {
-            Mat order_list_ = Mat::zeros(1,1,CV_64FC1);
+            Mat order_list_;
         } data_dom;
         
         

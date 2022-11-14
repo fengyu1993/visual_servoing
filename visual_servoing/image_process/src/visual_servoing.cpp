@@ -129,15 +129,16 @@ void Visual_Servoing::save_data(Mat pose)
 void Visual_Servoing::write_data()
 {
     string file_name = get_save_file_name();
-    string location = "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/";
+    string location = "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/data/";
     // 保存图像
     string saveImage_desired = location + file_name + "_desired_image.png";
     string saveImage_initial = location + file_name + "_initial_image.png";
-    imwrite(saveImage_desired, this->data_vs.image_gray_desired_);
-    imwrite(saveImage_initial, this->data_vs.image_gray_init_);
+    imwrite(saveImage_desired, this->data_vs.image_gray_desired_*255);
+    imwrite(saveImage_initial, this->data_vs.image_gray_init_*255);
     // 保存数据
     ofstream oFile;
-    oFile.open(file_name, ios::out|ios::trunc);
+	string excel_name = location + file_name + "_data.xls";
+    oFile.open(excel_name, ios::out|ios::trunc);
     write_visual_servoing_data(oFile);
     write_other_data(oFile);
     // 关闭文件
@@ -182,7 +183,7 @@ string Visual_Servoing::get_date_time()
 
 		std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(t.time_since_epoch());
 		char buf[128];
-		snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",
+		snprintf(buf, sizeof(buf), "%04d_%02d_%02d_%02d_%02d_%02d",
 			tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 		return buf;
 	};
