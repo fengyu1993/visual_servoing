@@ -28,7 +28,7 @@ class Visual_Servoing
         struct data
         {
             Mat velocity_;
-            Mat pose_; // 平移+四元数
+            Mat pose_; // 平移+四元数wxyz
             Mat error_feature_;
             Mat image_gray_init_;
             Mat image_gray_desired_;

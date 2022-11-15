@@ -24,6 +24,8 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
         Mat DOM_x_;
         Mat DOM_y_;
         double error_pixel_ave_;
+        double delta_epsilon_;
+        double lambda_order_;
 
         struct data_dom
         {
@@ -33,7 +35,7 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
         
         
     public: 
-        Discrete_Orthogonal_Moment_VS(int order_min, int order_max, int resolution_x, int resolution_y);
+        Discrete_Orthogonal_Moment_VS(int order_min, int order_max, double delta_epsilon, double lambda_order, int resolution_x, int resolution_y);
 
         virtual void get_feature_error_interaction_matrix();
 

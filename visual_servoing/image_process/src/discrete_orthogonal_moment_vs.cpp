@@ -4,9 +4,11 @@
 #include <math.h>
 
 
-Discrete_Orthogonal_Moment_VS::Discrete_Orthogonal_Moment_VS(int order_min, int order_max, int resolution_x=640, int resolution_y=480):Direct_Visual_Servoing(resolution_x, resolution_y)
+Discrete_Orthogonal_Moment_VS::Discrete_Orthogonal_Moment_VS
+    (int order_min, int order_max, double delta_epsilon=0.1, double lambda_order=1.2, int resolution_x=640, int resolution_y=480)
+    : Direct_Visual_Servoing(resolution_x, resolution_y)
 {
-    this->N_ = resolution_x;
+    this->N_ = resolution_x; 
     this->M_ = resolution_y;
     this->order_min_ = order_min;
     this->order_max_ = order_max;   
@@ -171,9 +173,9 @@ bool Discrete_Orthogonal_Moment_VS::is_success()
             double d_error = this->data_dom.error_pixel_ave_.at<double>(num, 1) - this->data_dom.error_pixel_ave_.at<double>(num-1, 1);
             double h_error = this->data_dom.error_pixel_ave_.at<double>(num, 1) - 2*this->data_dom.error_pixel_ave_.at<double>(num-1, 1) + this->data_dom.error_pixel_ave_.at<double>(num-2, 1);
             double delta = abs(d_error / h_error);
-            if(delta < 0.1) 
+            if(delta < this->delta_epsilon_) 
             {
-                this->order_max_ = 1.2*this->order_max_;
+                this->order_max_ = this->lambda_order_ * this->order_max_;
             }
         }
         

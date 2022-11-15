@@ -8,8 +8,8 @@
 #include <ctime> 
 #include <chrono>
 
-Hahn_Moments_VS::Hahn_Moments_VS(int order_min, int order_max, int resolution_x, int resolution_y)
-            : Discrete_Orthogonal_Moment_VS(order_min, order_max, resolution_x, resolution_y)
+Hahn_Moments_VS::Hahn_Moments_VS(int order_min, int order_max, double delta_epsilon=0.1, double lambda_order=1.2, int resolution_x=640, int resolution_y=480)
+            : Discrete_Orthogonal_Moment_VS(order_min, order_max, delta_epsilon, lambda_order, resolution_x, resolution_y)
 {
     this->ax = 10;
     this->bx = 10;

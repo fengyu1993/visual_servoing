@@ -11,8 +11,8 @@ using namespace std;
 class Techebichef_Moments_VS: public Discrete_Orthogonal_Moment_VS
 {        
     public: 
-        Techebichef_Moments_VS(int order_min, int order_max, int resolution_x, int resolution_y)
-            : Discrete_Orthogonal_Moment_VS(order_min, order_max, resolution_x, resolution_y){};
+        Techebichef_Moments_VS(int order_min, int order_max, double delta_epsilon=0.1, double lambda_order=1.2, int resolution_x=640, int resolution_y=480)
+            : Discrete_Orthogonal_Moment_VS(order_min, order_max, delta_epsilon, lambda_order, resolution_x, resolution_y){};
 
         virtual void get_DOM_matrix(); //  DOM_x_ DOM_y_
 

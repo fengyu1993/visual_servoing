@@ -25,7 +25,7 @@ class Hahn_Moments_VS: public Discrete_Orthogonal_Moment_VS
         } data_hm;
 
     public: 
-        Hahn_Moments_VS(int order_min, int order_max, int resolution_x, int resolution_y);
+        Hahn_Moments_VS(int order_min, int order_max, double delta_epsilon, double lambda_order, int resolution_x, int resolution_y);
         
         virtual void get_DOM_matrix(); //  DOM_x_ DOM_y_
 
