@@ -81,13 +81,14 @@ int Discrete_Orthogonal_Moment_VS::get_order_adaption()
     Mat err_0 = vec_image_init - vec_image_old;
 
     Mat error_ave = err.t() * err / (err.rows * err.cols);
-    double error_pixel_ave = error_ave.at<double>(0,0);
+    this->error_pixel_ave_ = error_ave.at<double>(0,0);
+    double error_pixel_ave = this->error_pixel_ave_;
     Mat error_ave_0 = err_0.t() * err_0 / (err_0.rows * err_0.cols);
     double error_pixel_ave_0 = error_ave_0.at<double>(0,0);
 
     double k = 10.0;
     
-    if (error_pixel_ave > error_pixel_ave_0)
+    if (this->error_pixel_ave_ > error_pixel_ave_0)
         error_pixel_ave = error_pixel_ave_0;
 
     double t = exp(-k*(error_pixel_ave / (error_pixel_ave_0 - error_pixel_ave)));
@@ -112,8 +113,15 @@ Mat Discrete_Orthogonal_Moment_VS::linspace(double begin, double finish, int num
 // 保存其他参数
 void Discrete_Orthogonal_Moment_VS::save_data_other_parameter()
 {
+    save_data_error_pixel_ave();
     save_data_order();
     save_data_moments_parameter();
+}
+
+// 保存图像像素平均误差
+void Discrete_Orthogonal_Moment_VS::save_data_error_pixel_ave()
+{
+    this->data_dom.error_pixel_ave_.push_back(this->error_pixel_ave_);
 }
 
 // 保存阶数
@@ -124,8 +132,15 @@ void Discrete_Orthogonal_Moment_VS::save_data_order()
 
 void Discrete_Orthogonal_Moment_VS::write_other_data(ofstream& oFile)
 {
+    write_data_error_pixel_ave(oFile);
     write_data_order(oFile);
     write_data_moments(oFile);
+}
+
+void Discrete_Orthogonal_Moment_VS::write_data_error_pixel_ave(ofstream& oFile)
+{
+    oFile << "error_pixel_ave" << endl;
+    write_to_excel(this->data_dom.error_pixel_ave_, oFile);
 }
 
 void Discrete_Orthogonal_Moment_VS::write_data_order(ofstream& oFile)
@@ -138,3 +153,40 @@ string Discrete_Orthogonal_Moment_VS::get_method_name()
 {
     return "DOM_VS";
 }
+
+// 判断是否伺服成功
+bool Discrete_Orthogonal_Moment_VS::is_success()
+{
+	Mat error_ave = this->error_s_.t() * this->error_s_ / (this->error_s_.rows*this->error_s_.cols);
+	if(error_ave.at<double>(0,0) < this->epsilon_)
+	{
+		cout << "Visual Servoing Success" << endl;
+		return true;
+	}
+	else
+	{
+        int num = this->data_dom.error_pixel_ave_.rows * this->data_dom.error_pixel_ave_.cols - 1;
+        if(num > 1)
+        {
+            double d_error = this->data_dom.error_pixel_ave_.at<double>(num, 1) - this->data_dom.error_pixel_ave_.at<double>(num-1, 1);
+            double h_error = this->data_dom.error_pixel_ave_.at<double>(num, 1) - 2*this->data_dom.error_pixel_ave_.at<double>(num-1, 1) + this->data_dom.error_pixel_ave_.at<double>(num-2, 1);
+            double delta = abs(d_error / h_error);
+            if(delta < 0.1) 
+            {
+                this->order_max_ = 1.2*this->order_max_;
+            }
+        }
+        
+		return false;
+	}
+}
+
+        // if i > 1
+        //     d_error = error_pixel_ave(i+1,1) - error_pixel_ave(i,1);
+        //     h_error = error_pixel_ave(i+1,1) - 2*error_pixel_ave(i,1) + error_pixel_ave(i-1,1);
+        //     delta = abs(d_error / h_error);
+        //     fprintf('delta：%.5f\n', delta); 
+        //     if delta < 0.1
+        //         order_max = 1.2*order_max;
+        //     end
+        // end

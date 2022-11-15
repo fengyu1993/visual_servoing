@@ -23,10 +23,12 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
         int order_;
         Mat DOM_x_;
         Mat DOM_y_;
+        double error_pixel_ave_;
 
         struct data_dom
         {
             Mat order_list_;
+            Mat error_pixel_ave_;
         } data_dom;
         
         
@@ -47,15 +49,21 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
 
         void save_data_order();
 
+        void save_data_error_pixel_ave();
+
         virtual void save_data_moments_parameter() {};
 
         virtual void write_other_data(ofstream& oFile);
+
+        void write_data_error_pixel_ave(ofstream& oFile);
 
         void write_data_order(ofstream& oFile);
 
         virtual void write_data_moments(ofstream& oFile){};
 
         virtual string get_method_name();
+
+        virtual bool is_success();
 
 };
 

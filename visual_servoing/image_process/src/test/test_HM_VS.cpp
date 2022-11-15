@@ -40,6 +40,8 @@ int main()
             camera_velocity = HM_VS.get_camera_velocity();
             cout << "camera_velocity = \n" << camera_velocity.t() << endl;  
             HM_VS.save_data(pose*i);
+            if(HM_VS.is_success())
+                break;
         }    
         HM_VS.write_data();  
     }

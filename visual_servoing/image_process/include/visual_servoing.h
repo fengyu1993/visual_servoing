@@ -28,7 +28,7 @@ class Visual_Servoing
         struct data
         {
             Mat velocity_;
-            Mat pose_;
+            Mat pose_; // 平移+四元数
             Mat error_feature_;
             Mat image_gray_init_;
             Mat image_gray_desired_;
@@ -86,6 +86,8 @@ class Visual_Servoing
         virtual string get_method_name();
 
         void write_to_excel(Mat data, ofstream& oFile);
+
+        Mat Matrix2Quaternion(Mat matrix);
 };
 
 

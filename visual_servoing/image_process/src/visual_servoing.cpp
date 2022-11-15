@@ -116,7 +116,7 @@ void Visual_Servoing::save_data_image_gray_initial()
 // 保存相机速度
 void Visual_Servoing::save_data_camera_velocity()
 {
-    this->data_vs.velocity_.push_back(this->camera_velocity_);
+    this->data_vs.velocity_.push_back(this->camera_velocity_.t());
 }
 
 // 保存特征误差
@@ -128,7 +128,7 @@ void Visual_Servoing::save_data_error_feature()
 // 保存相机位姿
 void Visual_Servoing::save_data_camera_pose(Mat pose)
 {
-    this->data_vs.pose_.push_back(pose);
+    this->data_vs.pose_.push_back(pose.t());
 }
 
 // 保存所有数据
@@ -284,4 +284,51 @@ void Visual_Servoing::write_to_excel(Mat data, ofstream& oFile)
 				oFile << endl;
 			}
 		}
+}
+
+//旋转矩阵得到四元数
+Mat Visual_Servoing::Matrix2Quaternion(Mat matrix)
+{
+  double tr, qx, qy, qz, qw;
+
+  // 计算矩阵轨迹
+  double a[4][4] = {0};
+  for(int i=0;i<4;i++)
+    for(int j=0;j<4;j++)
+      a[i][j]=matrix.at<double>(i,j);
+  
+  // I removed + 1.0f; see discussion with Ethan
+  double trace = a[0][0] + a[1][1] + a[2][2]; 
+  if( trace > 0 ) {
+    // I changed M_EPSILON to 0
+    double s = 0.5 / sqrt(trace+ 1.0);
+    qw = 0.25 / s;
+    qx = ( a[2][1] - a[1][2] ) * s;
+    qy = ( a[0][2] - a[2][0] ) * s;
+    qz = ( a[1][0] - a[0][1] ) * s;
+  } else {
+    if ( a[0][0] > a[1][1] && a[0][0] > a[2][2] ) {
+      double s = 2.0 * sqrt( 1.0 + a[0][0] - a[1][1] - a[2][2]);
+      qw = (a[2][1] - a[1][2] ) / s;
+      qx = 0.25 * s;
+      qy = (a[0][1] + a[1][0] ) / s;
+      qz = (a[0][2] + a[2][0] ) / s;
+    } else if (a[1][1] > a[2][2]) {
+      double s = 2.0 * sqrt( 1.0 + a[1][1] - a[0][0] - a[2][2]);
+      qw = (a[0][2] - a[2][0] ) / s;
+      qx = (a[0][1] + a[1][0] ) / s;
+      qy = 0.25 * s;
+      qz = (a[1][2] + a[2][1] ) / s;
+    } else {
+      double s = 2.0 * sqrt( 1.0 + a[2][2] - a[0][0] - a[1][1] );
+      qw = (a[1][0] - a[0][1] ) / s;
+      qx = (a[0][2] + a[2][0] ) / s;
+      qy = (a[1][2] + a[2][1] ) / s;
+      qz = 0.25 * s;
+    }    
+  }
+
+  double q[] = {qw,qx,qy,qz};
+
+  return cv::Mat(4,1,CV_64FC1,q).clone();
 }
