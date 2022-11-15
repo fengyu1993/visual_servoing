@@ -11,7 +11,9 @@ Discrete_Orthogonal_Moment_VS::Discrete_Orthogonal_Moment_VS
     this->N_ = resolution_x; 
     this->M_ = resolution_y;
     this->order_min_ = order_min;
-    this->order_max_ = order_max;   
+    this->order_max_ = order_max;  
+    this->delta_epsilon_ =  delta_epsilon;
+    this->lambda_order_ =  lambda_order;
 }
 
 // ¼ÆËãÌØÕ÷Îó²î ½»»¥¾ØÕó
@@ -170,8 +172,10 @@ bool Discrete_Orthogonal_Moment_VS::is_success()
         int num = this->data_dom.error_pixel_ave_.rows * this->data_dom.error_pixel_ave_.cols - 1;
         if(num > 1)
         {
-            double d_error = this->data_dom.error_pixel_ave_.at<double>(num, 1) - this->data_dom.error_pixel_ave_.at<double>(num-1, 1);
-            double h_error = this->data_dom.error_pixel_ave_.at<double>(num, 1) - 2*this->data_dom.error_pixel_ave_.at<double>(num-1, 1) + this->data_dom.error_pixel_ave_.at<double>(num-2, 1);
+            double d_error = this->data_dom.error_pixel_ave_.at<double>(num, 0) - this->data_dom.error_pixel_ave_.at<double>(num-1, 0);
+            double h_error = this->data_dom.error_pixel_ave_.at<double>(num, 0) 
+                                - 2*this->data_dom.error_pixel_ave_.at<double>(num-1, 0) 
+                                + this->data_dom.error_pixel_ave_.at<double>(num-2, 0);
             double delta = abs(d_error / h_error);
             if(delta < this->delta_epsilon_) 
             {

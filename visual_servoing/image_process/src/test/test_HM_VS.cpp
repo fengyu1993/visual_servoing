@@ -35,10 +35,18 @@ int main()
         Hahn_Moments_VS HM_VS(order_min, order_max, delta_epsilon, lambda_order, img_old.cols, img_old.rows);
         HM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic);
         Mat pose = (Mat_<double>(7,1) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5, 0.8);
-        for(int i = 0; i < 5; i++)
+        for(int i = 0; i < 10; i++)
         {
-            HM_VS.set_image_depth_current(depth_new);
-            HM_VS.set_image_gray_current(img_new);
+            if(i == 5)
+            {
+                HM_VS.set_image_depth_current(depth_old);
+                HM_VS.set_image_gray_current(img_old);
+            }
+            else
+            {
+                HM_VS.set_image_depth_current(depth_new);
+                HM_VS.set_image_gray_current(img_new);
+            }
             camera_velocity = HM_VS.get_camera_velocity();
             cout << "camera_velocity = \n" << camera_velocity.t() << endl;  
             HM_VS.save_data(pose*i);
