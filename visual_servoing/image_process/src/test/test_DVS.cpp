@@ -10,8 +10,8 @@ int main()
     Mat img_old, img_new, depth_old, depth_new;
     Mat camera_velocity;
 
-    img_old = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_old_640_480.jpg", IMREAD_GRAYSCALE);
-    img_new = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_new_640_480.jpg", IMREAD_GRAYSCALE);  
+    img_old = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_old_200_150.jpg", IMREAD_GRAYSCALE);
+    img_new = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_new_200_150.jpg", IMREAD_GRAYSCALE);  
     img_old.convertTo(img_old, CV_64FC1);
     img_new.convertTo(img_new, CV_64FC1);
 

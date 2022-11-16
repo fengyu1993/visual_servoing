@@ -5,8 +5,9 @@ project(image_process)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
-  message_filters
+  geometry_msgs
 )
+
 
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -19,7 +20,7 @@ set(THIS_PACKAGE_INCLUDE_DIRS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES image_process
-#  CATKIN_DEPENDS roscpp
+#  CATKIN_DEPENDS roscpp std_msgs message_runtime 
 #  DEPENDS system_lib
 )
 
