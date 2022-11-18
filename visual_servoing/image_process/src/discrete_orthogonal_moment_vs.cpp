@@ -143,7 +143,7 @@ void Discrete_Orthogonal_Moment_VS::write_other_data(ofstream& oFile)
 
 void Discrete_Orthogonal_Moment_VS::write_data_error_pixel_ave(ofstream& oFile)
 {
-    oFile << "error_pixel_ave" << endl;
+    oFile << "error pixel ave" << endl;
     write_to_excel(this->data_dom.error_pixel_ave_, oFile);
 }
 
