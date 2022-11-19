@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
+#include <time.h>
 
 using namespace cv;
 using namespace std;
@@ -37,7 +38,7 @@ class Visual_Servoing
     public: 
         Visual_Servoing(int resolution_x, int resolution_y);
 
-        void init_VS(double lambda, double epsilon, Mat image_gray_desired, Mat image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic);
+        void init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic);
 
         Mat get_camera_velocity();
 
@@ -45,17 +46,17 @@ class Visual_Servoing
 
         virtual void get_feature_error_interaction_matrix() = 0;
 
-        void set_camera_intrinsic(Mat camera_intrinsic);
+        void set_camera_intrinsic(Mat& camera_intrinsic);
 
-        void set_image_gray_desired(Mat image_gray_desired);
+        void set_image_gray_desired(Mat& image_gray_desired);
 
-        void set_image_gray_current(Mat image_gray_current);
+        void set_image_gray_current(Mat& image_gray_current);
 
-        void set_image_gray_initial(Mat image_gray_initial);
+        void set_image_gray_initial(Mat& image_gray_initial);
 
-        void set_image_depth_desired(Mat image_depth_desired);
+        void set_image_depth_desired(Mat& image_depth_desired);
 
-        void set_image_depth_current(Mat image_depth_current);
+        void set_image_depth_current(Mat& image_depth_current);
 
         void save_data_image();
 
@@ -67,7 +68,7 @@ class Visual_Servoing
 
         virtual void save_data_error_feature();
 
-        void save_data_camera_pose(Mat pose);
+        void save_data_camera_pose(Mat& pose);
 
         virtual void save_data_other_parameter() {};
 
@@ -87,7 +88,7 @@ class Visual_Servoing
 
         void write_to_excel(Mat data, ofstream& oFile);
 
-        Mat Matrix2Quaternion(Mat matrix);
+        Mat Matrix2Quaternion(Mat& matrix);
 };
 
 

@@ -40,8 +40,8 @@ void Krawtchouk_Moments_VS::get_Krawtchouk_Moments_parameters()
     Mat xc_old = image_gray_old_x * X.t() / sum(image_gray_old_x)[0];
     Mat yc_old = image_gray_old_y.t() * Y.t() / sum(image_gray_old_x)[0] ;
 
-    this->px = (xc_new.at<double>(0,0) + xc_old.at<double>(0,0)) / (2*this->N_);
-    this->py = (yc_new.at<double>(0,0) + yc_old.at<double>(0,0)) / (2*this->M_);
+    this->px = (((double*)xc_new.data)[0] + ((double*)xc_old.data)[0]) / (2*this->N_);
+    this->py = (((double*)yc_new.data)[0] + ((double*)yc_old.data)[0]) / (2*this->M_);
 }
 
 // 计算Krawtchouk正交多项式 
@@ -64,12 +64,13 @@ Mat Krawtchouk_Moments_VS::get_orthogonal_polynomial_KM(int N, int order, double
     Kn.at<double>(0,0) = pow((1.0 - p), (double(N)/2.0));
     for(int n = 1; n <= order; n++)
     {
-        Kn.at<double>(n,0) = -sqrt(double(N-n+1) / double(n)) * sqrt((p) / (1.0-p)) * Kn.at<double>(n-1,0);
+        ((double*)Kn.data)[n*Kn.cols] = -sqrt(double(N-n+1) / double(n)) * sqrt((p) / (1.0-p)) * ((double*)Kn.data)[(n-1)*Kn.cols];
+        
     }
     // 计算第2列
     for(int n = 0; n <= order; n++)
     {
-        Kn.at<double>(n,1) = (1.0 - double(n)/double(N*p))  * sqrt(w_x_x_1_Krawtchouk(N, 1, p)) * Kn.at<double>(n,0);
+        ((double*)Kn.data)[n*Kn.cols+1] = (1.0 - double(n)/double(N*p))  * sqrt(w_x_x_1_Krawtchouk(N, 1, p)) * ((double*)Kn.data)[n*Kn.cols];
     }    
     // 计算第3...N列
     for(int n = 0; n <= order; n++)
@@ -81,13 +82,13 @@ Mat Krawtchouk_Moments_VS::get_orthogonal_polynomial_KM(int N, int order, double
             tao = double(N * p - x + 1) / (1.0 - p);
             w_x_x_1 = w_x_x_1_Krawtchouk(N, x, p);
             w_x_x_2 = w_x_x_2_Krawtchouk(N, x, p);
-            Kn.at<double>(n,x) = 1.0 / (sigma + tao) * 
-                    ((2*sigma + tao - lambda) * sqrt(w_x_x_1) * Kn.at<double>(n,x-1) 
-                        - sigma * sqrt(w_x_x_2) * Kn.at<double>(n,x-2));    
+            ((double*)Kn.data)[n*Kn.cols+x] = 1.0 / (sigma + tao) * 
+                    ((2*sigma + tao - lambda) * sqrt(w_x_x_1) * ((double*)Kn.data)[n*Kn.cols+x-1] 
+                        - sigma * sqrt(w_x_x_2) * ((double*)Kn.data)[n*Kn.cols+x-2]);    
             // 抑制数值不稳定 
-            k = Kn.at<double>(n,x); 
-            dk = Kn.at<double>(n,x) - Kn.at<double>(n,x-1);
-            ddk = Kn.at<double>(n,x) - 2*Kn.at<double>(n,x-1) + Kn.at<double>(n,x-2);
+            k = ((double*)Kn.data)[n*Kn.cols+x]; 
+            dk = ((double*)Kn.data)[n*Kn.cols+x] - ((double*)Kn.data)[n*Kn.cols+x-1];
+            ddk = ((double*)Kn.data)[n*Kn.cols+x] - 2*((double*)Kn.data)[n*Kn.cols+x-1] + ((double*)Kn.data)[n*Kn.cols+x-2];
             flag_1 = (k>0) && (k<e) && (dk>-e) && (dk<0) && (ddk>0) && (ddk<e); // 0<h<e, -e<dh<0, 0<ddh<e
             flag_2 = (k>-e) && (k<0) && (dk>0) && (dk<e) && (ddk>-e) && (ddk<0);// -e<h<0, 0<dh<e, -e<ddh< 0
             if (flag_1 || flag_2)

@@ -99,7 +99,7 @@ void Hahn_Moments_VS::get_Hahn_Moments_parameters()
 
 
 // 计算散度
-void Hahn_Moments_VS::get_image_spread(Mat img, int xc, int yc, int& sx, int& sy)
+void Hahn_Moments_VS::get_image_spread(Mat& img, int xc, int yc, int& sx, int& sy)
 {
     // 准备
     Mat image_gray_x, image_gray_y; 
@@ -119,13 +119,13 @@ void Hahn_Moments_VS::get_image_spread(Mat img, int xc, int yc, int& sx, int& sy
             num_right_x = xc + i;
             if(num_right_x < img.cols)
             {
-                p = p + p_gray_x.at<double>(0, num_right_x);
+                p = p + ((double*)p_gray_x.data)[num_right_x];
                 sx_right = sx_right + 1;
             }
             num_left_x = xc - i;
             if(num_left_x >= 0)
             {
-                p = p + p_gray_x.at<double>(0, num_left_x);
+                p = p + ((double*)p_gray_x.data)[num_left_x];
                 sx_left = sx_left + 1;
             }
         }
@@ -145,13 +145,13 @@ void Hahn_Moments_VS::get_image_spread(Mat img, int xc, int yc, int& sx, int& sy
             num_right_y = yc + i;
             if(num_right_y < img.rows)
             {
-                p = p + p_gray_y.at<double>(num_right_y, 0);
+                p = p + ((double*)p_gray_y.data)[num_right_y*p_gray_y.cols];
                 sy_right = sy_right + 1;
             }
             num_left_y = yc - i;
             if(num_left_y >= 0)
             {
-                p = p + p_gray_y.at<double>(num_left_y, 0);
+                p = p + ((double*)p_gray_y.data)[num_left_y*p_gray_y.cols];
                 sy_left = sy_left + 1;
             }
         }
@@ -188,15 +188,15 @@ Mat Hahn_Moments_VS::get_orthogonal_polynomial_HM(int N, int order, int a, int b
     {
         temp = temp * double(a+i)/double(N+a-1.0+i);
     }    
-    Hn.at<double>(0,0) = sqrt(temp);
+    ((double*)Hn.data)[0] = sqrt(temp);
     for(int n = 1; n <= order; n++)
     {
-        Hn.at<double>(n,0) = -sqrt(double(N-n)*(n+b)*(a+b+n) / double(n*(a+n)*(a+b+N+n))) * sqrt(double(2*n+1+a+b) / double(2*n-1+a+b)) * Hn.at<double>(n-1,0);
+        ((double*)Hn.data)[n*Hn.cols] = -sqrt(double(N-n)*(n+b)*(a+b+n) / double(n*(a+n)*(a+b+N+n))) * sqrt(double(2*n+1+a+b) / double(2*n-1+a+b)) * ((double*)Hn.data)[(n-1)*Hn.cols];
     }
     // 计算第2列
     for(int n = 0; n <= order; n++)
     {
-        Hn.at<double>(n,1) = (1 - double(n*(n+a+b+1)) / double((b+1)*(N-1))) * sqrt(w_x_x_1_Hahn(N, 1, a, b)) * Hn.at<double>(n,0);
+        ((double*)Hn.data)[n*Hn.cols+1] = (1 - double(n*(n+a+b+1)) / double((b+1)*(N-1))) * sqrt(w_x_x_1_Hahn(N, 1, a, b)) * ((double*)Hn.data)[n*Hn.cols];
     } 
     // 计算第3...N列
     for(int n = 0; n <= order; n++)
@@ -208,13 +208,13 @@ Mat Hahn_Moments_VS::get_orthogonal_polynomial_HM(int N, int order, int a, int b
             tao = double((b+1)*(N-1) - (2+a+b)*(x-1));
             w_x_x_1 = w_x_x_1_Hahn(N, x, a, b);
             w_x_x_2 = w_x_x_2_Hahn(N, x, a, b);
-            Hn.at<double>(n,x) = 1.0 / (sigma + tao) * 
-                    ((2*sigma + tao - lambda) * sqrt(w_x_x_1) * Hn.at<double>(n,x-1) 
-                        - sigma * sqrt(w_x_x_2) * Hn.at<double>(n,x-2));    
+            ((double*)Hn.data)[n*Hn.cols+x] = 1.0 / (sigma + tao) * 
+                    ((2*sigma + tao - lambda) * sqrt(w_x_x_1) * ((double*)Hn.data)[n*Hn.cols+x-1]
+                        - sigma * sqrt(w_x_x_2) * ((double*)Hn.data)[n*Hn.cols+x-2]);    
             // 抑制数值不稳定 
-            h = Hn.at<double>(n,x); 
-            dh = Hn.at<double>(n,x) - Hn.at<double>(n,x-1);
-            ddh = Hn.at<double>(n,x) - 2*Hn.at<double>(n,x-1) + Hn.at<double>(n,x-2);
+            h = ((double*)Hn.data)[n*Hn.cols+x]; 
+            dh = ((double*)Hn.data)[n*Hn.cols+x] - ((double*)Hn.data)[n*Hn.cols+x-1];
+            ddh = ((double*)Hn.data)[n*Hn.cols+x] - 2*((double*)Hn.data)[n*Hn.cols+x-1] + ((double*)Hn.data)[n*Hn.cols+x-2];
             flag_1 = (h>0) && (h<e) && (dh>-e) && (dh<0) && (ddh>0) && (ddh<e); // 0<h<e, -e<dh<0, 0<ddh<e
             flag_2 = (h>-e) && (h<0) && (dh>0) && (dh<e) && (ddh>-e) && (ddh<0);// -e<h<0, 0<dh<e, -e<ddh< 0
             if (flag_1 || flag_2)

@@ -24,13 +24,13 @@ void Direct_Visual_Servoing::get_feature_error_interaction_matrix()
     this->L_e_ = 0.5*(Le_new + Le_old);
 }
 
-Mat Direct_Visual_Servoing::get_interaction_matrix_gray(Mat image_gray, Mat image_depth, Mat Camera_Intrinsic)
+Mat Direct_Visual_Servoing::get_interaction_matrix_gray(Mat& image_gray, Mat& image_depth, Mat& Camera_Intrinsic)
 {
     Mat I_x, I_y;
     int cnt = 0;
     Mat point_image = Mat::ones(3, 1, CV_64FC1);
     Mat xy = Mat::zeros(3, 1, CV_64FC1);
-    double x, y;
+    double x, y, I_x_temp, I_y_temp;
     double Z_inv;
     Mat L_e = Mat::zeros(image_gray.rows*image_gray.cols, 6, CV_64FC1); 
 
@@ -43,15 +43,17 @@ Mat Direct_Visual_Servoing::get_interaction_matrix_gray(Mat image_gray, Mat imag
         {
             point_image.at<double>(0,0) = j;
             xy = Camera_Intrinsic.inv() * point_image;
-            x = xy.at<double>(0,0);
-            y = xy.at<double>(1,0);
+            x = ((double*)xy.data)[0];
+            y = ((double*)xy.data)[1];
             Z_inv = 1.0/image_depth.at<double>(i, j);
-            L_e.at<double>(cnt, 0) = I_x.at<double>(i, j)*Z_inv;
-            L_e.at<double>(cnt, 1) = I_y.at<double>(i, j)*Z_inv;
-            L_e.at<double>(cnt, 2) = -(x*I_x.at<double>(i, j) + y*I_y.at<double>(i, j))*Z_inv;
-            L_e.at<double>(cnt, 3) = -x*y*I_x.at<double>(i, j) - (1+y*y)*I_y.at<double>(i, j);
-            L_e.at<double>(cnt, 4) = (1+x*x)*I_x.at<double>(i, j) + x*y*I_y.at<double>(i, j);
-            L_e.at<double>(cnt, 5) = -y*I_x.at<double>(i, j) + x*I_y.at<double>(i, j);   
+            I_x_temp = ((double*)I_x.data)[i*I_x.cols+j];
+            I_y_temp = ((double*)I_y.data)[i*I_y.cols+j];
+            ((double*)L_e.data)[cnt*6+0] = I_x_temp*Z_inv;
+            ((double*)L_e.data)[cnt*6+1] = I_y_temp*Z_inv;
+            ((double*)L_e.data)[cnt*6+2] = -(x*I_x_temp + y*I_y_temp)*Z_inv;
+            ((double*)L_e.data)[cnt*6+3] = -x*y*I_x_temp - (1+y*y)*I_y_temp;
+            ((double*)L_e.data)[cnt*6+4] = (1+x*x)*I_x_temp + x*y*I_y_temp;
+            ((double*)L_e.data)[cnt*6+5] = -y*I_x_temp + x*I_y_temp;  
             cnt++;        
         }
     }
@@ -60,17 +62,16 @@ Mat Direct_Visual_Servoing::get_interaction_matrix_gray(Mat image_gray, Mat imag
 }
 
 // 计算图像梯度
-void Direct_Visual_Servoing::get_image_gradient(Mat image, Mat Camera_Intrinsic, Mat& I_x, Mat& I_y)
+void Direct_Visual_Servoing::get_image_gradient(Mat& image, Mat& Camera_Intrinsic, Mat& I_x, Mat& I_y)
 {
     I_x = get_image_gradient_x(image) * Camera_Intrinsic.at<double>(0, 0);
     I_y = get_image_gradient_y(image) * Camera_Intrinsic.at<double>(1, 1);
 }
 
 // 计算矩阵x方向上的梯度
-Mat Direct_Visual_Servoing::get_image_gradient_x(Mat image)
+Mat Direct_Visual_Servoing::get_image_gradient_x(Mat& image)
 {
     Mat I_x = Mat::zeros(image.rows, image.cols, CV_64FC1);
-    Mat temp = Mat::zeros(image.rows, 1, CV_64FC1);
     int up, down;
     for(int i = 0; i < image.cols; i++)
     {
@@ -80,18 +81,16 @@ Mat Direct_Visual_Servoing::get_image_gradient_x(Mat image)
             up = image.cols-1;
         if (down < 0) 
             down = 0;
-        temp = (image.col(up) - image.col(down)) / (up - down); 
-        temp.copyTo(I_x.col(i));
+        I_x.col(i) = (image.col(up) - image.col(down)) / (up - down); 
     }
 
     return I_x;
 }
 
 // 计算矩阵y方向上的梯度
-Mat Direct_Visual_Servoing::get_image_gradient_y(Mat image)
+Mat Direct_Visual_Servoing::get_image_gradient_y(Mat& image)
 {
     Mat I_y = Mat::zeros(image.rows, image.cols, CV_64FC1);
-    Mat temp = Mat::zeros(1, image.cols, CV_64FC1);
     int up, down;
     for(int i = 0; i < image.rows; i++)
     {
@@ -101,8 +100,7 @@ Mat Direct_Visual_Servoing::get_image_gradient_y(Mat image)
             up = image.rows-1;
         if (down < 0) 
             down = 0;
-        temp = (image.row(up) - image.row(down)) / (up - down); 
-        temp.copyTo(I_y.row(i));
+        I_y.row(i) = (image.row(up) - image.row(down)) / (up - down); 
     }
     return I_y;
 }
@@ -119,3 +117,16 @@ string Direct_Visual_Servoing::get_method_name()
     return "Direct_Visual_Servoing";
 }
 
+
+
+
+
+
+
+    // Mat I_xy_temp = Mat::zeros(1, 2, CV_64FC1); 
+    // Mat L_x_temp = Mat::zeros(2, 6, CV_64FC1); 
+
+            // I_xy_temp = (Mat_<double>(1,2) << -I_x.at<double>(i, j), -I_y.at<double>(i, j));
+            // L_x_temp = (Mat_<double>(2,6) << -Z_inv, 0, x*Z_inv, x*y, -(1+x*x), y,
+            //                                 0, -Z_inv, y*Z_inv, 1+y*y, -x*y, -x);
+            // L_e.row(cnt) = I_xy_temp * L_x_temp;

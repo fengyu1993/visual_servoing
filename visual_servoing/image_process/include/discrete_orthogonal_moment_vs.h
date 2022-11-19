@@ -43,7 +43,7 @@ class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
 
         int get_order_adaption();
 
-        Mat get_interaction_matrix_DOM_once(Mat DOM_XY, Mat L_I);
+        Mat get_interaction_matrix_DOM_once(Mat& DOM_XY, Mat& L_I);
 
         Mat linspace(double begin, double finish, int number);
 

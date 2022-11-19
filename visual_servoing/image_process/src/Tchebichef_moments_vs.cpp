@@ -31,12 +31,12 @@ Mat Techebichef_Moments_VS::get_orthogonal_polynomial_HM(int N, int order)
     Tn.at<double>(0,0) = sqrt(1.0/N);
     for(int n = 1; n <= order; n++)
     {
-        Tn.at<double>(n,0) = -sqrt(double(N-n) / double(N+n)) * sqrt(double(2*n+1) / double(2*n-1)) * Tn.at<double>(n-1,0);
+        ((double*)Tn.data)[n*Tn.cols] = -sqrt(double(N-n) / double(N+n)) * sqrt(double(2*n+1) / double(2*n-1)) * ((double*)Tn.data)[(n-1)*Tn.cols]; 
     }
     // 计算第2列
     for(int n = 0; n <= order; n++)
     {
-        Tn.at<double>(n,1) = (1 + double(n*(n+1)) / double(1 - N)) * Tn.at<double>(n,0);
+        ((double*)Tn.data)[n*Tn.cols+1] = (1 + double(n*(n+1)) / double(1 - N)) * ((double*)Tn.data)[n*Tn.cols];
     }    
     // 计算第3...N列
     for(int n = 0; n <= order; n++)
@@ -46,8 +46,8 @@ Mat Techebichef_Moments_VS::get_orthogonal_polynomial_HM(int N, int order)
         {
             sigma = (x-1) * (N - x + 1);
             tao = N - 1 - 2 * (x-1);
-            Tn.at<double>(n,x) = 1.0 / (sigma + tao) * ((2*sigma + tao - lambda) 
-                            * Tn.at<double>(n,x-1) - sigma * Tn.at<double>(n,x-2));           
+            ((double*)Tn.data)[n*Tn.cols+x] = 1.0 / (sigma + tao) * ((2*sigma + tao - lambda) 
+                            * ((double*)Tn.data)[n*Tn.cols+x-1] - sigma * ((double*)Tn.data)[n*Tn.cols+x-2]);           
         }
     }
     return Tn;

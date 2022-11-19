@@ -33,7 +33,7 @@ class Hahn_Moments_VS: public Discrete_Orthogonal_Moment_VS
 
         void get_Hahn_Moments_parameters();
 
-        void get_image_spread(Mat img, int xc, int yc, int& sx, int& sy);
+        void get_image_spread(Mat& img, int xc, int yc, int& sx, int& sy);
 
         inline double w_x_x_1_Hahn(int N, int x, int a, int b);
        

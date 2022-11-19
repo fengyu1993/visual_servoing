@@ -47,8 +47,8 @@ void Discrete_Orthogonal_Moment_VS::get_feature_error_interaction_matrix()
                 DOM_XY = repeat(this->DOM_x_.row(l), this->M_, 1).mul(
                     repeat(this->DOM_y_.row(k).t(), 1, this->N_));                     
                 // 计算特征
-                feature_new.at<double>(cnt, 0) = sum(DOM_XY.mul(this->image_gray_current_))[0];
-                feature_old.at<double>(cnt, 0) = sum(DOM_XY.mul(this->image_gray_desired_))[0];
+                ((double*)feature_new.data)[cnt] = sum(DOM_XY.mul(this->image_gray_current_))[0];
+                ((double*)feature_old.data)[cnt] = sum(DOM_XY.mul(this->image_gray_desired_))[0];
                 // 计算交互矩阵
                 get_interaction_matrix_DOM_once(DOM_XY, L_I_new).copyTo(Le_new.row(cnt));
                 get_interaction_matrix_DOM_once(DOM_XY, L_I_old).copyTo(Le_old.row(cnt));
@@ -56,21 +56,23 @@ void Discrete_Orthogonal_Moment_VS::get_feature_error_interaction_matrix()
                 cnt++;
             }
         }
-    }
+    }   
     // 计算特征误差 交互矩阵
     this->error_s_ = feature_new.rowRange(0, cnt) - feature_old.rowRange(0, cnt);
     this->L_e_ = 0.5*(Le_new.rowRange(0, cnt) + Le_old.rowRange(0, cnt));
 }
 
 // 计算每个特征就交互矩阵
-Mat Discrete_Orthogonal_Moment_VS::get_interaction_matrix_DOM_once(Mat DOM_XY, Mat L_I)
+Mat Discrete_Orthogonal_Moment_VS::get_interaction_matrix_DOM_once(Mat& DOM_XY, Mat& L_I)
 {
-    Mat DOM_XY_Vec = DOM_XY.reshape(0, DOM_XY.rows*DOM_XY.cols);
     Mat L_once = Mat::zeros(1, L_I.cols, CV_64FC1);
-    for(int i = 0; i < L_I.rows; i++)
-    {
-        L_once = L_once + DOM_XY_Vec.at<double>(i,0) * L_I.row(i);
-    }
+    Mat DOM_XY_Vec = DOM_XY.reshape(0, DOM_XY.rows*DOM_XY.cols);
+    Mat matArray[] = { DOM_XY_Vec, DOM_XY_Vec, DOM_XY_Vec, 
+                       DOM_XY_Vec, DOM_XY_Vec, DOM_XY_Vec};
+    Mat DOM_XY_Mat;
+    hconcat(matArray, 6, DOM_XY_Mat); 
+    reduce(DOM_XY_Mat.mul(L_I), L_once, 0, REDUCE_SUM);
+
     return L_once;
 }
 

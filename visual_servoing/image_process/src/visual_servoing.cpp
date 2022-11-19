@@ -20,7 +20,7 @@ Visual_Servoing::Visual_Servoing(int resolution_x=640, int resolution_y=480)
 }
 
 // 初始化
-void Visual_Servoing::init_VS(double lambda, double epsilon, Mat image_gray_desired, Mat image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic)
+void Visual_Servoing::init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic)
 {
     this->lambda_ = lambda;
     this->epsilon_ = epsilon;
@@ -57,38 +57,38 @@ bool Visual_Servoing::is_success()
 }
 
 // 设置相机内参
-void Visual_Servoing::set_camera_intrinsic(Mat camera_intrinsic)
+void Visual_Servoing::set_camera_intrinsic(Mat& camera_intrinsic)
 {
     camera_intrinsic.copyTo(this->camera_intrinsic_);
 }
 
 // 设置期望灰度图像
-void Visual_Servoing::set_image_gray_desired(Mat image_gray_desired)
+void Visual_Servoing::set_image_gray_desired(Mat& image_gray_desired)
 {
     image_gray_desired.copyTo(this->image_gray_desired_);
 }
 
 // 设置当前灰度图像
-void Visual_Servoing::set_image_gray_current(Mat image_gray_current)
+void Visual_Servoing::set_image_gray_current(Mat& image_gray_current)
 {
     // image_gray_current.copyTo(this->image_gray_current_);
     this->image_gray_current_ = image_gray_current;
 }
 
 // 设置初始图像
-void Visual_Servoing::set_image_gray_initial(Mat image_gray_initial)
+void Visual_Servoing::set_image_gray_initial(Mat& image_gray_initial)
 {
     image_gray_initial.copyTo(this->image_gray_initial_);
 }
 
 // 设置期望深度图像
-void Visual_Servoing::set_image_depth_desired(Mat image_depth_desired)
+void Visual_Servoing::set_image_depth_desired(Mat& image_depth_desired)
 {
     image_depth_desired.copyTo(this->image_depth_desired_);
 }
 
 // 设置当前深度图像
-void Visual_Servoing::set_image_depth_current(Mat image_depth_current)
+void Visual_Servoing::set_image_depth_current(Mat& image_depth_current)
 {
     // image_depth_current.copyTo(this->image_depth_current_);
     this->image_depth_current_ = image_depth_current;
@@ -126,7 +126,7 @@ void Visual_Servoing::save_data_error_feature()
 }
 
 // 保存相机位姿
-void Visual_Servoing::save_data_camera_pose(Mat pose)
+void Visual_Servoing::save_data_camera_pose(Mat& pose)
 {
     this->data_vs.pose_.push_back(pose.t());
 }
@@ -287,7 +287,7 @@ void Visual_Servoing::write_to_excel(Mat data, ofstream& oFile)
 }
 
 //旋转矩阵得到四元数
-Mat Visual_Servoing::Matrix2Quaternion(Mat matrix)
+Mat Visual_Servoing::Matrix2Quaternion(Mat& matrix)
 {
   double tr, qx, qy, qz, qw;
 

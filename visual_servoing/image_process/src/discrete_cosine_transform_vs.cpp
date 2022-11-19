@@ -24,16 +24,14 @@ void Direct_Cosine_Transform_VS::get_DOM_matrix()
 Mat Direct_Cosine_Transform_VS::get_orthogonal_polynomial_DCT(int N, int order)
 {
     Mat Dn = Mat::zeros(order+1, N, CV_64FC1);
-    Mat temp;
 
     for(int u = 0; u <= order; u++)
     {
         for(int x = 0; x < N; x++)
         {
-            Dn.at<double>(u,x) = 1/sqrt(2) * cos(u * (2*x + 1)*M_PI / (2*N));
+            ((double*)Dn.data)[u*Dn.cols+x] = 1.0/sqrt(2.0) * cos(double(u * (2*x + 1)*M_PI) / double(2*N));
         }
-        temp = Dn.row(u) / norm(Dn.row(u));
-        temp.copyTo(Dn.row(u));
+        Dn.row(u) = Dn.row(u) / norm(Dn.row(u));
     }
     return Dn;
 }
