@@ -26,6 +26,8 @@ int main()
     depth_old = img_old * 100 + 1;
     depth_new = img_new * 100 + 1;
 
+    Mat pose = (Mat_<double>(7,1) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5, 0.8);
+
     if(img_old.empty() || img_new.empty())
     {
         cerr <<"no image" << endl;
@@ -33,8 +35,8 @@ int main()
     }else
     {
         Techebichef_Moments_VS TM_VS(order_min, order_max, delta_epsilon, lambda_order, img_old.cols, img_old.rows);
-        TM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic);
-        Mat pose = (Mat_<double>(7,1) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5, 0.8);
+        TM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic, pose);
+        
         for(int i = 0; i < 5; i++)
         {
             TM_VS.set_image_depth_current(depth_new);

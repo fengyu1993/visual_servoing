@@ -1,5 +1,5 @@
 %% 输入四元数位姿 , 期望位姿四元数-> 位姿旋量误差，位姿矩阵
-function [error_pose, T_lise] = get_pose_error_T(camera_pose, q_desrired)
+function [error_pose, T_lise] = get_pose_error_T(camera_pose, s_desrired)
 
     T_lise = zeros(4, 4, size(camera_pose, 1));
     error_pose = zeros(size(camera_pose, 1), 6);
@@ -10,7 +10,10 @@ function [error_pose, T_lise] = get_pose_error_T(camera_pose, q_desrired)
         T_lise(:, :, i) = [R, p'; 0 0 0 1];
     end
 
-    T_desrired = quat2dcm(q_desrired);
+    p_desired = s_desrired(1:3);
+    R_desired = quat2dcm(s_desrired(4:end));
+    T_desrired = [R_desired , p_desired'; 0 0 0 1];
+    
     for i = 1 : size(camera_pose, 1)
         T = TransInv(T_desrired) * T_lise(:, :, i);
         temp = se3ToVec(MatrixLog6(T));

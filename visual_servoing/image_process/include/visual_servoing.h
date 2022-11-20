@@ -18,6 +18,7 @@ class Visual_Servoing
         Mat image_depth_current_; 
         Mat camera_intrinsic_;
         Mat camera_velocity_;
+        Mat pose_desired_;
         double lambda_;
         double epsilon_; 
         int resolution_x_;
@@ -30,6 +31,7 @@ class Visual_Servoing
         {
             Mat velocity_;
             Mat pose_; // 平移+四元数wxyz
+            Mat pose_desired_; // 平移+四元数wxyz
             Mat error_feature_;
             Mat image_gray_init_;
             Mat image_gray_desired_;
@@ -38,7 +40,7 @@ class Visual_Servoing
     public: 
         Visual_Servoing(int resolution_x, int resolution_y);
 
-        void init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic);
+        void init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic, Mat pose_desired);
 
         Mat get_camera_velocity();
 
@@ -57,6 +59,10 @@ class Visual_Servoing
         void set_image_depth_desired(Mat& image_depth_desired);
 
         void set_image_depth_current(Mat& image_depth_current);
+
+        void set_pose_desired(Mat& pose_desired);
+
+        void save_pose_desired();
 
         void save_data_image();
 
