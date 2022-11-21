@@ -93,8 +93,6 @@ class Visual_Servoing
         virtual string get_method_name();
 
         void write_to_excel(Mat data, ofstream& oFile);
-
-        Mat Matrix2Quaternion(Mat& matrix);
 };
 
 
