@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   geometry_msgs
+  message_filters
   image_process
 )
 

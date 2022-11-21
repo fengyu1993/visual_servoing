@@ -1,14 +1,19 @@
 # include "ros_VS.h"
 
+
 Ros_VS::Ros_VS()
 {
     this->flag_success = false;
 
     this->nh_.getParam("control_rate", this->control_rate_);
-   
-    sub_ = this->nh_.subscribe("YYYYYY", 100, &Ros_VS::Callback, this);
 
-    pub_ = this->nh_.advertise<geometry_msgs::Twist>("XXXXX", 100);
+    image_color_sub_.subscribe(this->nh_,"/camera/color/image_raw", 1);// bgr8
+    image_depth_sub_.subscribe(this->nh_,"/camera/aligned_depth_to_color/image_raw", 1);
+    TimeSynchronizer<Image, Image> sync(image_color_sub_, image_depth_sub_, 10);
+    sync.registerCallback(boost::bind(&Ros_VS::Callback, this, _1, _2));
+
+
+    pub_ = this->nh_.advertise<geometry_msgs::Twist>("/cartesian_velocity_node_controller/cartesian_velocity", 5);
 }
 
 void Ros_VS::get_parameters(int& resolution_x, int& resolution_y, double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& image_gray_initial, Mat& camera_intrinsic, Mat& pose_desired)
