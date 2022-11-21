@@ -37,10 +37,20 @@ int main()
         DVS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic, pose);
         for(int i = 0; i < 10; i++)
         {
-            DVS.set_image_depth_current(depth_new);
-            DVS.set_image_gray_current(img_new);
+            if(i == 5)
+            {
+                DVS.set_image_depth_current(depth_old);
+                DVS.set_image_gray_current(img_old);
+            }
+            else
+            {
+                DVS.set_image_depth_current(depth_new);
+                DVS.set_image_gray_current(img_new);
+            }
             camera_velocity = DVS.get_camera_velocity();
             cout << "camera_velocity = \n" << camera_velocity.t() << endl;
+            if(DVS.is_success())
+                break;
             DVS.save_data(pose*i);
         }    
         // DVS.write_data();    

@@ -36,12 +36,22 @@ int main()
     {
         Direct_Cosine_Transform_VS DCT_VS(order_min, order_max, delta_epsilon, lambda_order, img_old.cols, img_old.rows);
         DCT_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic, pose);
-        for(int i = 0; i < 5; i++)
+        for(int i = 0; i < 10; i++)
         {
-            DCT_VS.set_image_depth_current(depth_new);
-            DCT_VS.set_image_gray_current(img_new);
+            if(i == 5)
+            {
+                DCT_VS.set_image_depth_current(depth_old);
+                DCT_VS.set_image_gray_current(img_old);
+            }
+            else
+            {
+                DCT_VS.set_image_depth_current(depth_new);
+                DCT_VS.set_image_gray_current(img_new);
+            }
             camera_velocity = DCT_VS.get_camera_velocity();
             cout << "camera_velocity = \n" << camera_velocity.t() << endl;
+            if(DCT_VS.is_success())
+                break;
             DCT_VS.save_data(pose*i);
         }    
         DCT_VS.write_data();  

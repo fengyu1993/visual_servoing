@@ -37,12 +37,22 @@ int main()
         Techebichef_Moments_VS TM_VS(order_min, order_max, delta_epsilon, lambda_order, img_old.cols, img_old.rows);
         TM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic, pose);
         
-        for(int i = 0; i < 5; i++)
+        for(int i = 0; i < 10; i++)
         {
-            TM_VS.set_image_depth_current(depth_new);
-            TM_VS.set_image_gray_current(img_new);
+            if(i == 5)
+            {
+                TM_VS.set_image_depth_current(depth_old);
+                TM_VS.set_image_gray_current(img_old);
+            }
+            else
+            {
+                TM_VS.set_image_depth_current(depth_new);
+                TM_VS.set_image_gray_current(img_new);
+            }
             camera_velocity = TM_VS.get_camera_velocity();
-            cout << "camera_velocity = \n" << camera_velocity.t() << endl;  
+            cout << "camera_velocity = \n" << camera_velocity.t() << endl;
+            if(TM_VS.is_success())
+                break;
             TM_VS.save_data(pose*i);
         }    
         TM_VS.write_data();  

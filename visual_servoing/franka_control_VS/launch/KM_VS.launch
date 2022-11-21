@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<launch>
+
+
+<node name="KM_VS" pkg="franka_control_VS"  type="franka_control_KM_VS"  output="screen"/>
+
+</launch>

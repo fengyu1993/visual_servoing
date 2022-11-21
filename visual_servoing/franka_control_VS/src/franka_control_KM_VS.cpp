@@ -36,12 +36,22 @@ int main()
     {
         Krawtchouk_Moments_VS KM_VS(order_min, order_max, delta_epsilon, lambda_order, img_old.cols, img_old.rows);
         KM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic, pose);
-        for(int i = 0; i < 5; i++)
+        for(int i = 0; i < 10; i++)
         {
-            KM_VS.set_image_depth_current(depth_new);
-            KM_VS.set_image_gray_current(img_new);
+            if(i == 5)
+            {
+                KM_VS.set_image_depth_current(depth_old);
+                KM_VS.set_image_gray_current(img_old);
+            }
+            else
+            {
+                KM_VS.set_image_depth_current(depth_new);
+                KM_VS.set_image_gray_current(img_new);
+            }
             camera_velocity = KM_VS.get_camera_velocity();
-            cout << "camera_velocity = \n" << camera_velocity.t() << endl;  
+            cout << "camera_velocity = \n" << camera_velocity.t() << endl;
+            if(KM_VS.is_success())
+                break;
             KM_VS.save_data(pose*i);
         }    
         KM_VS.write_data();   
