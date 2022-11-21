@@ -18,27 +18,28 @@ Ros_DVS::Ros_DVS() : Ros_VS()
 }
 
 
-void Ros_DVS::Callback(const sensor_msgs::ImageConstPtr &msg)
+void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg)
 {
-    Mat depth_new, img_new, pose;
-    /**************************/
-    // depth_new = ;
-    // img_new = ;
-    // pose = ;
-    /**************************/
-    this->DVS.set_image_depth_current(depth_new);
-    this->DVS.set_image_gray_current(img_new);
-    Mat camera_velocity = this->DVS.get_camera_velocity();
-    this->DVS.save_data(pose);
-    if(this->DVS.is_success())
-    {
-        this->flag_success = true;
-        this->DVS.write_data();  
-    }
-    else
-    {
-        this->flag_success = false;
-    }
+    ROS_INFO("cyh");
+    // Mat depth_new, img_new, pose;
+    // /**************************/
+    // // depth_new = ;
+    // // img_new = ;
+    // // pose = ;
+    // /**************************/
+    // this->DVS.set_image_depth_current(depth_new);
+    // this->DVS.set_image_gray_current(img_new);
+    // Mat camera_velocity = this->DVS.get_camera_velocity();
+    // this->DVS.save_data(pose);
+    // if(this->DVS.is_success())
+    // {
+    //     this->flag_success = true;
+    //     this->DVS.write_data();  
+    // }
+    // else
+    // {
+    //     this->flag_success = false;
+    // }
 }
 
 

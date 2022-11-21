@@ -28,7 +28,7 @@ class Ros_VS
         bool                flag_success;
     public:
         Ros_VS();
-        virtual void Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg){}; 
+        virtual void Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg) = 0; 
         void get_parameters(int& resolution_x, int& resolution_y, double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& image_gray_initial, Mat& camera_intrinsic, Mat& pose_desired);    
 };
 

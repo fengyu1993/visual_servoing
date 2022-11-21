@@ -11,7 +11,7 @@ class Ros_DVS : public Ros_VS
 
     public:
         Ros_DVS();
-        virtual void Callback(const sensor_msgs::ImageConstPtr &msg);     
+        virtual void Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg);     
 };
 
 #endif

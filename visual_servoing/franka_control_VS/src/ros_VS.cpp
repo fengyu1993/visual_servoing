@@ -12,7 +12,6 @@ Ros_VS::Ros_VS()
     TimeSynchronizer<Image, Image> sync(image_color_sub_, image_depth_sub_, 10);
     sync.registerCallback(boost::bind(&Ros_VS::Callback, this, _1, _2));
 
-
     pub_ = this->nh_.advertise<geometry_msgs::Twist>("/cartesian_velocity_node_controller/cartesian_velocity", 5);
 }
 
