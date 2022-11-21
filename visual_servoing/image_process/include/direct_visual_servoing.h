@@ -11,7 +11,7 @@ using namespace std;
 class Direct_Visual_Servoing: public Visual_Servoing
 {
     public: 
-        Direct_Visual_Servoing(int resolution_x, int resolution_y);
+        Direct_Visual_Servoing(int resolution_x=640, int resolution_y=480);
 
         virtual void get_feature_error_interaction_matrix();
 

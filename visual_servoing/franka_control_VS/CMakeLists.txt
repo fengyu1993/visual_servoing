@@ -23,6 +23,10 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
+add_library(franka_control_VS src/ros_VS.cpp 
+                              src/ros_DVS.cpp ) 
+
+
 include_directories(${THIS_PACKAGE_INCLUDE_DIRS})
 include_directories(SYSTEM  ${catkin_INCLUDE_DIRS} 
                             ${Boost_INCLUDE_DIR} 
@@ -35,11 +39,11 @@ add_executable(franka_control_TM_VS     src/franka_control_TM_VS.cpp)
 add_executable(franka_control_KM_VS     src/franka_control_KM_VS.cpp)
 add_executable(franka_control_HM_VS     src/franka_control_HM_VS.cpp)
 
-target_link_libraries(franka_control_DVS  ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
-target_link_libraries(franka_control_DCT_VS  ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
-target_link_libraries(franka_control_TM_VS  ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
-target_link_libraries(franka_control_KM_VS  ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
-target_link_libraries(franka_control_HM_VS  ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
+target_link_libraries(franka_control_DVS    franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
+target_link_libraries(franka_control_DCT_VS franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
+target_link_libraries(franka_control_TM_VS  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
+target_link_libraries(franka_control_KM_VS  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
+target_link_libraries(franka_control_HM_VS  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
 
 install(TARGETS franka_control_DVS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(TARGETS franka_control_DCT_VS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

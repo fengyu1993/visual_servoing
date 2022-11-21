@@ -1,0 +1,17 @@
+
+resolution_x:   200
+resolution_y:   150
+epsilon:        5e-2
+lambda:         0.1
+control_rate:   10
+resource_location:         "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/"
+image_gray_desired_name:    "image_gray_desired.jpg"
+image_depth_desired_name:   "image_depth_desired.jpg"
+image_gray_initial_name:    "image_gray_initial.jpg"
+camera_intrinsic: [ 1.0, 0.0, 0.0, 
+                    0.0, 1.0, 0.0, 
+                    0.0, 0.0, 1.0]
+pose_desired: [1.0, 0.0, 0.0, 1.0,
+               0.0, 1.0, 0.0, 2.0,
+               0.0, 0.0, 1.0, 3.0,
+               0.0, 0.0, 0.0, 1.0]
