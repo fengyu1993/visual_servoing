@@ -1,6 +1,6 @@
 
-resolution_x:   200
-resolution_y:   150
+resolution_x:   320
+resolution_y:   240
 epsilon:        5e-2
 lambda:         0.1
 control_rate:   10

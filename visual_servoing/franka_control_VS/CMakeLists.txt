@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   message_filters
   image_process
+  cv_bridge
 )
 
 find_package(Eigen3 REQUIRED)

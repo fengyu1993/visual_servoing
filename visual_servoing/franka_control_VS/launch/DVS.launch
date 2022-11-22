@@ -3,7 +3,15 @@
 
 <rosparam file= "$(find franka_control_VS)/param/parameters_VS.yaml" command= "load"/>
 
-<include file="$(find realsense2_camera)/launch/rs_aligned_depth.launch"/>
+<include file="$(find realsense2_camera)/launch/rs_aligned_depth.launch">
+    <arg name="enable_fisheye"              value="false"/>
+    <arg name="enable_infra1"               value="false"/>
+    <arg name="enable_infra2"               value="false"/>
+    <arg name="depth_width"                 value="640"/>
+    <arg name="depth_height"                value="480"/>
+    <arg name="color_width"                 value="640"/>
+    <arg name="color_height"                value="480"/>
+</include>
 
 <node name="DVS" pkg="franka_control_VS"  type="franka_control_DVS"  output="screen"/>
 

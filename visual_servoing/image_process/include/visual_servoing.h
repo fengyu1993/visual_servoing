@@ -18,7 +18,7 @@ class Visual_Servoing
         Mat image_depth_desired_;
         Mat image_depth_current_; 
         Mat camera_intrinsic_;
-        Mat camera_velocity_;
+        Mat camera_velocity_; // vx vy vz wx wy wz
         Mat pose_desired_;
         double lambda_;
         double epsilon_; 
