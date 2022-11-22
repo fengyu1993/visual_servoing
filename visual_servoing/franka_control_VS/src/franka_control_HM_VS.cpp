@@ -37,7 +37,7 @@ int main()
     }else
     {
         Hahn_Moments_VS HM_VS(order_min, order_max, delta_epsilon, lambda_order, img_old.cols, img_old.rows);
-        HM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic, pose);
+        HM_VS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic, pose, pose);
         for(int i = 0; i < 10; i++)
         {
             if(i == 5)

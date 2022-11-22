@@ -5,17 +5,17 @@ Ros_DVS::Ros_DVS() : Ros_VS()
     // 准备
     double lambda, epsilon; 
     int resolution_x, resolution_y;
-    Mat img_old, depth_old, img_init, camera_intrinsic, pose_desired;
+    Mat img_old, depth_old, img_init, camera_intrinsic, pose_desired, pose_initial;
 
     // 获取参数
-    get_parameters(resolution_x, resolution_y, lambda, epsilon, img_old, depth_old, img_init, camera_intrinsic, pose_desired);
+    get_parameters_VS(resolution_x, resolution_y, lambda, epsilon, img_old, depth_old, img_init, camera_intrinsic, pose_desired, pose_initial);
 
     // 设置分辨率
     set_resolution_parameters(resolution_x, resolution_y);
 
     // 初始化
     this->DVS = new Direct_Visual_Servoing(resolution_x, resolution_y);
-    this->DVS->init_VS(lambda, epsilon, img_old, depth_old, img_init, camera_intrinsic, pose_desired);
+    this->DVS->init_VS(lambda, epsilon, img_old, depth_old, img_init, camera_intrinsic, pose_desired, pose_initial);
 }
 
 

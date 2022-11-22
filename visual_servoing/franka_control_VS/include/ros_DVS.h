@@ -6,7 +6,7 @@
 
 class Ros_DVS : public Ros_VS
 {
-    private:
+    public:
         Direct_Visual_Servoing *DVS;
 
     public:

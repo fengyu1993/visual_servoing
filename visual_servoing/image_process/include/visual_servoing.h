@@ -20,6 +20,7 @@ class Visual_Servoing
         Mat camera_intrinsic_;
         Mat camera_velocity_; // vx vy vz wx wy wz
         Mat pose_desired_;
+        Mat pose_initial_;
         double lambda_;
         double epsilon_; 
         int resolution_x_;
@@ -41,7 +42,7 @@ class Visual_Servoing
     public: 
         Visual_Servoing(int resolution_x, int resolution_y);
 
-        void init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic, Mat pose_desired);
+        void init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic, Mat pose_desired, Mat pose_initial);
 
         Mat get_camera_velocity();
 
@@ -62,6 +63,8 @@ class Visual_Servoing
         void set_image_depth_current(Mat& image_depth_current);
 
         void set_pose_desired(Mat& pose_desired);
+
+        void set_pose_initial(Mat& pose_initial);
 
         void save_pose_desired();
 
@@ -94,6 +97,8 @@ class Visual_Servoing
         virtual string get_method_name();
 
         void write_to_excel(Mat data, ofstream& oFile);
+
+        Mat get_pose_initial_parameter();
 };
 
 

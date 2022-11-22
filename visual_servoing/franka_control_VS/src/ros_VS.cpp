@@ -22,7 +22,7 @@ void Ros_VS::initialize_time_sync()
 }
 
 
-void Ros_VS::get_parameters(int& resolution_x, int& resolution_y, double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& image_gray_initial, Mat& camera_intrinsic, Mat& pose_desired)
+void Ros_VS::get_parameters_VS(int& resolution_x, int& resolution_y, double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& image_gray_initial, Mat& camera_intrinsic, Mat& pose_desired, Mat& pose_initial)
 {
     // 基本参数
     this->nh_.getParam("resolution_x", resolution_x);
@@ -39,24 +39,11 @@ void Ros_VS::get_parameters(int& resolution_x, int& resolution_y, double& lambda
     this->nh_.getParam("image_gray_initial_name", name);
     image_gray_initial = imread(loaction + name, IMREAD_GRAYSCALE);  
     // 相机内参
-    XmlRpc::XmlRpcValue param_yaml;
-    this->nh_.getParam("camera_intrinsic", param_yaml);
-    double intrinsic_temp[9];
-    for(int i=0; i<9; i++) 
-    {
-        intrinsic_temp[i] = param_yaml[i];
-    }
-    Mat camera_intrinsic_temp = Mat(3, 3, CV_64FC1, intrinsic_temp);
-    camera_intrinsic_temp.copyTo(camera_intrinsic);
+    camera_intrinsic = get_parameter_Matrix("camera_intrinsic", 3, 3);
     // 期望位姿
-    this->nh_.getParam("pose_desired", param_yaml);
-    double pose_temp[16];
-    for(int i=0; i<16; i++) 
-    {
-        pose_temp[i] = param_yaml[i];
-    }     
-    Mat pose_desired_temp = Mat(4, 4, CV_64FC1, pose_temp);
-    pose_desired_temp.copyTo(pose_desired);
+    pose_desired = get_parameter_Matrix("pose_desired", 4, 4);
+    // 期望位姿
+    pose_initial = get_parameter_Matrix("pose_initial", 4, 4);
 }
 
 
@@ -101,4 +88,19 @@ Mat Ros_VS::velocity_camera_to_base(Mat velocity, Mat pose)
     AdT.rowRange(0,3).colRange(3,6) = p_cross * R;
     Mat V = AdT * velocity;
     return V;
+}
+
+Mat Ros_VS::get_parameter_Matrix(string str, int row, int col)
+{
+    Mat Matrix;
+    XmlRpc::XmlRpcValue param_yaml;
+    this->nh_.getParam(str, param_yaml);
+    double data[param_yaml.size()];
+    for(int i=0; i<param_yaml.size(); i++) 
+    {
+        data[i] = param_yaml[i];
+    }
+    Mat Matrix_temp = Mat(row, col, CV_64FC1, data);
+    Matrix_temp.copyTo(Matrix);   
+    return Matrix;
 }

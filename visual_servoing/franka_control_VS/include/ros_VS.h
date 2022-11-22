@@ -32,11 +32,12 @@ class Ros_VS
         Ros_VS();
         void initialize_time_sync();
         virtual void Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg) = 0; 
-        void get_parameters(int& resolution_x, int& resolution_y, double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& image_gray_initial, Mat& camera_intrinsic, Mat& pose_desired);    
+        void get_parameters_VS(int& resolution_x, int& resolution_y, double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& image_gray_initial, Mat& camera_intrinsic, Mat& pose_desired, Mat& pose_initial);    
         void set_resolution_parameters(int resolution_x, int resolution_y);
         void get_image_data_convert(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg, Mat& color_img, Mat& depth_img);
         Mat get_camera_pose();
         Mat velocity_camera_to_base(Mat velocity, Mat pose);
+        Mat get_parameter_Matrix(string str, int row, int col);
 };
 
 #endif
