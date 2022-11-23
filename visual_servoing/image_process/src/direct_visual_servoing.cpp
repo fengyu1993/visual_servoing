@@ -16,9 +16,13 @@ Direct_Visual_Servoing::Direct_Visual_Servoing(int resolution_x, int resolution_
 // 计算直接视觉伺服特征误差 交互矩阵
 void Direct_Visual_Servoing::get_feature_error_interaction_matrix()
 {
+    cout << "cyh_1" << endl;
+    // cout << "num_current = " << this->image_gray_current_.reshape(0, this->image_gray_current_.rows*this->image_gray_current_.cols) << endl;
+    // cout << "num_desired = " << this->image_gray_desired_.reshape(0, this->image_gray_desired_.rows*this->image_gray_desired_.cols) << endl;
+
     this->error_s_ = this->image_gray_current_.reshape(0, this->image_gray_current_.rows*this->image_gray_current_.cols)
                 - this->image_gray_desired_.reshape(0, this->image_gray_desired_.rows*this->image_gray_desired_.cols);
-    
+    cout << "error_s_ = \n" << this->error_s_ << endl;
     Mat Le_new = get_interaction_matrix_gray(this->image_gray_current_, this->image_depth_current_, this->camera_intrinsic_);  
     Mat Le_old = get_interaction_matrix_gray(this->image_gray_desired_, this->image_depth_desired_, this->camera_intrinsic_);
     this->L_e_ = 0.5*(Le_new + Le_old);

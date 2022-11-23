@@ -20,7 +20,7 @@ Visual_Servoing::Visual_Servoing(int resolution_x=640, int resolution_y=480)
 }
 
 // 初始化
-void Visual_Servoing::init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic, Mat pose_desired, Mat pose_initial)
+void Visual_Servoing::init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic, Mat pose_desired)
 {
     this->lambda_ = lambda;
     this->epsilon_ = epsilon;
@@ -29,7 +29,6 @@ void Visual_Servoing::init_VS(double lambda, double epsilon, Mat& image_gray_des
     set_image_gray_desired(image_gray_desired);
     set_image_gray_initial(image_gray_initial);
     set_pose_desired(pose_desired);
-	set_pose_initial(pose_initial);
     save_data_image();
     save_pose_desired();
 }
@@ -103,10 +102,6 @@ void Visual_Servoing::set_pose_desired(Mat& pose_desired)
 	pose_desired.copyTo(this->pose_desired_);
 }
 
-void Visual_Servoing::set_pose_initial(Mat& pose_initial)
-{
-	pose_initial.copyTo(this->pose_initial_);
-}
 
 // 保存图像数据
 void Visual_Servoing::save_pose_desired()
@@ -308,7 +303,3 @@ void Visual_Servoing::write_to_excel(Mat data, ofstream& oFile)
 		}
 }
 
-Mat Visual_Servoing::get_pose_initial_parameter()
-{
-	return this->pose_initial_;
-}

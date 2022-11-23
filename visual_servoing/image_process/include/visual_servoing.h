@@ -11,7 +11,7 @@ using namespace std;
 
 class Visual_Servoing
 {
-    protected:
+    public:
         Mat image_gray_desired_;
         Mat image_gray_current_; 
         Mat image_gray_initial_;
@@ -20,13 +20,10 @@ class Visual_Servoing
         Mat camera_intrinsic_;
         Mat camera_velocity_; // vx vy vz wx wy wz
         Mat pose_desired_;
-        Mat pose_initial_;
         double lambda_;
         double epsilon_; 
         int resolution_x_;
         int resolution_y_;
-
-    public:
         Mat L_e_;
         Mat error_s_;
         struct data
@@ -42,7 +39,7 @@ class Visual_Servoing
     public: 
         Visual_Servoing(int resolution_x, int resolution_y);
 
-        void init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic, Mat pose_desired, Mat pose_initial);
+        void init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat image_gray_initial, Mat camera_intrinsic, Mat pose_desired);
 
         Mat get_camera_velocity();
 
@@ -97,8 +94,6 @@ class Visual_Servoing
         virtual string get_method_name();
 
         void write_to_excel(Mat data, ofstream& oFile);
-
-        Mat get_pose_initial_parameter();
 };
 
 

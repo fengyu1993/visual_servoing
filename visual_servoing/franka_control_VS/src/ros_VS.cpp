@@ -3,26 +3,28 @@
 
 Ros_VS::Ros_VS()
 {
-    this->flag_success = false;
+    this->flag_success_ = false;
 
     this->nh_.getParam("control_rate", this->control_rate_);
+
+    this->joint_angle_initial_ = get_parameter_Matrix("joint_angle_initial", 7, 1);
 
     initialize_time_sync();
 
     this->pub_camera_twist_ = this->nh_.advertise<geometry_msgs::Twist>("/cartesian_velocity_node_controller/cartesian_velocity", 5);
-
+    
 }
 
 void Ros_VS::initialize_time_sync()
 {
     image_color_sub_.subscribe(this->nh_,"/camera/color/image_raw", 1);
     image_depth_sub_.subscribe(this->nh_,"/camera/aligned_depth_to_color/image_raw", 1);
-    sync = new TimeSynchronizer<Image, Image>(image_color_sub_, image_depth_sub_, 10);
-    sync->registerCallback(boost::bind(&Ros_VS::Callback, this, _1, _2));
+    this->sync_ = new TimeSynchronizer<Image, Image>(image_color_sub_, image_depth_sub_, 10);
+    this->sync_->registerCallback(boost::bind(&Ros_VS::Callback, this, _1, _2));
 }
 
 
-void Ros_VS::get_parameters_VS(int& resolution_x, int& resolution_y, double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& image_gray_initial, Mat& camera_intrinsic, Mat& pose_desired, Mat& pose_initial)
+void Ros_VS::get_parameters_VS(int& resolution_x, int& resolution_y, double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& image_gray_initial, Mat& camera_intrinsic, Mat& pose_desired)
 {
     // 基本参数
     this->nh_.getParam("resolution_x", resolution_x);
@@ -34,16 +36,18 @@ void Ros_VS::get_parameters_VS(int& resolution_x, int& resolution_y, double& lam
     this->nh_.getParam("resource_location", loaction);
     this->nh_.getParam("image_gray_desired_name", name);
     image_gray_desired = imread(loaction + name, IMREAD_GRAYSCALE);
+    image_gray_desired.convertTo(image_gray_desired, CV_64FC1);
+    image_gray_desired = 1 - image_gray_desired/255.0;   
     this->nh_.getParam("image_depth_desired_name", name);
-    image_depth_desired = imread(loaction + name);  
+    image_depth_desired = imread(loaction + name, IMREAD_UNCHANGED);  
     this->nh_.getParam("image_gray_initial_name", name);
     image_gray_initial = imread(loaction + name, IMREAD_GRAYSCALE);  
+    image_gray_initial.convertTo(image_gray_initial, CV_64FC1);
+    image_gray_initial = 1 - image_gray_initial/255.0;     
     // 相机内参
     camera_intrinsic = get_parameter_Matrix("camera_intrinsic", 3, 3);
     // 期望位姿
     pose_desired = get_parameter_Matrix("pose_desired", 4, 4);
-    // 期望位姿
-    pose_initial = get_parameter_Matrix("pose_initial", 4, 4);
 }
 
 

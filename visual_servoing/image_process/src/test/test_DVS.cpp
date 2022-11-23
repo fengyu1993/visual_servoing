@@ -20,6 +20,9 @@ int main()
     img_old.convertTo(img_old, CV_64FC1);
     img_new.convertTo(img_new, CV_64FC1);
 
+    img_old = 1 - img_old/255.0;
+    img_new = 1 - img_new/255.0;
+
     img_old = img_old / 255.0;
     img_new = img_new / 255.0;
     depth_old = img_old * 100 + 1;
@@ -34,7 +37,7 @@ int main()
     }else
     {
         Direct_Visual_Servoing DVS(img_old.cols, img_old.rows);
-        DVS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic, pose, pose);
+        DVS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic, pose);
         for(int i = 0; i < 10; i++)
         {
             DVS.set_image_depth_current(depth_new);
@@ -66,6 +69,13 @@ int main()
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+    //  Size dsize = Size(320, 240);
+    // resize(img_old, img_old, dsize, 0, 0, INTER_AREA);
+    // resize(img_new, img_new, dsize, 0, 0, INTER_AREA);
+    // imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_new_320_240.jpg", img_new);
+    // imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/Lauren_old_320_240.jpg", img_old);
+
        // Size dsize = Size(512, 512);
         // resize(img_old, img_old, dsize, 0, 0, INTER_AREA);
         // img_old.resize(512, 512);

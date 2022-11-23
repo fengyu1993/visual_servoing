@@ -3,7 +3,7 @@ resolution_x:   320
 resolution_y:   240
 epsilon:        5e-2
 lambda:         0.1
-control_rate:   10
+control_rate:   1
 resource_location:         "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/"
 image_gray_desired_name:    "image_gray_desired.jpg"
 image_depth_desired_name:   "image_depth_desired.jpg"
@@ -15,7 +15,4 @@ pose_desired: [1.0, 0.0, 0.0, 1.0,
                0.0, 1.0, 0.0, 2.0,
                0.0, 0.0, 1.0, 3.0,
                0.0, 0.0, 0.0, 1.0]
-pose_initial: [1.0, 0.0, 0.0, 1.0,
-               0.0, 1.0, 0.0, 5.0,
-               0.0, 0.0, 1.0, 3.0,
-               0.0, 0.0, 0.0, 1.0]
+joint_angle_initial: [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.5]

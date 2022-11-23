@@ -5,23 +5,20 @@ Ros_DVS::Ros_DVS() : Ros_VS()
     // 准备
     double lambda, epsilon; 
     int resolution_x, resolution_y;
-    Mat img_old, depth_old, img_init, camera_intrinsic, pose_desired, pose_initial;
-
+    Mat img_old, depth_old, img_init, camera_intrinsic, pose_desired;
     // 获取参数
-    get_parameters_VS(resolution_x, resolution_y, lambda, epsilon, img_old, depth_old, img_init, camera_intrinsic, pose_desired, pose_initial);
-
+    get_parameters_VS(resolution_x, resolution_y, lambda, epsilon, img_old, depth_old, img_init, camera_intrinsic, pose_desired);
     // 设置分辨率
     set_resolution_parameters(resolution_x, resolution_y);
-
     // 初始化
     this->DVS = new Direct_Visual_Servoing(resolution_x, resolution_y);
-    this->DVS->init_VS(lambda, epsilon, img_old, depth_old, img_init, camera_intrinsic, pose_desired, pose_initial);
+    this->DVS->init_VS(lambda, epsilon, img_old, depth_old, img_init, camera_intrinsic, pose_desired);
 }
 
 
 void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg)
 {
-    ROS_INFO("cyh");
+    ROS_INFO("cyh");        
     // 数据转换
     Mat depth_new, img_new;
     get_image_data_convert(image_color_msg, image_depth_msg, img_new, depth_new);
@@ -30,22 +27,22 @@ void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr
     // 计算相机速度并保存数据
     this->DVS->set_image_depth_current(depth_new);
     this->DVS->set_image_gray_current(img_new);
-    Mat camera_velocity;
-    // Mat camera_velocity = this->DVS->get_camera_velocity();
+    // Mat camera_velocity;
+    Mat camera_velocity = this->DVS->get_camera_velocity();
     this->DVS->save_data(camera_pose);
     // 判断是否成功并做速度转换
     if(this->DVS->is_success())
     {
-        this->flag_success = true;
+        this->flag_success_ = true;
         this->DVS->write_data();  
         camera_velocity = 0 * camera_velocity;
     }
     else
     {
-        this->flag_success = false;
+        this->flag_success_ = false;
         // 速度转换
         camera_pose  = (Mat_<double>(4,4) << 1, 0, 0, 1, 0, 0, -1, 2, 0, 1, 0, 3, 0, 0, 0, 1);
-        camera_velocity = (Mat_<double>(6,1) << 4, 5, 6, 1, 2, 3);
+        // camera_velocity = (Mat_<double>(6,1) << 4, 5, 6, 1, 2, 3);
         camera_velocity = velocity_camera_to_base(camera_velocity, camera_pose);
     }
     // 发布速度信息
@@ -61,7 +58,14 @@ void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr
 
 
 
-
+    // cout << "desired_color: width = " << this->DVS->image_gray_desired_.cols << 
+    //         ", heigh = " << this->DVS->image_gray_desired_.rows << endl;
+    // cout << "desired_depth: width = " << this->DVS->image_depth_desired_.cols << 
+    //         ", heigh = " << this->DVS->image_depth_desired_.rows << endl;
+    // cout << "current_color: width = " << this->DVS->image_gray_current_.cols << 
+    //         ", heigh = " << this->DVS->image_gray_current_.rows << endl;
+    // cout << "current_depth: width = " << this->DVS->image_depth_current_.cols << 
+    //         ", heigh = " << this->DVS->image_depth_current_.rows << endl;
 
         // // 速度转换
         // camera_pose  = (Mat_<double>(4,4) << 1, 0, 0, 1, 0, 0, -1, 2, 0, 1, 0, 3, 0, 0, 0, 1);
