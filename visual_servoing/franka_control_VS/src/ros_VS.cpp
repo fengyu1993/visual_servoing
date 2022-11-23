@@ -34,16 +34,17 @@ void Ros_VS::get_parameters_VS(int& resolution_x, int& resolution_y, double& lam
     // 图像参数
     string loaction, name;
     this->nh_.getParam("resource_location", loaction);
-    this->nh_.getParam("image_gray_desired_name", name);
-    image_gray_desired = imread(loaction + name, IMREAD_GRAYSCALE);
-    image_gray_desired.convertTo(image_gray_desired, CV_64FC1);
-    image_gray_desired = 1 - image_gray_desired/255.0;   
+    // 读彩色图
+    this->nh_.getParam("image_rgb_desired_name", name);
+    Mat image_rgb_desired = imread(loaction + name, IMREAD_COLOR);
+    image_gray_desired = rgb_image_operate(image_rgb_desired);
+    this->nh_.getParam("image_rgb_initial_name", name);
+    Mat image_rgb_initial = imread(loaction + name, IMREAD_COLOR);  
+    image_gray_initial = rgb_image_operate(image_rgb_initial);
+    // 读深度图
     this->nh_.getParam("image_depth_desired_name", name);
-    image_depth_desired = imread(loaction + name, IMREAD_UNCHANGED);  
-    this->nh_.getParam("image_gray_initial_name", name);
-    image_gray_initial = imread(loaction + name, IMREAD_GRAYSCALE);  
-    image_gray_initial.convertTo(image_gray_initial, CV_64FC1);
-    image_gray_initial = 1 - image_gray_initial/255.0;     
+    Mat image_depth_desired_temp = imread(loaction + name, IMREAD_UNCHANGED); 
+    image_depth_desired = depth_image_operate(image_depth_desired_temp);   
     // 相机内参
     camera_intrinsic = get_parameter_Matrix("camera_intrinsic", 3, 3);
     // 期望位姿
@@ -59,19 +60,16 @@ void Ros_VS::set_resolution_parameters(int resolution_x, int resolution_y)
     this->nh_.setParam("/camera/realsense2_camera/color_width", resolution_x);
 }
 
-void Ros_VS::get_image_data_convert(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg, Mat& color_img, Mat& depth_img)
+void Ros_VS::get_image_data_convert(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg, Mat& gray_img, Mat& depth_img)
 {
     // rgb转灰度 [0,255]->[1,0]
     cv_bridge::CvImagePtr cv_ptr_color = cv_bridge::toCvCopy(image_color_msg, sensor_msgs::image_encodings::BGR8);
     Mat img_new_rgb = cv_ptr_color->image;
-    cvtColor(img_new_rgb, color_img, CV_BGR2GRAY);
-    color_img.convertTo(color_img, CV_64FC1);
-    color_img = 1 - color_img / 255.0;
+    gray_img = rgb_image_operate(img_new_rgb);
     // 深度图
     cv_bridge::CvImagePtr cv_ptr_depth = cv_bridge::toCvCopy(image_depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
-    depth_img = cv_ptr_depth->image;
-    depth_img.convertTo(depth_img, CV_64FC1);
-    depth_img = depth_img / 1000.0;
+    Mat depth_img_temp = cv_ptr_depth->image;
+    depth_img = depth_image_operate(depth_img_temp);
 }
 
 Mat Ros_VS::get_camera_pose()
@@ -108,3 +106,43 @@ Mat Ros_VS::get_parameter_Matrix(string str, int row, int col)
     Matrix_temp.copyTo(Matrix);   
     return Matrix;
 }
+
+Mat Ros_VS::rgb_image_operate(Mat& image_rgb)
+{
+    Mat image_gray;
+    cvtColor(image_rgb, image_gray, CV_BGR2GRAY);
+    image_rgb.convertTo(image_gray, CV_64FC1);
+    image_gray = 1 - image_gray/255.0; 
+    return image_gray;
+}
+
+Mat Ros_VS::depth_image_operate(Mat& image_depth)
+{
+    Mat image_depth_return;
+    image_depth.convertTo(image_depth_return, CV_64FC1);
+    image_depth_return = image_depth_return / 1000.0;
+    return image_depth_return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // imshow("desired_color", image_rgb_desired);
+    // imshow("desired_gray", image_gray_desired);
+    // imshow("initial_color", image_rgb_initial);
+    // imshow("initial_gray", image_gray_initial);
+    // imshow("desired_depth", image_depth_desired);
+    // waitKey();

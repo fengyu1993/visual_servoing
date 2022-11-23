@@ -29,6 +29,7 @@ void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr
     this->DVS->set_image_gray_current(img_new);
     // Mat camera_velocity;
     Mat camera_velocity = this->DVS->get_camera_velocity();
+    
     this->DVS->save_data(camera_pose);
     // 判断是否成功并做速度转换
     if(this->DVS->is_success())

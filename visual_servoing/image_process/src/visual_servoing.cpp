@@ -38,8 +38,11 @@ Mat Visual_Servoing::get_camera_velocity()
 {
     Mat L_e_inv;
     get_feature_error_interaction_matrix();
+	cout << "cyh_6" << endl;
     invert(this->L_e_, L_e_inv, DECOMP_SVD);
+	cout << "cyh_7" << endl;
     this->camera_velocity_ = -this->lambda_ * L_e_inv * this->error_s_;
+	cout << "camera_velocity_ = \n" <<this->camera_velocity_ << endl;
     return this->camera_velocity_;
 }
 

@@ -5,9 +5,9 @@ epsilon:        5e-2
 lambda:         0.1
 control_rate:   1
 resource_location:         "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/"
-image_gray_desired_name:    "image_gray_desired.jpg"
-image_depth_desired_name:   "image_depth_desired.jpg"
-image_gray_initial_name:    "image_gray_initial.jpg"
+image_rgb_desired_name:    "image_rgb_desired.png"
+image_depth_desired_name:  "image_depth_desired.png"
+image_rgb_initial_name:    "image_rgb_initial.png"
 camera_intrinsic: [ 1.0, 0.0, 5.0, 
                     0.0, 1.0, 6.0, 
                     0.0, 0.0, 1.0]

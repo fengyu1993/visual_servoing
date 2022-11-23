@@ -39,6 +39,8 @@ class Ros_VS
         Mat get_camera_pose();
         Mat velocity_camera_to_base(Mat velocity, Mat pose);
         Mat get_parameter_Matrix(string str, int row, int col);
+        Mat rgb_image_operate(Mat& image_rgb);
+        Mat depth_image_operate(Mat& image_depth);
 };
 
 #endif
