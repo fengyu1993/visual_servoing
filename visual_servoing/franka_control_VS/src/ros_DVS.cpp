@@ -1,18 +1,13 @@
 # include "ros_DVS.h"
 
 Ros_DVS::Ros_DVS() : Ros_VS()
-{
-    // 准备
-    double lambda, epsilon; 
+{ 
     int resolution_x, resolution_y;
-    Mat img_old, depth_old, img_init, camera_intrinsic, pose_desired;
-    // 获取参数
-    get_parameters_VS(resolution_x, resolution_y, lambda, epsilon, img_old, depth_old, img_init, camera_intrinsic, pose_desired);
     // 设置分辨率
+    get_parameters_resolution(resolution_x, resolution_y);
     set_resolution_parameters(resolution_x, resolution_y);
     // 初始化
     this->DVS = new Direct_Visual_Servoing(resolution_x, resolution_y);
-    this->DVS->init_VS(lambda, epsilon, img_old, depth_old, img_init, camera_intrinsic, pose_desired);
 }
 
 
@@ -27,7 +22,17 @@ void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr
     // 计算相机速度并保存数据
     this->DVS->set_image_depth_current(depth_new);
     this->DVS->set_image_gray_current(img_new);
-    // Mat camera_velocity;
+    if(this->DVS->flag_first)
+    {
+        // 准备
+        double lambda, epsilon;
+        Mat img_old, depth_old, camera_intrinsic, pose_desired;
+        // 获取参数
+        get_parameters_VS(lambda, epsilon, img_old, depth_old, camera_intrinsic, pose_desired);
+        this->DVS->init_VS(lambda, epsilon, img_old, depth_old, img_new, camera_intrinsic, pose_desired);
+        this->DVS->flag_first = false;
+    }
+
     Mat camera_velocity = this->DVS->get_camera_velocity();
     
     this->DVS->save_data(camera_pose);

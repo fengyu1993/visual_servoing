@@ -11,7 +11,6 @@ Ros_VS::Ros_VS()
     initialize_time_sync();
 
     this->pub_camera_twist_ = this->nh_.advertise<geometry_msgs::Twist>("/cartesian_velocity_node_controller/cartesian_velocity", 5);
-    
 }
 
 void Ros_VS::initialize_time_sync()
@@ -22,12 +21,15 @@ void Ros_VS::initialize_time_sync()
     this->sync_->registerCallback(boost::bind(&Ros_VS::Callback, this, _1, _2));
 }
 
-
-void Ros_VS::get_parameters_VS(int& resolution_x, int& resolution_y, double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& image_gray_initial, Mat& camera_intrinsic, Mat& pose_desired)
+void Ros_VS::get_parameters_resolution(int& resolution_x, int& resolution_y)
 {
-    // 基本参数
     this->nh_.getParam("resolution_x", resolution_x);
     this->nh_.getParam("resolution_y", resolution_y);
+}
+
+void Ros_VS::get_parameters_VS(double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& camera_intrinsic, Mat& pose_desired)
+{
+    // 基本参数
     this->nh_.getParam("lambda", lambda);
     this->nh_.getParam("epsilon", epsilon);
     // 图像参数
@@ -37,9 +39,6 @@ void Ros_VS::get_parameters_VS(int& resolution_x, int& resolution_y, double& lam
     this->nh_.getParam("image_rgb_desired_name", name);
     Mat image_rgb_desired = imread(loaction + name, IMREAD_COLOR);
     image_gray_desired = rgb_image_operate(image_rgb_desired);
-    this->nh_.getParam("image_rgb_initial_name", name);
-    Mat image_rgb_initial = imread(loaction + name, IMREAD_COLOR);  
-    image_gray_initial = rgb_image_operate(image_rgb_initial);
     // 读深度图
     this->nh_.getParam("image_depth_desired_name", name);
     Mat image_depth_desired_temp = imread(loaction + name, IMREAD_UNCHANGED); 
@@ -73,8 +72,11 @@ void Ros_VS::get_image_data_convert(const ImageConstPtr& image_color_msg, const 
 
 Mat Ros_VS::get_camera_pose()
 {
-    /*****************/
-    return Mat::eye(4,4,CV_64FC1);
+    tf::StampedTransform transform;
+    this->listener_camera_pose_.waitForTransform("panda_link0", "camera_link", ros::Time(0), ros::Duration(3.0));
+    this->listener_camera_pose_.lookupTransform("panda_link0", "camera_link", ros::Time(0), transform);
+    Mat T = get_T(transform);
+    return T;
 }
 
 Mat Ros_VS::velocity_camera_to_base(Mat velocity, Mat pose)
@@ -123,7 +125,57 @@ Mat Ros_VS::depth_image_operate(Mat& image_depth)
     return image_depth_return;
 }
 
+Mat Ros_VS::get_T(tf::StampedTransform  transform)
+{
+    double x = transform.getOrigin().getX();
+    double y = transform.getOrigin().getY();
+    double z = transform.getOrigin().getZ();
+    double W = transform.getRotation().getW();
+    double X = transform.getRotation().getX();
+    double Y = transform.getRotation().getY();
+    double Z = transform.getRotation().getZ();
 
+    Mat T = Mat::eye(4,4,CV_64FC1);
+    Mat p = (Mat_<double>(3,1) << x, y, z);
+    p.copyTo(T.rowRange(0,3).colRange(3,4));
+    Mat q = (Mat_<double>(4,1) << W, X, Y, Z);
+    Mat R = Quaternion2Matrix(q);
+    R.copyTo(T.rowRange(0,3).colRange(0,3));
+    return T;    
+}
+
+Mat Ros_VS::Quaternion2Matrix (Mat q)
+{
+  double w = q.at<double>(0);
+  double x = q.at<double>(1);
+  double y = q.at<double>(2);
+  double z = q.at<double>(3);
+
+  double xx = x*x;
+  double yy = y*y;
+  double zz = z*z;
+  double xy = x*y;
+  double wz = w*z;
+  double wy = w*y;
+  double xz = x*z;
+  double yz = y*z;
+  double wx = w*x;
+
+  double ret[3][3];
+  ret[0][0] = 1.0-2*(yy+zz);
+  ret[0][1] = 2*(xy-wz);
+  ret[0][2] = 2*(wy+xz);
+ 
+  ret[1][0] = 2*(xy+wz);
+  ret[1][1] = 1.0-2*(xx+zz);
+  ret[1][2] = 2*(yz-wx);
+ 
+  ret[2][0] = 2*(xz-wy);
+  ret[2][1] = 2*(yz+wx);
+  ret[2][2] = 1.0-2*(xx+yy);
+ 
+  return cv::Mat(3,3,CV_64FC1,ret).clone();    
+}
 
 
 

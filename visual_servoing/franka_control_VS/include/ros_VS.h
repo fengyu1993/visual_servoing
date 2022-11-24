@@ -11,6 +11,7 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/time_synchronizer.h>
 #include <cv_bridge/cv_bridge.h>
+#include <tf/transform_listener.h>
 
 using namespace cv;
 using namespace std;
@@ -20,11 +21,13 @@ using namespace message_filters;
 class Ros_VS
 {
     protected:
-        ros::NodeHandle     nh_; 
+        ros::NodeHandle                         nh_; 
         message_filters::Subscriber<Image>      image_color_sub_;
         message_filters::Subscriber<Image>      image_depth_sub_;
         TimeSynchronizer<Image, Image>          *sync_;
         ros::Publisher                          pub_camera_twist_; 
+        tf::TransformListener                   listener_camera_pose_;
+
     public:
         int                 control_rate_;
         bool                flag_success_;
@@ -33,7 +36,8 @@ class Ros_VS
         Ros_VS();
         void initialize_time_sync();
         virtual void Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg) = 0; 
-        void get_parameters_VS(int& resolution_x, int& resolution_y, double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& image_gray_initial, Mat& camera_intrinsic, Mat& pose_desired);    
+        void get_parameters_resolution(int& resolution_x, int& resolution_y);
+        void get_parameters_VS(double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& camera_intrinsic, Mat& pose_desired);    
         void set_resolution_parameters(int resolution_x, int resolution_y);
         void get_image_data_convert(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg, Mat& color_img, Mat& depth_img);
         Mat get_camera_pose();
@@ -41,6 +45,8 @@ class Ros_VS
         Mat get_parameter_Matrix(string str, int row, int col);
         Mat rgb_image_operate(Mat& image_rgb);
         Mat depth_image_operate(Mat& image_depth);
+        Mat get_T(tf::StampedTransform  transform);
+        Mat Quaternion2Matrix (Mat q);
 };
 
 #endif

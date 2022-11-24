@@ -26,6 +26,8 @@ class Visual_Servoing
         int resolution_y_;
         Mat L_e_;
         Mat error_s_;
+        bool flag_first;
+
         struct data
         {
             Mat velocity_;
