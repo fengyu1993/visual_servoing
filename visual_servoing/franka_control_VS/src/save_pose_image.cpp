@@ -14,17 +14,22 @@
 #include <string>
 #include <ctime> 
 #include <chrono>
+#include <tf/transform_listener.h>
 
 using namespace std;
 using namespace cv;
 using namespace sensor_msgs;
 using namespace message_filters;
 
-bool flag_save_pose = false;
+bool flag_save_joint_angle = false;
+Mat joint_group_positions;
+Mat T_link0_camera;
+
+
 
 void callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg);
 cv::Mat Quaternion2Matrix (cv::Mat q);
-Mat get_T(geometry_msgs::Pose pose);
+Mat get_T(tf::StampedTransform  pose);
 void write_to_excel(Mat data, ofstream& oFile);
 string get_date_time();
 
@@ -38,8 +43,6 @@ int main(int argc, char** argv)
 
     static const std::string PLANNING_GROUP = "panda_arm";
     moveit::planning_interface::MoveGroupInterface move_group_interface(PLANNING_GROUP);
-    move_group_interface.setPoseReferenceFrame("panda_link0");
-    // move_group_interface.setEndEffectorLink("camera_link");
 
     cout<< "Press space to save rgb_raw and depth_raw to a file."<<endl;
  
@@ -51,20 +54,13 @@ int main(int argc, char** argv)
 
     while (ros::ok())
     {
-        if(flag_save_pose)
+        if(flag_save_joint_angle)
         {
             std::vector<double> joint_positions = move_group_interface.getCurrentJointValues();
-            Mat joint_group_positions = (Mat_<double>(1,7) << joint_positions[0], joint_positions[1], 
+            joint_group_positions = (Mat_<double>(1,7) << joint_positions[0], joint_positions[1], 
                                         joint_positions[2], joint_positions[3], joint_positions[4], 
                                         joint_positions[5], joint_positions[6]);
             cout << "joint_angle = \n" <<  joint_group_positions << endl;
-
-            auto Pose = move_group_interface.getCurrentPose();
-            cout << "pose = \n" << Pose.pose.position.x << ", " << Pose.pose.position.y << ", "
-                                << Pose.pose.position.z << ", " << Pose.pose.orientation.w << ", " << Pose.pose.orientation.x << ", "
-                                << Pose.pose.orientation.y << ", " << Pose.pose.orientation.z << endl;
-            Mat T = get_T(Pose.pose);
-            cout << "T = \n" << T << endl;
 
             ofstream oFile;
             string location = "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/";
@@ -74,10 +70,10 @@ int main(int argc, char** argv)
             oFile << "joint angle" << endl;
             write_to_excel(joint_group_positions, oFile);
             oFile << "pose" << endl;
-            write_to_excel(T, oFile);
+            write_to_excel(T_link0_camera, oFile);
             oFile.close();
 
-            flag_save_pose = false;
+            flag_save_joint_angle = false;
         }
     }
  
@@ -109,7 +105,14 @@ void callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_d
         // 保存彩色图
         imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_rgb_desired.png", color_img);
         // 保存相机位姿
-        flag_save_pose = true;
+        tf::TransformListener listener;
+        tf::StampedTransform transform;
+        listener.waitForTransform("panda_link0", "camera_link", ros::Time(0), ros::Duration(3.0));
+        listener.lookupTransform("panda_link0", "camera_link", ros::Time(0), transform);
+        T_link0_camera = get_T(transform);
+        cout << "T_link0_camera = \n" << T_link0_camera << endl;
+        // 保存关节角度
+        flag_save_joint_angle = true;
      }
 }
 
@@ -148,12 +151,20 @@ cv::Mat Quaternion2Matrix (cv::Mat q)
 }
 
 
-Mat get_T(geometry_msgs::Pose pose)
+Mat get_T(tf::StampedTransform transform)
 {
+    double x = transform.getOrigin().getX();
+    double y = transform.getOrigin().getY();
+    double z = transform.getOrigin().getZ();
+    double W = transform.getRotation().getW();
+    double X = transform.getRotation().getX();
+    double Y = transform.getRotation().getY();
+    double Z = transform.getRotation().getZ();
+
     Mat T = Mat::eye(4,4,CV_64FC1);
-    Mat p = (Mat_<double>(3,1) << pose.position.x, pose.position.y, pose.position.z);
+    Mat p = (Mat_<double>(3,1) << x, y, z);
     p.copyTo(T.rowRange(0,3).colRange(3,4));
-    Mat q = (Mat_<double>(4,1) << pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
+    Mat q = (Mat_<double>(4,1) << W, X, Y, Z);
     Mat R = Quaternion2Matrix(q);
     R.copyTo(T.rowRange(0,3).colRange(0,3));
     return T;

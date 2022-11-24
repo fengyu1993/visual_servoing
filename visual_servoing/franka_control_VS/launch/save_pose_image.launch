@@ -3,6 +3,7 @@
 
 <include file="$(dirname)/franka_demo.launch" />
 <!-- <include file="$(find panda_moveit_config)/launch/franka_control.launch" /> -->
+<include file="$(dirname)/camera_calibration.launch" />
 
 <include file="$(find realsense2_camera)/launch/rs_aligned_depth.launch">
     <arg name="enable_fisheye"              value="false"/>
