@@ -18,18 +18,21 @@ void Direct_Visual_Servoing::get_feature_error_interaction_matrix()
 {
     this->error_s_ = this->image_gray_current_.reshape(0, this->image_gray_current_.rows*this->image_gray_current_.cols)
                 - this->image_gray_desired_.reshape(0, this->image_gray_desired_.rows*this->image_gray_desired_.cols);  
-    cout << "image_depth_desired_ = \n" << this->image_depth_desired_ << endl; 
+    // cout << "image_depth_desired_ = \n" << this->image_depth_desired_ << endl; 
     Mat Le_old = get_interaction_matrix_gray(this->image_gray_desired_, this->image_depth_desired_, this->camera_intrinsic_);
-    // cout << "Le_old" << Le_old << endl;
+    // cout << "Le_old = " << Le_old.rows << ", " << Le_old.cols << endl << Le_old << endl; 
     Mat Le_new = get_interaction_matrix_gray(this->image_gray_current_, this->image_depth_current_, this->camera_intrinsic_);
+    // cout << "Le_new" << Le_new.colRange(0,6).rowRange(0,15) << endl;
     this->L_e_ = 0.5*(Le_new + Le_old);
-    // cout << "L_e_" << this->L_e_ << endl;
+    // this->L_e_ = 0.5*(Le_old + Le_old);
+    // cout << "L_e_ = \n" << this->L_e_ << endl;
+    // Mat L_e_inv;
+    // invert(this->L_e_, L_e_inv, DECOMP_SVD);
+    // cout << "L_e_inv * L_e_ = \n" << L_e_inv * this->L_e_ << endl;
 }
 
 Mat Direct_Visual_Servoing::get_interaction_matrix_gray(Mat& image_gray, Mat& image_depth, Mat& Camera_Intrinsic)
 {
-    // cout << "image_depth = \n" << image_depth << endl;
-
     Mat I_x, I_y;
     int cnt = 0;
     Mat point_image = Mat::ones(3, 1, CV_64FC1);
@@ -39,8 +42,6 @@ Mat Direct_Visual_Servoing::get_interaction_matrix_gray(Mat& image_gray, Mat& im
     Mat L_e = Mat::zeros(image_gray.rows*image_gray.cols, 6, CV_64FC1); 
 
     get_image_gradient(image_gray, Camera_Intrinsic, I_x, I_y);
-
-    // cout << "I_x" << I_x << endl;
 
     for(int i = 0; i < image_gray.rows; i++)
     {
@@ -89,7 +90,6 @@ Mat Direct_Visual_Servoing::get_image_gradient_x(Mat& image)
             down = 0;
         I_x.col(i) = (image.col(up) - image.col(down)) / (up - down); 
     }
-
     return I_x;
 }
 

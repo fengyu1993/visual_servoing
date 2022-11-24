@@ -6,7 +6,6 @@ Ros_VS::Ros_VS()
     this->flag_success_ = false;
 
     this->nh_.getParam("control_rate", this->control_rate_);
-
     this->joint_angle_initial_ = get_parameter_Matrix("joint_angle_initial", 7, 1);
 
     initialize_time_sync();
@@ -111,7 +110,7 @@ Mat Ros_VS::rgb_image_operate(Mat& image_rgb)
 {
     Mat image_gray;
     cvtColor(image_rgb, image_gray, CV_BGR2GRAY);
-    image_rgb.convertTo(image_gray, CV_64FC1);
+    image_gray.convertTo(image_gray, CV_64FC1);
     image_gray = 1 - image_gray/255.0; 
     return image_gray;
 }

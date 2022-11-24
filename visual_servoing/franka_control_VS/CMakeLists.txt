@@ -8,6 +8,12 @@ find_package(catkin REQUIRED COMPONENTS
   message_filters
   image_process
   cv_bridge
+  moveit_core
+  moveit_ros_planning
+  moveit_ros_planning_interface
+  moveit_ros_perception
+  rviz_visual_tools
+  moveit_visual_tools
 )
 
 find_package(Eigen3 REQUIRED)
