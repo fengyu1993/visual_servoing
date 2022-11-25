@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(franka_moveit_cyh)
 
+# set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
+
 find_package(catkin REQUIRED COMPONENTS
   COMPONENTS
     interactive_markers

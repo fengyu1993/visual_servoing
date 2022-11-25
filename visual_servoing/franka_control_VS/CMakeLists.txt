@@ -50,7 +50,7 @@ add_executable(franka_control_DCT_VS    src/franka_control_DCT_VS.cpp)
 add_executable(franka_control_TM_VS     src/franka_control_TM_VS.cpp)
 add_executable(franka_control_KM_VS     src/franka_control_KM_VS.cpp)
 add_executable(franka_control_HM_VS     src/franka_control_HM_VS.cpp)
-add_executable(save_pose_image          src/save_pose_image.cpp)
+add_executable(save_pose_image          src/save_pose_jointangle_image.cpp)
 
 
 target_link_libraries(franka_control_DVS    franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
