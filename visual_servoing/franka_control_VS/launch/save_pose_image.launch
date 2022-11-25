@@ -15,6 +15,7 @@
     <arg name="color_height"                value="240"/>
     <arg name="depth_width"                 value="320"/>
     <arg name="depth_height"                value="240"/>
+    <!-- <arg name="filters"                     value="hole_filling"/> -->
 </include>
 
 <node name="save_pose_image" pkg="franka_control_VS"  type="save_pose_image"  output="screen"/>

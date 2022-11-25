@@ -20,6 +20,7 @@ find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED system filesystem date_time thread)
 find_package(Franka REQUIRED)
+find_package(realsense2 REQUIRED)
 
 set(THIS_PACKAGE_INCLUDE_DIRS
   ./include
@@ -52,12 +53,12 @@ add_executable(franka_control_HM_VS     src/franka_control_HM_VS.cpp)
 add_executable(save_pose_image          src/save_pose_image.cpp)
 
 
-target_link_libraries(franka_control_DVS    franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} )
-target_link_libraries(franka_control_DCT_VS franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} )
-target_link_libraries(franka_control_TM_VS  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} )
-target_link_libraries(franka_control_KM_VS  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} )
-target_link_libraries(franka_control_HM_VS  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} )
-target_link_libraries(save_pose_image  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ) 
+target_link_libraries(franka_control_DVS    franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
+target_link_libraries(franka_control_DCT_VS franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
+target_link_libraries(franka_control_TM_VS  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
+target_link_libraries(franka_control_KM_VS  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
+target_link_libraries(franka_control_HM_VS  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
+target_link_libraries(save_pose_image  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY}) 
 
 install(TARGETS franka_control_DVS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(TARGETS franka_control_DCT_VS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

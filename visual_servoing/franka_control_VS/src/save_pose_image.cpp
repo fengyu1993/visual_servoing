@@ -15,6 +15,7 @@
 #include <ctime> 
 #include <chrono>
 #include <tf/transform_listener.h>
+#include <librealsense2/rs.hpp>
 
 using namespace std;
 using namespace cv;
@@ -26,7 +27,7 @@ Mat joint_group_positions;
 Mat T_link0_camera;
 
 
-
+Mat depth_filter(Mat depth_img);
 void callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg);
 cv::Mat Quaternion2Matrix (cv::Mat q);
 Mat get_T(tf::StampedTransform  pose);
@@ -81,7 +82,38 @@ int main(int argc, char** argv)
     return 0;
 }
 
+Mat depth_filter(Mat depth_img)
+{
+    cout << "cyh_1" << endl;
+    rs2::frame res;
+    memcpy((void*)res.get_data(), depth_img.data, depth_img.cols * depth_img.rows * 2);
+    cout << "cyh_2" << endl;
+    // Declare filters
+    rs2::decimation_filter dec_filter;  // Decimation - reduces depth frame density
+    rs2::threshold_filter thr_filter;   // Threshold  - removes values outside recommended range
+    rs2::spatial_filter spat_filter;    // Spatial    - edge-preserving spatial smoothing
+    rs2::temporal_filter temp_filter;   // Temporal   - reduces temporal noise    
+    rs2::hole_filling_filter hole_fill_filter;
+    cout << "cyh_3" << endl;
+    // Declare disparity transform from depth to disparity and vice versa
+    const std::string disparity_filter_name = "Disparity";
+    rs2::disparity_transform depth_to_disparity(true);
+    rs2::disparity_transform disparity_to_depth(false);
 
+    rs2::frame filtered = res;
+
+    filtered = dec_filter.process(filtered);
+    filtered = thr_filter.process(filtered);
+    filtered = depth_to_disparity.process(filtered);
+    filtered = spat_filter.process(filtered);
+    filtered = temp_filter.process(filtered);
+    filtered = disparity_to_depth.process(filtered);
+    filtered = hole_fill_filter.process(filtered);
+
+    Mat image(Size(depth_img.cols, depth_img.rows), CV_16UC1, (void*)filtered.get_data(), Mat::AUTO_STEP);
+
+    return image;
+}
 
 void callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg)
 {
@@ -93,9 +125,21 @@ void callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_d
     // 深度图
     cv_bridge::CvImagePtr cv_ptr_depth = cv_bridge::toCvCopy(image_depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
     depth_img = cv_ptr_depth->image;
+
+    // depth_img.convertTo(depth_img, CV_64FC1);
+    double minValue, maxValue;    // 最大值，最小值
+    cv::Point  minIdx, maxIdx;    // 最小值坐标，最大值坐标     
+    cv::minMaxLoc(depth_img, &minValue, &maxValue, &minIdx, &maxIdx);
+    std::cout << "max: " << maxValue << " max_lacation: " << maxIdx <<std::endl;
+    std::cout <<"min: "<< minValue << " min_lacation: " << minIdx<<std::endl;
+
+    Mat depth_img_filter = depth_filter(depth_img);
+
+
     // 显示
     imshow("Color", color_img);
     imshow("Depth", depth_img);
+    imshow("Depth_filter", depth_img_filter);
     // 保存图像和位姿
     if((char)waitKey(10) == 32) // 32: space
     {
