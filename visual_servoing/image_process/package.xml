@@ -26,6 +26,8 @@
   <depend>ddynamic_reconfigure</depend>
   <depend>diagnostic_updater</depend>
   <depend>librealsense2</depend>
+  <depend>controller_interface</depend>
+  <depend>controller_manager_msgs</depend>
 
   <build_depend>message_filters</build_depend>
   <build_depend>message_generation</build_depend>

@@ -49,7 +49,7 @@ int main(int argc, char** argv)
     rs2::config cfg;
     rs2::colorizer color_map;
     cfg.enable_stream(RS2_STREAM_COLOR, resolution_x, resolution_y);
-    cfg.enable_stream(RS2_STREAM_DEPTH, resolution_x*2, resolution_y*2);
+    cfg.enable_stream(RS2_STREAM_DEPTH, resolution_x, resolution_y);
     pipe.start(cfg);
     rs2::align align_to_color(RS2_STREAM_COLOR);
 

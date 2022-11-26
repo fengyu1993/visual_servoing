@@ -1,20 +1,22 @@
 #include "franka_control_base.h"
 
-void franka_move_to_target_joint_angle(Mat joint_angle)
+void franka_move_to_target_joint_angle(moveit::planning_interface::MoveGroupInterface& move_group_interface, std::vector<double> joint_group_positions_target)
 {
-    // franka::Robot robot("172.16.0.1");
-    // setDefaultBehavior(robot);
-
-    // std::array<double, 7> q_goal = 
-    // {{((double*)joint_angle.data)[0], ((double*)joint_angle.data)[1], ((double*)joint_angle.data)[2],
-    //   ((double*)joint_angle.data)[3], ((double*)joint_angle.data)[4], ((double*)joint_angle.data)[5],
-    //   ((double*)joint_angle.data)[6]}};
-
-    // MotionGenerator motion_generator(0.2, q_goal);
-    // std::cout << "WARNING: it will move the robot! "
-    //           << "Please make sure to have the user stop button at hand!" << std::endl
-    //           << "Press Enter to continue..." << std::endl;
-    // std::cin.ignore();
-    // robot.control(motion_generator);
-    // std::cout << "Finished moving to joint configuration." << std::endl;
+    move_group_interface.setJointValueTarget(joint_group_positions_target);
+    move_group_interface.setMaxAccelerationScalingFactor(0.05);
+    move_group_interface.setMaxVelocityScalingFactor(0.05);
+    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    bool success = (move_group_interface.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    if(success)
+    {
+        std::cout << "Press Enter to move the robot..." << std::endl;
+        std::cin.ignore();
+        move_group_interface.move();
+        std::cout << "Move finish" << std::endl;
+    }
+    else
+    {
+        std::cout << "moveit joint plan fail ! ! !" << std::endl;
+    }
 }
+

@@ -27,6 +27,7 @@ Mat joint_group_positions;
 Mat T_link0_camera;
 Mat img_rgb;
 Mat img_depth;
+Mat camera_intrinsic;
 
 
 rs2::frame depth_filter(rs2::frame& depth_img);
@@ -41,6 +42,7 @@ void write_image();
 void write_data();
 void save_image(rs2::frame color, rs2::frame depth);
 Mat hole_fill(Mat& img_depth);
+Mat save_camera_intrinsic(rs2::stream_profile cprofile);
 
 int main(int argc, char** argv)
 {
@@ -59,7 +61,7 @@ int main(int argc, char** argv)
     rs2::pipeline pipe;
     rs2::config cfg;
     rs2::colorizer color_map;
-    cfg.enable_stream(RS2_STREAM_COLOR, 320, 240);
+    cfg.enable_stream(RS2_STREAM_COLOR, 640, 480);
     cfg.enable_stream(RS2_STREAM_DEPTH, 640, 480);
     pipe.start(cfg);
     rs2::align align_to_color(RS2_STREAM_COLOR);
@@ -74,6 +76,8 @@ int main(int argc, char** argv)
         // With the aligned frameset we proceed as usual
         auto depth = frameset_depth.get_depth_frame();
         auto color = frameset_depth.get_color_frame();
+        rs2::stream_profile cprofile =  color.get_profile();
+
         // filter
         depth = depth_filter(depth);
         // show
@@ -90,6 +94,7 @@ int main(int argc, char** argv)
         // save
         if((char)waitKey(10) == 32)
         {
+            save_camera_intrinsic(cprofile);
             save_image(color, depth);
             save_joint_positions(move_group_interface);
             save_camera_pose();
@@ -101,6 +106,17 @@ int main(int argc, char** argv)
  
  
     return 0;
+}
+
+Mat save_camera_intrinsic(rs2::stream_profile cprofile)
+{
+    ///获取彩色相机内参
+    rs2::video_stream_profile cvsprofile(cprofile);
+    rs2_intrinsics color_intrin =  cvsprofile.get_intrinsics();
+    camera_intrinsic = (Mat_<double>(3,3) << color_intrin.fx, 0, color_intrin.ppx,
+                                        0, color_intrin.fy, color_intrin.ppy,0, 0, 1);
+    cout << "camera_intrinsic = " << camera_intrinsic << endl;
+    return  camera_intrinsic; 
 }
 
 void save_image(rs2::frame color, rs2::frame depth)
@@ -145,6 +161,8 @@ void write_data()
     write_to_excel(joint_group_positions, oFile);
     oFile << "pose" << endl;
     write_to_excel(T_link0_camera, oFile);
+    oFile << "camera_intrinsic" << endl;
+    write_to_excel(camera_intrinsic, oFile);
     oFile.close();
 }
 

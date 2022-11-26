@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Image_depth1
         - /Image_rgb1
+        - /MotionPlanning1
       Splitter Ratio: 0.5
     Tree Height: 897
   - Class: rviz/Help
@@ -229,7 +230,7 @@ Visualization Manager:
         Interactive Marker Size: 0
         Joint Violation Color: 255; 0; 255
         Planning Group: panda_arm
-        Query Goal State: true
+        Query Goal State: false
         Query Start State: false
         Show Workspace: false
         Start State Alpha: 1

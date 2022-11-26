@@ -33,6 +33,7 @@ class Ros_VS
         int                 control_rate_;
         bool                flag_success_;
         Mat                 joint_angle_initial_;
+        bool                start_VS;
     public:
         Ros_VS();
         void initialize_time_sync();

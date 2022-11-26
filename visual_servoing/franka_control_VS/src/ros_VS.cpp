@@ -11,6 +11,8 @@ Ros_VS::Ros_VS()
     initialize_time_sync();
 
     this->pub_camera_twist_ = this->nh_.advertise<geometry_msgs::Twist>("/cartesian_velocity_node_controller/cartesian_velocity", 5);
+
+    this->start_VS = true;
 }
 
 void Ros_VS::initialize_time_sync()

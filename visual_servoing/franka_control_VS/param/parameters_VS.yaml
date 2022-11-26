@@ -1,12 +1,13 @@
 
-resolution_x:   320
-resolution_y:   240
+resolution_x:   640
+resolution_y:   480
 epsilon:        5e-2
 lambda:         0.1
 control_rate:   1
 resource_location:         "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/"
 image_rgb_desired_name:    "image_rgb_desired.png"
 image_depth_desired_name:  "image_depth_desired.png"
+controller:                "moveit"
 camera_intrinsic: [ 1.0, 0.0, 5.0, 
                     0.0, 1.0, 6.0, 
                     0.0, 0.0, 1.0]
@@ -14,4 +15,5 @@ pose_desired: [0.707107, -0.707107, -6.12323E-17, 0.306891,
 -0.707107, -0.707107, -3.14018E-16, -2.36797E-16,
 1.78747E-16, 2.65342E-16, -1.0, 0.590282,
 0.0, 0.0, 0.0, 1.0]
-joint_angle_initial: [0.0, -0.785398, 0.0, -2.35619, 0.0, 1.5708, 0.785398]
+joint_angle_initial: [0.210029, -0.600568, -0.056272, -2.26388, -0.0120032, 1.75309, 0.768835]
+

@@ -6,25 +6,41 @@
 #include "ros_DVS.h"
 #include "examples_common.h"
 #include "franka_control_base.h"
+#include <moveit/move_group_interface/move_group_interface.h>
+#include <moveit/planning_scene_interface/planning_scene_interface.h>
 
 int main(int argc, char** argv)
 {
     // 准备
     ros::init(argc, argv, "DVS");  
-    // 机械臂移动到工作位姿
-    Mat joint_angle_work = (Mat_<double>(7,1) << 0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4);
-    franka_move_to_target_joint_angle(joint_angle_work);
+    ros::AsyncSpinner spinner(1);
+    spinner.start();  
+    ros::param::set("controller", "moveit");
+    static const std::string PLANNING_GROUP = "panda_arm";
+    moveit::planning_interface::MoveGroupInterface move_group_interface(PLANNING_GROUP);
     // 机械臂移动到初始位姿
+    std::vector<double> joint_group_positions_work = {0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4};
+    franka_move_to_target_joint_angle(move_group_interface, joint_group_positions_work);
+    // 机械臂移动到工作位姿
+    std::vector<double> joint_group_positions_init;
+    ros::param::get("joint_angle_initial", joint_group_positions_init);
+    franka_move_to_target_joint_angle(move_group_interface, joint_group_positions_init);
+    // 转换控制器
+    ros::param::set("controller", "velocity");
+    spinner.stop();
+    // 视觉伺服控制
+    cout << "Start visual servoing control ... " << endl;
+    cout << "Press Enter to start..." << endl;
+    cin.ignore();
     Ros_DVS DVS_control;
-    Mat joint_angle_initial = DVS_control.joint_angle_initial_;
-    franka_move_to_target_joint_angle(joint_angle_initial);
-    // 控制
     ros::Rate loop_rate(DVS_control.control_rate_);
+    int num = 0;
     while (ros::ok())
     {
         try{
             if(DVS_control.flag_success_){
                 ROS_INFO("visual servoing success");
+                DVS_control.start_VS = false;
                 break;
             }else{
                 ros::spinOnce();
@@ -33,9 +49,21 @@ int main(int argc, char** argv)
         }catch(...){
             return 1;
         }
+        num++;
+        if(num > 5)
+        {
+            DVS_control.start_VS = false;
+            break;
+        }
     }
+    // 转换控制器
+    ros::param::set("controller", "moveit");
+    cout << "Move to work position ... " << endl;
+    cout << "Press Enter to start..." << endl;
+    cin.ignore();
+    spinner.start();
     // 机械臂移动到工作位姿
-    franka_move_to_target_joint_angle(joint_angle_work);
+    franka_move_to_target_joint_angle(move_group_interface, joint_group_positions_work);
     // 结束
     return 0;
 }
