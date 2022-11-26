@@ -18,6 +18,7 @@ Visual_Servoing::Visual_Servoing(int resolution_x=640, int resolution_y=480)
     this->camera_intrinsic_ = Mat::zeros(3, 3, CV_64FC1);
     this->camera_velocity_ = Mat::zeros(6, 1, CV_64FC1);
 	this->flag_first = true;
+	iteration_num = 0;
 }
 
 // ³õÊ¼»¯
@@ -38,12 +39,10 @@ void Visual_Servoing::init_VS(double lambda, double epsilon, Mat& image_gray_des
 Mat Visual_Servoing::get_camera_velocity()
 {
     Mat L_e_inv;
+	this->iteration_num++;
     get_feature_error_interaction_matrix();
-	cout << "cyh_6" << endl;
     invert(this->L_e_, L_e_inv, DECOMP_SVD);
-
     this->camera_velocity_ = -this->lambda_ * L_e_inv * this->error_s_;
-	cout << "camera_velocity_ = \n" <<this->camera_velocity_ << endl;
     return this->camera_velocity_;
 }
 

@@ -16,6 +16,7 @@
 #include <chrono>
 #include <tf/transform_listener.h>
 #include <librealsense2/rs.hpp>
+#include <librealsense2/h/rs_option.h>
 
 using namespace std;
 using namespace cv;
@@ -39,6 +40,7 @@ void save_camera_pose();
 void write_image();
 void write_data();
 void save_image(rs2::frame color, rs2::frame depth);
+Mat hole_fill(Mat& img_depth);
 
 int main(int argc, char** argv)
 {
@@ -63,7 +65,7 @@ int main(int argc, char** argv)
     rs2::align align_to_color(RS2_STREAM_COLOR);
 
     cout<< "Press space to save rgb_raw and depth_raw to a file."<<endl;
- 
+
     while (ros::ok())
     {
         // read image
@@ -81,8 +83,10 @@ int main(int argc, char** argv)
         const int h_rgb = color.as<rs2::video_frame>().get_height();
         Mat rgb_show(cv::Size(w_rgb, h_rgb), CV_8UC3, (void*)color.get_data(), cv::Mat::AUTO_STEP);
         Mat depth_show(cv::Size(w_depth, h_depth), CV_8UC3, (void*)depth.apply_filter(color_map).get_data(), cv::Mat::AUTO_STEP);
+        cvtColor(rgb_show, rgb_show, COLOR_BGR2RGB);
         imshow("Color", rgb_show);
         imshow("Depth", depth_show);
+
         // save
         if((char)waitKey(10) == 32)
         {
@@ -107,8 +111,27 @@ void save_image(rs2::frame color, rs2::frame depth)
     const int h_rgb = color.as<rs2::video_frame>().get_height();
     Mat img_rgb_temp(cv::Size(w_rgb, h_rgb), CV_8UC3, (void*)color.get_data(), cv::Mat::AUTO_STEP);
     Mat img_depth_temp(cv::Size(w_depth, h_depth), CV_16UC1, (void*)depth.get_data(), cv::Mat::AUTO_STEP);
-    img_rgb_temp.copyTo(img_rgb);
+    img_depth_temp = hole_fill(img_depth_temp);
     img_depth_temp.copyTo(img_depth);
+    img_rgb_temp.copyTo(img_rgb);
+}
+
+Mat hole_fill(Mat& img_depth)
+{
+    Mat img_fill;
+    img_depth.copyTo(img_fill);
+    unsigned short ave = mean(img_fill)[0];
+    for(int i = 0; i < img_fill.rows; i++)
+    {
+        for(int j = 0; j < img_fill.cols; j++)
+        {
+            if(img_fill.at<unsigned short>(i,j) == 0)
+            {
+                img_fill.at<unsigned short>(i,j) = ave;
+            }
+        }
+    }
+    return img_fill;
 }
 
 void write_data()
@@ -156,7 +179,7 @@ rs2::frame depth_filter(rs2::frame& depth_img)
 {
     // Declare filters
     rs2::decimation_filter dec_filter;  // Decimation - reduces depth frame density
-    dec_filter.set_option(RS2_OPTION_FILTER_MAGNITUDE, 1);
+    dec_filter.set_option(rs2_option::RS2_OPTION_FILTER_MAGNITUDE, 1);
     rs2::threshold_filter thr_filter;   // Threshold  - removes values outside recommended range
     rs2::spatial_filter spat_filter;    // Spatial    - edge-preserving spatial smoothing
     rs2::temporal_filter temp_filter;   // Temporal   - reduces temporal noise    

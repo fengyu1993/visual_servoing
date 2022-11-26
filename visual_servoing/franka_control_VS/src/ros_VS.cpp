@@ -3,7 +3,7 @@
 
 Ros_VS::Ros_VS()
 {
-    this->flag_success_ = false;
+   this->flag_success_ = false;
 
     this->nh_.getParam("control_rate", this->control_rate_);
     this->joint_angle_initial_ = get_parameter_Matrix("joint_angle_initial", 7, 1);
@@ -176,13 +176,6 @@ Mat Ros_VS::Quaternion2Matrix (Mat q)
  
   return cv::Mat(3,3,CV_64FC1,ret).clone();    
 }
-
-
-
-
-
-
-
 
 
 

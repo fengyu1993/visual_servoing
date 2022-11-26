@@ -12,6 +12,7 @@
 #include <message_filters/time_synchronizer.h>
 #include <cv_bridge/cv_bridge.h>
 #include <tf/transform_listener.h>
+#include <librealsense2/rs.hpp>
 
 using namespace cv;
 using namespace std;
@@ -35,7 +36,7 @@ class Ros_VS
     public:
         Ros_VS();
         void initialize_time_sync();
-        virtual void Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg) = 0; 
+        virtual void Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg) = 0;  
         void get_parameters_resolution(int& resolution_x, int& resolution_y);
         void get_parameters_VS(double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& camera_intrinsic, Mat& pose_desired);    
         void set_resolution_parameters(int resolution_x, int resolution_y);

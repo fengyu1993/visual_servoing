@@ -27,6 +27,7 @@ class Visual_Servoing
         Mat L_e_;
         Mat error_s_;
         bool flag_first;
+        int iteration_num;
 
         struct data
         {

@@ -5,11 +5,9 @@ Ros_DVS::Ros_DVS() : Ros_VS()
     int resolution_x, resolution_y;
     // 设置分辨率
     get_parameters_resolution(resolution_x, resolution_y);
-    set_resolution_parameters(resolution_x, resolution_y);
     // 初始化
     this->DVS = new Direct_Visual_Servoing(resolution_x, resolution_y);
 }
-
 
 void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg)
 {
@@ -61,6 +59,18 @@ void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr
     camera_Twist.angular.z = camera_velocity.at<double>(5,0);
     this->pub_camera_twist_.publish(camera_Twist);
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
