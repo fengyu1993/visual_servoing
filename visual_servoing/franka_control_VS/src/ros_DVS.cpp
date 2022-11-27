@@ -43,6 +43,7 @@ void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr
             this->flag_success_ = true;
             this->DVS->write_data();  
             camera_velocity = 0 * camera_velocity;
+            this->start_VS = false;
         }
         else
         {

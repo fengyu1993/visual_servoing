@@ -15,7 +15,9 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "DVS");  
     ros::AsyncSpinner spinner(1);
     spinner.start();  
-    ros::param::set("controller", "moveit");
+    ControlSwitcher control_switcher;
+    control_switcher.switch_controllers("moveit", "velocity");
+    // ros::param::set("controller", "moveit");
     static const std::string PLANNING_GROUP = "panda_arm";
     moveit::planning_interface::MoveGroupInterface move_group_interface(PLANNING_GROUP);
     // 机械臂移动到初始位姿
@@ -26,7 +28,8 @@ int main(int argc, char** argv)
     ros::param::get("joint_angle_initial", joint_group_positions_init);
     franka_move_to_target_joint_angle(move_group_interface, joint_group_positions_init);
     // 转换控制器
-    ros::param::set("controller", "velocity");
+    control_switcher.switch_controllers("velocity", "moveit");
+    // ros::param::set("controller", "velocity");
     spinner.stop();
     // 视觉伺服控制
     cout << "Start visual servoing control ... " << endl;
@@ -57,7 +60,8 @@ int main(int argc, char** argv)
         }
     }
     // 转换控制器
-    ros::param::set("controller", "moveit");
+    control_switcher.switch_controllers("moveit", "velocity");
+    // ros::param::set("controller", "moveit");
     cout << "Move to work position ... " << endl;
     cout << "Press Enter to start..." << endl;
     cin.ignore();
