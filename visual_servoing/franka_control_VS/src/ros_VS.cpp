@@ -51,6 +51,14 @@ void Ros_VS::get_parameters_VS(double& lambda, double& epsilon, Mat& image_gray_
     pose_desired = get_parameter_Matrix("pose_desired", 4, 4);
 }
 
+void Ros_VS::get_parameters_DOM(int& order_min, int& order_max, double& delta_epsilon, double& lambda_order)
+{
+    this->nh_.getParam("order_min", order_min);
+    this->nh_.getParam("order_max", order_max);
+    this->nh_.getParam("delta_epsilon", delta_epsilon);
+    this->nh_.getParam("lambda_order", lambda_order);
+}
+
 
 void Ros_VS::set_resolution_parameters(int resolution_x, int resolution_y)
 {

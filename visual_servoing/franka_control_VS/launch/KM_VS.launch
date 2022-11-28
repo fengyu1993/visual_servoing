@@ -1,6 +1,22 @@
 <?xml version="1.0" ?>
 <launch>
 
+<arg name="robot_ip" default="172.16.0.2" />
+<arg name="load_gripper" default="true" />
+
+<rosparam file= "$(find franka_control_VS)/param/parameters_VS.yaml" command= "load"/>
+
+<!-- <include file="$(dirname)/franka_demo.launch" /> -->
+<include file="$(dirname)/franka_control.launch" >
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+</include>
+<include file="$(dirname)/camera_calibration.launch" />
+
+<include file="$(find franka_control_wrappers)/launch/cartesian_velocity_controller.launch">
+    <arg name="stopped" value="true" />
+</include>
+
+<node name="publish_realsense" pkg="franka_control_VS"  type="publish_realsense"  output="screen"/>
 
 <node name="KM_VS" pkg="franka_control_VS"  type="franka_control_KM_VS"  output="screen"/>
 

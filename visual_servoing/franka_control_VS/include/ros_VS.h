@@ -91,6 +91,7 @@ class Ros_VS
         virtual void Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg) = 0;  
         void get_parameters_resolution(int& resolution_x, int& resolution_y);
         void get_parameters_VS(double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& camera_intrinsic, Mat& pose_desired);    
+        void get_parameters_DOM(int& order_min, int& order_max, double& delta_epsilon, double& lambda_order);    
         void set_resolution_parameters(int resolution_x, int resolution_y);
         void get_image_data_convert(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg, Mat& color_img, Mat& depth_img);
         Mat get_camera_pose();

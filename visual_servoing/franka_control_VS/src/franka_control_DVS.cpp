@@ -1,7 +1,6 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <ros/ros.h>
-#include <franka/robot.h>
 #include "direct_visual_servoing.h"
 #include "ros_DVS.h"
 #include <moveit/move_group_interface/move_group_interface.h>

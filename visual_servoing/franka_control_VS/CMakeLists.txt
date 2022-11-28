@@ -35,7 +35,11 @@ catkin_package(
 )
 
 add_library(franka_control_VS src/ros_VS.cpp 
-                              src/ros_DVS.cpp) 
+                              src/ros_DVS.cpp
+                              src/ros_DCT_VS.cpp
+                              src/ros_TM_VS.cpp
+                              src/ros_KM_VS.cpp
+                              src/ros_HM_VS.cpp) 
 
 
 include_directories(${THIS_PACKAGE_INCLUDE_DIRS})
