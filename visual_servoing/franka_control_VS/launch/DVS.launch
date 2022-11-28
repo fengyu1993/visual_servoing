@@ -12,8 +12,6 @@
 </include>
 <include file="$(dirname)/camera_calibration.launch" />
 
-<node name="control_switcher" pkg="franka_control_VS" type="control_switcher.py" respawn="false" output="screen"/>
-
 <include file="$(find franka_control_wrappers)/launch/cartesian_velocity_controller.launch">
     <arg name="stopped" value="true" />
 </include>

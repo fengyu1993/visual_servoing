@@ -8,7 +8,7 @@ Ros_VS::Ros_VS()
     this->nh_.getParam("control_rate", this->control_rate_);
     this->joint_angle_initial_ = get_parameter_Matrix("joint_angle_initial", 7, 1);
 
-    initialize_time_sync();
+    this->move_group_interface_ = new moveit::planning_interface::MoveGroupInterface("panda_arm");
 
     this->pub_camera_twist_ = this->nh_.advertise<geometry_msgs::Twist>("/cartesian_velocity_node_controller/cartesian_velocity", 5);
 
@@ -19,7 +19,7 @@ void Ros_VS::initialize_time_sync()
 {
     image_color_sub_.subscribe(this->nh_,"/camera/color/image_raw", 1);
     image_depth_sub_.subscribe(this->nh_,"/camera/aligned_depth_to_color/image_raw", 1);
-    this->sync_ = new TimeSynchronizer<Image, Image>(image_color_sub_, image_depth_sub_, 10);
+    this->sync_ = new TimeSynchronizer<Image, Image>(image_color_sub_, image_depth_sub_, 1);
     this->sync_->registerCallback(boost::bind(&Ros_VS::Callback, this, _1, _2));
 }
 
@@ -180,7 +180,25 @@ Mat Ros_VS::Quaternion2Matrix (Mat q)
 }
 
 
-
+void Ros_VS::franka_move_to_target_joint_angle(std::vector<double> joint_group_positions_target)
+{
+    this->move_group_interface_->setJointValueTarget(joint_group_positions_target);
+    this->move_group_interface_->setMaxAccelerationScalingFactor(0.05);
+    this->move_group_interface_->setMaxVelocityScalingFactor(0.05);
+    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    bool success = (this->move_group_interface_->plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    if(success)
+    {
+        std::cout << "Press Enter to move the robot..." << std::endl;
+        std::cin.ignore();
+        this->move_group_interface_->move();
+        std::cout << "Move finish" << std::endl;
+    }
+    else
+    {
+        std::cout << "moveit joint plan fail ! ! !" << std::endl;
+    }
+}
 
 
 

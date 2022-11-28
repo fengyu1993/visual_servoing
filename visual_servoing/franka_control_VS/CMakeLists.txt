@@ -35,9 +35,7 @@ catkin_package(
 )
 
 add_library(franka_control_VS src/ros_VS.cpp 
-                              src/ros_DVS.cpp
-                              src/libfranka/examples_common.cpp 
-                              src/libfranka/franka_control_base.cpp) 
+                              src/ros_DVS.cpp) 
 
 
 include_directories(${THIS_PACKAGE_INCLUDE_DIRS})
@@ -52,7 +50,7 @@ add_executable(franka_control_TM_VS     src/franka_control_TM_VS.cpp)
 add_executable(franka_control_KM_VS     src/franka_control_KM_VS.cpp)
 add_executable(franka_control_HM_VS     src/franka_control_HM_VS.cpp)
 add_executable(save_pose_image          src/save_pose_jointangle_image.cpp)
-add_executable(publish_realsense         src/publish_realsense.cpp)
+add_executable(publish_realsense        src/publish_realsense.cpp)
 
 target_link_libraries(franka_control_DVS    franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
 target_link_libraries(franka_control_DCT_VS franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})

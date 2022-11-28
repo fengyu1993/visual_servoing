@@ -53,12 +53,18 @@ void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr
         }
         // 发布速度信息
         geometry_msgs::Twist camera_Twist;
-        camera_Twist.linear.x = camera_velocity.at<double>(0,0);
-        camera_Twist.linear.y = camera_velocity.at<double>(1,0);
-        camera_Twist.linear.z = camera_velocity.at<double>(2,0);
-        camera_Twist.angular.x = camera_velocity.at<double>(3,0);
-        camera_Twist.angular.y = camera_velocity.at<double>(4,0);
-        camera_Twist.angular.z = camera_velocity.at<double>(5,0);
+        // camera_Twist.linear.x = camera_velocity.at<double>(0,0);
+        // camera_Twist.linear.y = camera_velocity.at<double>(1,0);
+        // camera_Twist.linear.z = camera_velocity.at<double>(2,0);
+        // camera_Twist.angular.x = camera_velocity.at<double>(3,0);
+        // camera_Twist.angular.y = camera_velocity.at<double>(4,0);
+        // camera_Twist.angular.z = camera_velocity.at<double>(5,0);
+        camera_Twist.linear.x = 0.05;
+        camera_Twist.linear.y = 0;
+        camera_Twist.linear.z = 0;
+        camera_Twist.angular.x = 0;
+        camera_Twist.angular.y = 0;
+        camera_Twist.angular.z = 0;
         this->pub_camera_twist_.publish(camera_Twist);
     }
 }
