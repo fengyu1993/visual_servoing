@@ -18,6 +18,7 @@
 #include <map>
 #include <string>
 #include <moveit/move_group_interface/move_group_interface.h>
+#include <thread>
 
 using namespace cv;
 using namespace std;
@@ -68,16 +69,17 @@ class ControlSwitcher
     }
 };
 
-class Ros_VS
+class Ros_VS 
 {
     protected:
         ros::NodeHandle                         nh_; 
         message_filters::Subscriber<Image>      image_color_sub_;
         message_filters::Subscriber<Image>      image_depth_sub_;
         TimeSynchronizer<Image, Image>          *sync_;
-        ros::Publisher                          pub_camera_twist_; 
         tf::TransformListener                   listener_camera_pose_;
         moveit::planning_interface::MoveGroupInterface *move_group_interface_;
+        Mat                                     camera_velocity_base_;
+        ros::Publisher                          pub_camera_twist_; 
 
     public:
         int                 control_rate_;

@@ -27,7 +27,7 @@ using namespace message_filters;
 
 rs2::frame depth_filter(rs2::frame& depth_img);
 Mat hole_fill(Mat& img_depth);
-
+float get_depth_scale(rs2::device dev);
 
 int main(int argc, char** argv)
 {
@@ -48,9 +48,9 @@ int main(int argc, char** argv)
     rs2::pipeline pipe;
     rs2::config cfg;
     rs2::colorizer color_map;
-    cfg.enable_stream(RS2_STREAM_COLOR, resolution_x, resolution_y);
-    cfg.enable_stream(RS2_STREAM_DEPTH, resolution_x, resolution_y);
-    pipe.start(cfg);
+    cfg.enable_stream(RS2_STREAM_COLOR, resolution_x, resolution_y, RS2_FORMAT_BGR8,30);
+    cfg.enable_stream(RS2_STREAM_DEPTH, resolution_x, resolution_y, RS2_FORMAT_Z16,30);
+    rs2::pipeline_profile profile = pipe.start(cfg);
     rs2::align align_to_color(RS2_STREAM_COLOR);
 
     int w_depth, h_depth, w_rgb, h_rgb;
@@ -63,6 +63,7 @@ int main(int argc, char** argv)
         // With the aligned frameset we proceed as usual
         auto depth = frameset_depth.get_depth_frame();
         auto color = frameset_depth.get_color_frame();
+        float depth_scale = get_depth_scale(profile.get_device());
         // filter
         depth = depth_filter(depth);
         // convert
@@ -76,6 +77,10 @@ int main(int argc, char** argv)
         Mat rgb_show;
         cvtColor(img_rgb, rgb_show, COLOR_BGR2RGB);
         img_depth = hole_fill(img_depth);
+        img_depth.convertTo(img_depth, CV_64FC1);
+        img_depth = img_depth * (1000*depth_scale);
+        img_depth.convertTo(img_depth, CV_16UC1);
+        // cout << img_depth.rowRange(1,10).colRange(0,5) << endl;
         // publist
         sensor_msgs::ImagePtr  rgb_show_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", rgb_show).toImageMsg(); 
         sensor_msgs::ImagePtr  depth_show_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_show).toImageMsg(); 
@@ -90,6 +95,20 @@ int main(int argc, char** argv)
     }
 
     return 0;
+}
+
+float get_depth_scale(rs2::device dev)
+{
+    // Go over the device's sensors
+    for (rs2::sensor& sensor : dev.query_sensors())
+    {
+        // Check if the sensor if a depth sensor
+        if (rs2::depth_sensor dpt = sensor.as<rs2::depth_sensor>())
+        {
+            return dpt.get_depth_scale();
+        }
+    }
+    throw std::runtime_error("Device does not have a depth sensor");
 }
 
 rs2::frame depth_filter(rs2::frame& depth_img)

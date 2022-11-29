@@ -28,6 +28,7 @@ Mat T_link0_camera;
 Mat img_rgb;
 Mat img_depth;
 Mat camera_intrinsic;
+float depth_scale;
 
 
 rs2::frame depth_filter(rs2::frame& depth_img);
@@ -43,6 +44,7 @@ void write_data();
 void save_image(rs2::frame color, rs2::frame depth);
 Mat hole_fill(Mat& img_depth);
 Mat save_camera_intrinsic(rs2::stream_profile cprofile);
+float get_depth_scale(rs2::device dev);
 
 int main(int argc, char** argv)
 {
@@ -61,10 +63,10 @@ int main(int argc, char** argv)
     rs2::pipeline pipe;
     rs2::config cfg;
     rs2::colorizer color_map;
-    cfg.enable_stream(RS2_STREAM_COLOR, 640, 480);
-    cfg.enable_stream(RS2_STREAM_DEPTH, 640, 480);
-    pipe.start(cfg);
-    rs2::align align_to_color(RS2_STREAM_COLOR);
+    cfg.enable_stream(RS2_STREAM_COLOR, 640, 480, RS2_FORMAT_BGR8,30);
+    cfg.enable_stream(RS2_STREAM_DEPTH, 640, 480, RS2_FORMAT_Z16,30);
+    rs2::pipeline_profile profile = pipe.start(cfg);
+    rs2::align align_to_color(RS2_STREAM_COLOR); //
 
     cout<< "Press space to save rgb_raw and depth_raw to a file."<<endl;
 
@@ -72,24 +74,36 @@ int main(int argc, char** argv)
     {
         // read image
         rs2::frameset frameset = pipe.wait_for_frames();
-        rs2::frameset frameset_depth = align_to_color.process(frameset);
+        frameset = align_to_color.process(frameset);
         // With the aligned frameset we proceed as usual
-        auto depth = frameset_depth.get_depth_frame();
-        auto color = frameset_depth.get_color_frame();
+        auto depth = frameset.get_depth_frame();
+        auto color = frameset.get_color_frame();
         rs2::stream_profile cprofile =  color.get_profile();
-
         // filter
         depth = depth_filter(depth);
         // show
+        auto colorized_depth = color_map.colorize(depth);
         const int w_depth = depth.as<rs2::depth_frame>().get_width();
         const int h_depth = depth.as<rs2::depth_frame>().get_height();
         const int w_rgb = color.as<rs2::video_frame>().get_width();
         const int h_rgb = color.as<rs2::video_frame>().get_height();
         Mat rgb_show(cv::Size(w_rgb, h_rgb), CV_8UC3, (void*)color.get_data(), cv::Mat::AUTO_STEP);
-        Mat depth_show(cv::Size(w_depth, h_depth), CV_8UC3, (void*)depth.apply_filter(color_map).get_data(), cv::Mat::AUTO_STEP);
+        Mat depth_show(cv::Size(w_depth, h_depth), CV_8UC3, (void*)colorized_depth.get_data(), cv::Mat::AUTO_STEP);
         cvtColor(rgb_show, rgb_show, COLOR_BGR2RGB);
         imshow("Color", rgb_show);
         imshow("Depth", depth_show);
+        depth_scale = get_depth_scale(profile.get_device());
+
+
+    Mat img_depth_temp(cv::Size(w_depth, h_depth), CV_16UC1, (void*)depth.get_data(), cv::Mat::AUTO_STEP);
+    img_depth_temp = hole_fill(img_depth_temp);
+
+    img_depth_temp.convertTo(img_depth_temp, CV_64FC1);
+    img_depth_temp = img_depth_temp * (1000*depth_scale);
+    img_depth_temp.convertTo(img_depth_temp, CV_16UC1);
+
+    cout << "Depth = \n" <<  img_depth_temp.rowRange(1,10).colRange(0,5) << endl;
+
 
         // save
         if((char)waitKey(10) == 32)
@@ -98,14 +112,34 @@ int main(int argc, char** argv)
             save_image(color, depth);
             save_joint_positions(move_group_interface);
             save_camera_pose();
-            write_image();
             write_data();
+            std::cout << "Save data successfully" << endl;
+            std::cout << "Press space to start..." << std::endl;
+            if((char)waitKey() == 32)
+            {
+                write_image();
+                std::cout << "Save image successfully" << endl;
+            }
         }
         loop_rate.sleep();
     }
  
  
     return 0;
+}
+
+float get_depth_scale(rs2::device dev)
+{
+    // Go over the device's sensors
+    for (rs2::sensor& sensor : dev.query_sensors())
+    {
+        // Check if the sensor if a depth sensor
+        if (rs2::depth_sensor dpt = sensor.as<rs2::depth_sensor>())
+        {
+            return dpt.get_depth_scale();
+        }
+    }
+    throw std::runtime_error("Device does not have a depth sensor");
 }
 
 Mat save_camera_intrinsic(rs2::stream_profile cprofile)
@@ -128,6 +162,11 @@ void save_image(rs2::frame color, rs2::frame depth)
     Mat img_rgb_temp(cv::Size(w_rgb, h_rgb), CV_8UC3, (void*)color.get_data(), cv::Mat::AUTO_STEP);
     Mat img_depth_temp(cv::Size(w_depth, h_depth), CV_16UC1, (void*)depth.get_data(), cv::Mat::AUTO_STEP);
     img_depth_temp = hole_fill(img_depth_temp);
+
+    img_depth_temp.convertTo(img_depth_temp, CV_64FC1);
+    img_depth_temp = img_depth_temp * (1000*depth_scale);
+    img_depth_temp.convertTo(img_depth_temp, CV_16UC1);
+
     img_depth_temp.copyTo(img_depth);
     img_rgb_temp.copyTo(img_rgb);
 }
@@ -159,7 +198,7 @@ void write_data()
     oFile.open(excel_name, ios::out|ios::trunc);
     oFile << "joint angle" << endl;
     write_to_excel(joint_group_positions, oFile);
-    oFile << "pose" << endl;
+    oFile << "camera pose" << endl;
     write_to_excel(T_link0_camera, oFile);
     oFile << "camera_intrinsic" << endl;
     write_to_excel(camera_intrinsic, oFile);
@@ -179,8 +218,8 @@ void save_camera_pose()
 {
     tf::TransformListener listener;
     tf::StampedTransform transform;
-    listener.waitForTransform("panda_link0", "camera_link", ros::Time(0), ros::Duration(3.0));
-    listener.lookupTransform("panda_link0", "camera_link", ros::Time(0), transform);
+    listener.waitForTransform("panda_link0", "camera_color_optical_frame", ros::Time(0), ros::Duration(3.0));
+    listener.lookupTransform("panda_link0", "camera_color_optical_frame", ros::Time(0), transform);
     T_link0_camera = get_T(transform);
     cout << "T_link0_camera = \n" << T_link0_camera << endl;
 }

@@ -63,8 +63,8 @@ void Ros_DCT_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConst
         // camera_Twist.angular.x = camera_velocity.at<double>(3,0);
         // camera_Twist.angular.y = camera_velocity.at<double>(4,0);
         // camera_Twist.angular.z = camera_velocity.at<double>(5,0);
-        camera_Twist.linear.x = 0.05;
-        camera_Twist.linear.y = 0;
+        camera_Twist.linear.x = 0;
+        camera_Twist.linear.y = -0.02;
         camera_Twist.linear.z = 0;
         camera_Twist.angular.x = 0;
         camera_Twist.angular.y = 0;

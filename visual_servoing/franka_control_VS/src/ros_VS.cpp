@@ -12,7 +12,7 @@ Ros_VS::Ros_VS()
 
     this->pub_camera_twist_ = this->nh_.advertise<geometry_msgs::Twist>("/cartesian_velocity_node_controller/cartesian_velocity", 5);
 
-    this->start_VS = true;
+    this->start_VS = false;
 }
 
 void Ros_VS::initialize_time_sync()
@@ -34,6 +34,8 @@ void Ros_VS::get_parameters_VS(double& lambda, double& epsilon, Mat& image_gray_
     // 基本参数
     this->nh_.getParam("lambda", lambda);
     this->nh_.getParam("epsilon", epsilon);
+    cout << "lambda" << lambda << endl;
+    cout << "epsilon" << epsilon << endl;
     // 图像参数
     string loaction, name;
     this->nh_.getParam("resource_location", loaction);
@@ -83,8 +85,8 @@ void Ros_VS::get_image_data_convert(const ImageConstPtr& image_color_msg, const 
 Mat Ros_VS::get_camera_pose()
 {
     tf::StampedTransform transform;
-    this->listener_camera_pose_.waitForTransform("panda_link0", "camera_link", ros::Time(0), ros::Duration(3.0));
-    this->listener_camera_pose_.lookupTransform("panda_link0", "camera_link", ros::Time(0), transform);
+    this->listener_camera_pose_.waitForTransform("panda_link0", "camera_color_optical_frame", ros::Time(0), ros::Duration(3.0));
+    this->listener_camera_pose_.lookupTransform("panda_link0", "camera_color_optical_frame", ros::Time(0), transform);
     Mat T = get_T(transform);
     return T;
 }
@@ -209,12 +211,3 @@ void Ros_VS::franka_move_to_target_joint_angle(std::vector<double> joint_group_p
 }
 
 
-
-
-
-    // imshow("desired_color", image_rgb_desired);
-    // imshow("desired_gray", image_gray_desired);
-    // imshow("initial_color", image_rgb_initial);
-    // imshow("initial_gray", image_gray_initial);
-    // imshow("desired_depth", image_depth_desired);
-    // waitKey();

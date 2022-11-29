@@ -25,10 +25,11 @@ int main(int argc, char** argv)
     DVS_control.control_switcher_.switch_controllers("velocity", "moveit");
     // 视觉伺服控制
     spinner.stop();
-    DVS_control.initialize_time_sync();
     cout << "Start visual servoing control ... " << endl;
     cout << "Press Enter to start..." << endl;
     cin.ignore();
+    DVS_control.initialize_time_sync();
+    DVS_control.start_VS = true;
     ros::Rate loop_rate(DVS_control.control_rate_);
     int num = 0;
     while (ros::ok())
@@ -45,12 +46,12 @@ int main(int argc, char** argv)
         }catch(...){
             return 1;
         }
-        num++;
-        if(num > 5)
-        {
-            DVS_control.start_VS = false;
-            break;
-        }
+        // num++;
+        // if(num > 10)
+        // {
+        //     DVS_control.start_VS = false;
+        //     break;
+        // }
     }
     // 转换控制器
     cout << "Move to work position ... " << endl;

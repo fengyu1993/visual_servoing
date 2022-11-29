@@ -50,6 +50,9 @@ Mat Visual_Servoing::get_camera_velocity()
 bool Visual_Servoing::is_success()
 {
 	Mat error_ave = this->error_s_.t() * this->error_s_ / (this->error_s_.rows*this->error_s_.cols);
+
+	cout << "error = " << 	error_ave.at<double>(0,0) << endl;
+	
 	if(error_ave.at<double>(0,0) < this->epsilon_)
 	{
 		cout << "Visual Servoing Success" << endl;
