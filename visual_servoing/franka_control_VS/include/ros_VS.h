@@ -87,6 +87,7 @@ class Ros_VS
         Mat                 joint_angle_initial_;
         bool                start_VS;
         ControlSwitcher     control_switcher_;
+
     public:
         Ros_VS();
         void initialize_time_sync();

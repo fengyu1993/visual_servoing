@@ -89,7 +89,6 @@ int main(int argc, char** argv)
         const int h_rgb = color.as<rs2::video_frame>().get_height();
         Mat rgb_show(cv::Size(w_rgb, h_rgb), CV_8UC3, (void*)color.get_data(), cv::Mat::AUTO_STEP);
         Mat depth_show(cv::Size(w_depth, h_depth), CV_8UC3, (void*)colorized_depth.get_data(), cv::Mat::AUTO_STEP);
-        cvtColor(rgb_show, rgb_show, COLOR_BGR2RGB);
         imshow("Color", rgb_show);
         imshow("Depth", depth_show);
         depth_scale = get_depth_scale(profile.get_device());

@@ -71,11 +71,9 @@ int main(int argc, char** argv)
         h_depth = depth.as<rs2::video_frame>().get_height();
         w_rgb = color.as<rs2::video_frame>().get_width();
         h_rgb = color.as<rs2::video_frame>().get_height();
-        Mat img_rgb(cv::Size(w_rgb, h_rgb), CV_8UC3, (void*)color.get_data(), cv::Mat::AUTO_STEP);
+        Mat rgb_show(cv::Size(w_rgb, h_rgb), CV_8UC3, (void*)color.get_data(), cv::Mat::AUTO_STEP);
         Mat depth_show(cv::Size(w_depth, h_depth), CV_8UC3, (void*)depth.apply_filter(color_map).get_data(), cv::Mat::AUTO_STEP);
         Mat img_depth(cv::Size(w_depth, h_depth), CV_16UC1, (void*)depth.get_data(), cv::Mat::AUTO_STEP);
-        Mat rgb_show;
-        cvtColor(img_rgb, rgb_show, COLOR_BGR2RGB);
         img_depth = hole_fill(img_depth);
         img_depth.convertTo(img_depth, CV_64FC1);
         img_depth = img_depth * (1000*depth_scale);
@@ -84,7 +82,7 @@ int main(int argc, char** argv)
         // publist
         sensor_msgs::ImagePtr  rgb_show_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", rgb_show).toImageMsg(); 
         sensor_msgs::ImagePtr  depth_show_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_show).toImageMsg(); 
-        sensor_msgs::ImagePtr  rgb_raw_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", img_rgb).toImageMsg(); 
+        sensor_msgs::ImagePtr  rgb_raw_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", rgb_show).toImageMsg(); 
         sensor_msgs::ImagePtr  depth_raw_msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", img_depth).toImageMsg(); 
         image_color_show_pub.publish(rgb_show_msg);
         image_depth_show_pub.publish(depth_show_msg);

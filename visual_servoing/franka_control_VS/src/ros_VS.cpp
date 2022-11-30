@@ -34,8 +34,6 @@ void Ros_VS::get_parameters_VS(double& lambda, double& epsilon, Mat& image_gray_
     // 基本参数
     this->nh_.getParam("lambda", lambda);
     this->nh_.getParam("epsilon", epsilon);
-    cout << "lambda" << lambda << endl;
-    cout << "epsilon" << epsilon << endl;
     // 图像参数
     string loaction, name;
     this->nh_.getParam("resource_location", loaction);

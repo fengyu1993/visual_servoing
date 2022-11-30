@@ -38,9 +38,17 @@ void Ros_DCT_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConst
         }
 
         Mat camera_velocity = this->DCT_VS->get_camera_velocity();
-        cout << "camera_velocity = " << camera_velocity.t() << endl;
-        
         this->DCT_VS->save_data(camera_pose);
+        
+        // ROS_INFO("cyh");  
+        // cout << "img_old = \n" <<  img_old.rowRange(0,10).colRange(0,5) << endl;
+        // cout << "img_new = \n" <<  img_new.rowRange(0,10).colRange(0,5) << endl;
+        // cout << "depth_old = \n" <<  depth_old.rowRange(0,10).colRange(0,5) << endl;
+        // cout << "depth_new = \n" <<  depth_new.rowRange(0,10).colRange(0,5) << endl;
+        // cout << "camera_velocity = \n" << camera_velocity << endl;
+        cout << "iteration_num = " << this->DCT_VS->iteration_num << endl;
+        cout << "error = " << ((double)*(this->DCT_VS->data_dom.error_pixel_ave_.end<double>() - 1)) << endl;
+        
         // 判断是否成功并做速度转换
         if(this->DCT_VS->is_success())
         {
@@ -53,22 +61,17 @@ void Ros_DCT_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConst
         {
             this->flag_success_ = false;
             // 速度转换
-            camera_velocity = velocity_camera_to_base(camera_velocity, camera_pose);
+            this->camera_velocity_base_ = velocity_camera_to_base(camera_velocity, camera_pose);
         }
+
         // 发布速度信息
         geometry_msgs::Twist camera_Twist;
-        // camera_Twist.linear.x = camera_velocity.at<double>(0,0);
-        // camera_Twist.linear.y = camera_velocity.at<double>(1,0);
-        // camera_Twist.linear.z = camera_velocity.at<double>(2,0);
-        // camera_Twist.angular.x = camera_velocity.at<double>(3,0);
-        // camera_Twist.angular.y = camera_velocity.at<double>(4,0);
-        // camera_Twist.angular.z = camera_velocity.at<double>(5,0);
-        camera_Twist.linear.x = 0;
-        camera_Twist.linear.y = -0.02;
-        camera_Twist.linear.z = 0;
-        camera_Twist.angular.x = 0;
-        camera_Twist.angular.y = 0;
-        camera_Twist.angular.z = 0;
+        camera_Twist.linear.x = this->camera_velocity_base_.at<double>(0,0);
+        camera_Twist.linear.y = this->camera_velocity_base_.at<double>(1,0);
+        camera_Twist.linear.z = this->camera_velocity_base_.at<double>(2,0);
+        camera_Twist.angular.x = this->camera_velocity_base_.at<double>(3,0);
+        camera_Twist.angular.y = this->camera_velocity_base_.at<double>(4,0);
+        camera_Twist.angular.z = this->camera_velocity_base_.at<double>(5,0);
         this->pub_camera_twist_.publish(camera_Twist);
     }
 }

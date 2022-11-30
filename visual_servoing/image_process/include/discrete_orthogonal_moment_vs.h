@@ -15,7 +15,7 @@ using namespace std;
 
 class Discrete_Orthogonal_Moment_VS: public Direct_Visual_Servoing
 {
-    protected:
+    public:
         int N_;
         int M_;
         int order_min_;
