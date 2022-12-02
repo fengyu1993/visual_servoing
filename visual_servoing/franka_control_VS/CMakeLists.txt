@@ -58,6 +58,8 @@ add_executable(franka_control_KM_VS     src/franka_control_KM_VS.cpp)
 add_executable(franka_control_HM_VS     src/franka_control_HM_VS.cpp)
 add_executable(save_pose_image          src/save_pose_jointangle_image.cpp)
 add_executable(publish_realsense        src/publish_realsense.cpp)
+add_executable(franka_control_keyboard  src/franka_control_keyboard.cpp)
+
 
 target_link_libraries(franka_control_DVS    franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
 target_link_libraries(franka_control_DCT_VS franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
@@ -66,6 +68,7 @@ target_link_libraries(franka_control_KM_VS  franka_control_VS ${catkin_LIBRARIES
 target_link_libraries(franka_control_HM_VS  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
 target_link_libraries(save_pose_image  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY}) 
 target_link_libraries(publish_realsense  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY}) 
+target_link_libraries(franka_control_keyboard  franka_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY}) 
 
 
 install(TARGETS franka_control_DVS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
@@ -75,5 +78,7 @@ install(TARGETS franka_control_KM_VS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATIO
 install(TARGETS franka_control_HM_VS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(TARGETS save_pose_image DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(TARGETS publish_realsense DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+install(TARGETS franka_control_keyboard DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 
 install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

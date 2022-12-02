@@ -163,8 +163,11 @@ string Discrete_Orthogonal_Moment_VS::get_method_name()
 // 判断是否伺服成功
 bool Discrete_Orthogonal_Moment_VS::is_success()
 {
-	Mat error_ave = this->error_s_.t() * this->error_s_ / (this->error_s_.rows*this->error_s_.cols);
-	if(error_ave.at<double>(0,0) < this->epsilon_)
+    double error_ave = ((double)*(this->data_dom.error_pixel_ave_.end<double>() - 1));
+
+    // cout << "error_ave = " << error_ave << endl;
+
+    if(error_ave < this->epsilon_)
 	{
 		cout << "Visual Servoing Success" << endl;
 		return true;

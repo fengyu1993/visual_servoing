@@ -82,7 +82,7 @@ class Ros_VS
         ros::Publisher                          pub_camera_twist_; 
 
     public:
-        int                 control_rate_;
+        double              control_rate_;
         bool                flag_success_;
         Mat                 joint_angle_initial_;
         bool                start_VS;

@@ -25,12 +25,12 @@ int main(int argc, char** argv)
     HM_VS_control.control_switcher_.switch_controllers("velocity", "moveit");
     // 视觉伺服控制
     spinner.stop();
-    HM_VS_control.initialize_time_sync();
     cout << "Start visual servoing control ... " << endl;
     cout << "Press Enter to start..." << endl;
     cin.ignore();
+    HM_VS_control.initialize_time_sync();
+    HM_VS_control.start_VS = true;
     ros::Rate loop_rate(HM_VS_control.control_rate_);
-    int num = 0;
     while (ros::ok())
     {
         try{
@@ -44,12 +44,6 @@ int main(int argc, char** argv)
             }
         }catch(...){
             return 1;
-        }
-        num++;
-        if(num > 5)
-        {
-            HM_VS_control.start_VS = false;
-            break;
         }
     }
     // 转换控制器

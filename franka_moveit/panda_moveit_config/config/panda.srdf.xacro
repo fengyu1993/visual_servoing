@@ -23,5 +23,6 @@
         <!-- old end-effector -->
         <end_effector name="$(arg arm_id)_hand" parent_link="$(arg arm_id)_link8" group="$(arg arm_id)_hand" parent_group="$(arg arm_id)_arm" />
     </xacro:if>
+    <xacro:include filename="$(find realsense2_description)/urdf/_l515.urdf.xacro" />
 
 </robot>

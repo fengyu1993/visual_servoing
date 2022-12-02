@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<launch>
+
+<arg name="robot_ip" default="172.16.0.2" />
+<arg name="load_gripper" default="true" />
+
+<include file="$(dirname)/franka_control.launch" >
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+</include>
+<include file="$(dirname)/camera_calibration.launch" />
+
+<include file="$(find franka_control_wrappers)/launch/cartesian_velocity_controller.launch">
+    <arg name="stopped" value="true" />
+</include>
+
+<node name="franka_control_keyboard" pkg="franka_control_VS"  type="franka_control_keyboard"  output="screen"/>
+
+</launch>

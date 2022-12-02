@@ -31,7 +31,6 @@ int main(int argc, char** argv)
     DCT_VS_control.initialize_time_sync();
     DCT_VS_control.start_VS = true;
     ros::Rate loop_rate(DCT_VS_control.control_rate_);
-    int num = 0;
     while (ros::ok())
     {
         try{

@@ -16,8 +16,7 @@ Ros_DCT_VS::Ros_DCT_VS() : Ros_VS()
 void Ros_DCT_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg)
 {
     if(this->start_VS)
-    {
-        ROS_INFO("cyh");        
+    {     
         // 数据转换
         Mat depth_new, img_new;
         get_image_data_convert(image_color_msg, image_depth_msg, img_new, depth_new);
@@ -46,15 +45,15 @@ void Ros_DCT_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConst
         // cout << "depth_old = \n" <<  depth_old.rowRange(0,10).colRange(0,5) << endl;
         // cout << "depth_new = \n" <<  depth_new.rowRange(0,10).colRange(0,5) << endl;
         // cout << "camera_velocity = \n" << camera_velocity << endl;
-        cout << "iteration_num = " << this->DCT_VS->iteration_num << endl;
-        cout << "error = " << ((double)*(this->DCT_VS->data_dom.error_pixel_ave_.end<double>() - 1)) << endl;
+        ROS_INFO("iteration_num = %i", this->DCT_VS->iteration_num);
+        ROS_INFO("error = %f", ((double)*(this->DCT_VS->data_dom.error_pixel_ave_.end<double>() - 1)));
         
         // 判断是否成功并做速度转换
         if(this->DCT_VS->is_success())
         {
             this->flag_success_ = true;
             this->DCT_VS->write_data();  
-            camera_velocity = 0 * camera_velocity;
+            this->camera_velocity_base_ = 0 * camera_velocity;
             this->start_VS = false;
         }
         else

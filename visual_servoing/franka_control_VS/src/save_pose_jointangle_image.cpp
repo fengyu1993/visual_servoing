@@ -65,6 +65,8 @@ int main(int argc, char** argv)
     rs2::colorizer color_map;
     cfg.enable_stream(RS2_STREAM_COLOR, 640, 480, RS2_FORMAT_BGR8,30);
     cfg.enable_stream(RS2_STREAM_DEPTH, 640, 480, RS2_FORMAT_Z16,30);
+    // cfg.enable_stream(RS2_STREAM_COLOR, 424, 240, RS2_FORMAT_BGR8,15);
+    // cfg.enable_stream(RS2_STREAM_DEPTH, 424, 240, RS2_FORMAT_Z16,15);
     rs2::pipeline_profile profile = pipe.start(cfg);
     rs2::align align_to_color(RS2_STREAM_COLOR); //
 
