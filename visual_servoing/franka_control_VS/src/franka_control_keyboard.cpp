@@ -17,7 +17,7 @@
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <thread>
 #include "ros_VS.h"
-// <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find realsense2_description)/urdf/test_l515_camera.urdf.xacro' use_nominal_extrinsics:=true add_plug:=true use_mesh:=true" />
+
 using namespace cv;
 using namespace std;
 using namespace sensor_msgs;
@@ -26,7 +26,7 @@ void franka_move_to_target_joint_angle(moveit::planning_interface::MoveGroupInte
 void get_camera_pose(Mat& camera_to_base, Mat& effector_to_camera);
 Mat get_T(tf::StampedTransform  transform);
 Mat Quaternion2Matrix (Mat q);
-Mat velocity_effector_to_base(Mat& velocity, Mat& camera_to_base, Mat& effector_to_camera);
+Mat velocity_camera_to_base(Mat velocity, Mat camera_to_base);
 int scanKeyboard();
 Mat cross_w(Mat& w);
 
@@ -117,8 +117,8 @@ int main(int argc, char** argv)
         Mat effector_to_camera = Mat::eye(4, 4, CV_64F);
         get_camera_pose(camera_to_base, effector_to_camera);
         
-        Mat effector_velocity_base = velocity_effector_to_base(camera_velocity, camera_to_base, effector_to_camera);
-        // Mat effector_velocity_base = camera_velocity;
+        Mat effector_velocity_base = velocity_camera_to_base(camera_velocity, camera_to_base);
+
         // 发布速度信息
         // cout << "effector_velocity_base = \n" << effector_velocity_base << endl;
         geometry_msgs::Twist effector_Twist;
@@ -226,31 +226,12 @@ Mat Quaternion2Matrix (Mat q)
  
   return cv::Mat(3,3,CV_64FC1,ret).clone();    
 }
-
-Mat velocity_effector_to_base(Mat& velocity, Mat& camera_to_base, Mat& effector_to_camera)
+Mat velocity_camera_to_base(Mat velocity, Mat camera_to_base)
 {
     Mat R_camera_to_base = camera_to_base.rowRange(0,3).colRange(0,3);
-    Mat p_camera_to_base = camera_to_base.rowRange(0,3).colRange(3,4);
-    Mat p_cross = cross_w(p_camera_to_base);
-    Mat AdT_camera_to_base = Mat::zeros(6,6,CV_64FC1);
-    R_camera_to_base.copyTo(AdT_camera_to_base.rowRange(0,3).colRange(0,3));
-    R_camera_to_base.copyTo(AdT_camera_to_base.rowRange(3,6).colRange(3,6));
-    AdT_camera_to_base.rowRange(0,3).colRange(3,6) = p_cross * R_camera_to_base;
-    Mat V_camera_to_base = AdT_camera_to_base * velocity;
-    Mat v_camera_to_base = V_camera_to_base.rowRange(0,3).colRange(0,1);
-    Mat w_camera_to_base = V_camera_to_base.rowRange(3,6).colRange(0,1);
-    
-
     Mat V_effector_to_base = Mat::zeros(6,1,CV_64FC1);
-    w_camera_to_base.copyTo(V_effector_to_base.rowRange(3,6).colRange(0,1));
-    Mat cross_w_camera_to_base = cross_w(w_camera_to_base);
-    Mat p_effector_to_camera = effector_to_camera.rowRange(0,3).colRange(3,4);
-    V_effector_to_base.rowRange(0,3).colRange(0,1) = v_camera_to_base + cross_w_camera_to_base * R_camera_to_base * p_effector_to_camera;
-
-    cout << "camera_to_base = \n" << camera_to_base << endl;
-    cout << "velocity = \n" << velocity.t() << endl;
-    cout << "effector_to_camera = \n" << effector_to_camera << endl;
-    cout << "V_effector_to_base = \n" << V_effector_to_base.t() << endl;
+    V_effector_to_base.rowRange(0,3).colRange(0,1) = R_camera_to_base * velocity.rowRange(0,3).colRange(0,1);
+    V_effector_to_base.rowRange(3,6).colRange(0,1) = R_camera_to_base * velocity.rowRange(3,6).colRange(0,1);
 
     return V_effector_to_base;
 }
@@ -272,3 +253,27 @@ Mat cross_w(Mat& w)
     // std::cout << "matrix  = \n" << matrix[0][0] << "\t" << matrix[0][1] << "\t" << matrix[0][2] << "\n"
     //         << matrix[1][0] << "\t" << matrix[1][1] << "\t" << matrix[1][2] << "\n"
     //         << matrix[2][0] << "\t" << matrix[2][1] << "\t" << matrix[2][2] << "\n\n";
+
+
+
+    // Mat R_camera_to_base = camera_to_base.rowRange(0,3).colRange(0,3);
+    // Mat p_camera_to_base = camera_to_base.rowRange(0,3).colRange(3,4);
+    // Mat p_cross = cross_w(p_camera_to_base);
+    // Mat AdT_camera_to_base = Mat::zeros(6,6,CV_64FC1);
+    // R_camera_to_base.copyTo(AdT_camera_to_base.rowRange(0,3).colRange(0,3));
+    // R_camera_to_base.copyTo(AdT_camera_to_base.rowRange(3,6).colRange(3,6));
+    // AdT_camera_to_base.rowRange(0,3).colRange(3,6) = p_cross * R_camera_to_base;
+    // Mat V_camera_to_base = AdT_camera_to_base * velocity;
+    // Mat v_camera_to_base = V_camera_to_base.rowRange(0,3).colRange(0,1);
+    // Mat w_camera_to_base = V_camera_to_base.rowRange(3,6).colRange(0,1);
+    
+
+    // Mat V_effector_to_base = Mat::zeros(6,1,CV_64FC1);
+    // w_camera_to_base.copyTo(V_effector_to_base.rowRange(3,6).colRange(0,1));
+    // Mat cross_w_camera_to_base = cross_w(w_camera_to_base);
+    // Mat p_effector_to_camera = effector_to_camera.rowRange(0,3).colRange(3,4);
+    // V_effector_to_base.rowRange(0,3).colRange(0,1) = v_camera_to_base + cross_w_camera_to_base * R_camera_to_base * p_effector_to_camera;
+    // cout << "camera_to_base = \n" << camera_to_base << endl;
+    // cout << "velocity = \n" << velocity.t() << endl;
+    // cout << "effector_to_camera = \n" << effector_to_camera << endl;
+    // cout << "V_effector_to_base = \n" << V_effector_to_base.t() << endl;

@@ -380,7 +380,7 @@ Visualization Manager:
         panda_NE:
           Value: false
         panda_hand:
-          Value: true
+          Value: false
         panda_hand_sc:
           Value: false
         panda_hand_tcp:

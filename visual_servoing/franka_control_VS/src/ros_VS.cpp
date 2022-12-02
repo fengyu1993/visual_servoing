@@ -91,16 +91,22 @@ Mat Ros_VS::get_camera_pose()
 
 Mat Ros_VS::velocity_camera_to_base(Mat velocity, Mat pose)
 {
-    Mat R = pose.rowRange(0,3).colRange(0,3);
-    Mat p = pose.rowRange(0,3).colRange(3,4);
-    double xa = p.at<double>(0,0), ya = p.at<double>(1,0), za = p.at<double>(2,0);
-    Mat p_cross = (Mat_<double>(3,3)<< 0.0, -za, ya, za, 0.0, -xa, -ya, xa, 0.0);
-    Mat AdT = Mat::zeros(6,6,CV_64FC1);
-    R.copyTo(AdT.rowRange(0,3).colRange(0,3));
-    R.copyTo(AdT.rowRange(3,6).colRange(3,6));
-    AdT.rowRange(0,3).colRange(3,6) = p_cross * R;
-    Mat V = AdT * velocity;
-    return V;
+    Mat R_camera_to_base = pose.rowRange(0,3).colRange(0,3);
+    Mat V_effector_to_base = Mat::zeros(6,1,CV_64FC1);
+    V_effector_to_base.rowRange(0,3).colRange(0,1) = R_camera_to_base * velocity.rowRange(0,3).colRange(0,1);
+    V_effector_to_base.rowRange(3,6).colRange(0,1) = R_camera_to_base * velocity.rowRange(3,6).colRange(0,1);
+
+    return V_effector_to_base;
+
+    // Mat p = pose.rowRange(0,3).colRange(3,4);
+    // double xa = p.at<double>(0,0), ya = p.at<double>(1,0), za = p.at<double>(2,0);
+    // Mat p_cross = (Mat_<double>(3,3)<< 0.0, -za, ya, za, 0.0, -xa, -ya, xa, 0.0);
+    // Mat AdT = Mat::zeros(6,6,CV_64FC1);
+    // R.copyTo(AdT.rowRange(0,3).colRange(0,3));
+    // R.copyTo(AdT.rowRange(3,6).colRange(3,6));
+    // AdT.rowRange(0,3).colRange(3,6) = p_cross * R;
+    // Mat V = AdT * velocity;
+    // return V;
 }
 
 Mat Ros_VS::get_parameter_Matrix(string str, int row, int col)

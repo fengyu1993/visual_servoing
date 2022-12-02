@@ -40,7 +40,7 @@ Mat Visual_Servoing::get_camera_velocity()
 {
     Mat L_e_inv;
 	this->iteration_num++;
-    get_feature_error_interaction_matrix();
+    get_feature_error_interaction_matrix(); 
     invert(this->L_e_, L_e_inv, DECOMP_SVD);
     this->camera_velocity_ = -this->lambda_ * L_e_inv * this->error_s_;
     return this->camera_velocity_;

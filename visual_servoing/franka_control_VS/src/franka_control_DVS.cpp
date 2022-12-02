@@ -31,6 +31,7 @@ int main(int argc, char** argv)
     DVS_control.initialize_time_sync();
     DVS_control.start_VS = true;
     ros::Rate loop_rate(DVS_control.control_rate_);
+    int num = 0; 
     while (ros::ok())
     {
         try{

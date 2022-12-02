@@ -23,7 +23,7 @@ void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr
         this->DVS->set_image_gray_current(img_new); 
         // 准备
         if(this->DVS->flag_first)
-        {
+        {  
             double lambda, epsilon;
             Mat img_old, depth_old, camera_intrinsic, pose_desired;
             // 获取参数
@@ -32,7 +32,8 @@ void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr
             this->DVS->flag_first = false;
         }
 
-        Mat camera_velocity= this->DVS->get_camera_velocity();
+        Mat camera_velocity = this->DVS->get_camera_velocity(); 
+
         this->DVS->save_data(camera_pose);
         // ROS_INFO("cyh");  
         // cout << "img_old = \n" <<  img_old.rowRange(0,10).colRange(0,5) << endl;
