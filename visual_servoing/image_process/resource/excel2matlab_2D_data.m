@@ -12,6 +12,12 @@ error_pixel_ave_name = "error pixel ave";
 order_name = "order";
 pxy_name = ["px", "py"];
 abxy_name = ["ax", "bx", "ay", "by"];
+%% 读取DVS_data
+[~, ~, DVS_data] = xlsread(location_name+'DVS_data_2D.xlsx');
+DVS_camera_velocity = get_camera_velocity_data(DVS_data, camera_velocity_name, camera_pose_name);
+DVS_camera_pose = get_camera_pose_data(DVS_data, camera_pose_name, camera_desired_pose_name);
+DVS_camera_desired_pose = get_camera_desired_pose_data(DVS_data, camera_desired_pose_name, error_feature_ave_name);
+DVS_error_feature = get_camera_error_feature_data(DVS_data, error_feature_ave_name, error_pixel_ave_name);
 %% 读取DCT_VS_data
 [~, ~, DCT_VS_data] = xlsread(location_name+'DCT_VS_data_2D.xlsx');
 DCT_VS_camera_velocity = get_camera_velocity_data(DCT_VS_data, camera_velocity_name, camera_pose_name);
@@ -50,6 +56,7 @@ HM_VS_abxy = get_camera_HM_abxy_data(HM_VS_data, abxy_name);
 image_rgb_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_rgb_desired.png");
 image_rgb_init = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_rgb_init.png");
 %% 保存数据
+save("DVS_experience_data_2D.mat", "DVS_camera_velocity", "DVS_camera_pose", "DVS_camera_desired_pose", "DVS_error_feature");
 save("DCT_VS_experience_data_2D.mat", "DCT_VS_camera_velocity", "DCT_VS_camera_pose", "DCT_VS_camera_desired_pose", "DCT_VS_error_feature", "DCT_VS_error_pixel", "DCT_VS_order");
 save("TM_VS_experience_data_2D.mat", "TM_VS_camera_velocity", "TM_VS_camera_pose", "TM_VS_camera_desired_pose", "TM_VS_error_feature", "TM_VS_error_pixel", "TM_VS_order");
 save("KM_VS_experience_data_2D.mat", "KM_VS_camera_velocity", "KM_VS_camera_pose", "KM_VS_camera_desired_pose", "KM_VS_error_feature", "KM_VS_error_pixel", "KM_VS_order", "KM_VS_pxy");
@@ -85,6 +92,9 @@ end
 function error_feature = get_camera_error_feature_data(data, name_begin, name_end)
     [row_begin, ~] = find(strcmp(data, name_begin));
     [row_end, ~] = find(strcmp(data, name_end));
+    if isempty(row_end)
+        row_end = size(data, 1);
+    end
     error_feature = cell2mat(data(row_begin+1:row_end-1, 1));
 end
 
