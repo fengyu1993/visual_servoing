@@ -46,11 +46,17 @@ HM_VS_error_feature = get_camera_error_feature_data(HM_VS_data, error_feature_av
 HM_VS_error_pixel = get_camera_error_pixel_data(HM_VS_data, error_pixel_ave_name, order_name);
 HM_VS_order = get_camera_order_data(HM_VS_data, order_name, abxy_name(1));
 HM_VS_abxy = get_camera_HM_abxy_data(HM_VS_data, abxy_name);
+%% 读取图像
+image_rgb_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_rgb_desired.png");
+image_rgb_init = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_rgb_init.png");
 %% 保存数据
 save("DCT_VS_experience_data_2D.mat", "DCT_VS_camera_velocity", "DCT_VS_camera_pose", "DCT_VS_camera_desired_pose", "DCT_VS_error_feature", "DCT_VS_error_pixel", "DCT_VS_order");
 save("TM_VS_experience_data_2D.mat", "TM_VS_camera_velocity", "TM_VS_camera_pose", "TM_VS_camera_desired_pose", "TM_VS_error_feature", "TM_VS_error_pixel", "TM_VS_order");
 save("KM_VS_experience_data_2D.mat", "KM_VS_camera_velocity", "KM_VS_camera_pose", "KM_VS_camera_desired_pose", "KM_VS_error_feature", "KM_VS_error_pixel", "KM_VS_order", "KM_VS_pxy");
 save("HM_VS_experience_data_2D.mat", "HM_VS_camera_velocity", "HM_VS_camera_pose", "HM_VS_camera_desired_pose", "HM_VS_error_feature", "HM_VS_error_pixel", "HM_VS_order", "HM_VS_abxy");
+imwrite(image_rgb_desired, "image_rgb_desired.png");
+imwrite(image_rgb_init, "image_rgb_init.png");
+
 
 
 
@@ -65,14 +71,14 @@ end
 function camera_pose = get_camera_pose_data(data, name_begin, name_end)
     [row_begin, ~] = find(strcmp(data, name_begin));
     [row_end, ~] = find(strcmp(data, name_end));
-    camera_pose = cell2mat(data(row_begin+1:row_end-1, 1:7));
+    camera_pose = cell2mat(data(row_begin+1:row_end-1, 1:4));
 end
 
 %% 读取期望位姿
 function camera_desired_pose = get_camera_desired_pose_data(data, name_begin, name_end)
     [row_begin, ~] = find(strcmp(data, name_begin));
     [row_end, ~] = find(strcmp(data, name_end));
-    camera_desired_pose = cell2mat(data(row_begin+1:row_end-1, 1:7));    
+    camera_desired_pose = cell2mat(data(row_begin+1:row_end-1, 1:4));    
 end
 
 %% 读取特征平均误差

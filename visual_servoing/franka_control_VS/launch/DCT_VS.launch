@@ -21,4 +21,8 @@
 
 <node name="DCT_VS" pkg="franka_control_VS"  type="franka_control_DCT_VS"  output="screen"/>
 
+<!-- <node name="rosbag_record" pkg="franka_control_VS"  type="rosbag_record"  output="screen"/> -->
+
+<node pkg="rosbag" type="record" name="bag_record" args="/camera/color/image_raw -o /home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/data/DCT_VS.bag"/>
+
 </launch>

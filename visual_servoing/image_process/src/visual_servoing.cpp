@@ -149,7 +149,7 @@ void Visual_Servoing::save_data_error_feature()
 // 保存相机位姿
 void Visual_Servoing::save_data_camera_pose(Mat& pose)
 {
-    this->data_vs.pose_.push_back(pose.t());
+    this->data_vs.pose_.push_back(pose);
 }
 
 // 保存所有数据
@@ -189,7 +189,7 @@ void Visual_Servoing::write_visual_servoing_data(ofstream& oFile)
     oFile << "camera pose" << endl;
     write_to_excel(this->data_vs.pose_, oFile);
     oFile << "camera desired pose" << endl;
-    write_to_excel(this->data_vs.pose_desired_.t(), oFile);   
+    write_to_excel(this->data_vs.pose_desired_, oFile);   
     oFile << "error feature" << endl;
     write_to_excel(this->data_vs.error_feature_, oFile);
 }

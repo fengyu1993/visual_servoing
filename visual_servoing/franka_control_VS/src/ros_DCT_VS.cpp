@@ -47,7 +47,7 @@ void Ros_DCT_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConst
         // cout << "camera_velocity = \n" << camera_velocity << endl;
         ROS_INFO("iteration_num = %i", this->DCT_VS->iteration_num);
         ROS_INFO("error = %f", ((double)*(this->DCT_VS->data_dom.error_pixel_ave_.end<double>() - 1)));
-        
+
         // 判断是否成功并做速度转换
         if(this->DCT_VS->is_success())
         {

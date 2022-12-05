@@ -2,7 +2,7 @@
 resolution_x:   640
 resolution_y:   480
 epsilon:        5.0e-4
-lambda:         0.01
+lambda:         0.03
 control_rate:   2
 resource_location:         "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/"
 image_rgb_desired_name:    "image_rgb_desired.png"
@@ -10,13 +10,15 @@ image_depth_desired_name:  "image_depth_desired.png"
 camera_intrinsic: [ 605.689, 0.0, 324.855, 
                     0.0, 606.215, 236.483, 
                     0.0, 0.0, 1.0]
-pose_desired: [-0.0862011, -0.979069, -0.184374, 0.452023,
--0.992931, 0.0692719, 0.0963793, -0.0439182,
--0.08159, 0.191379, -0.978119, 0.361654,
-0.0, 0.0, 0.0, 1.0]
-joint_angle_initial: [0.331729, -0.313961, -0.520467, -2.34552, 0.11300, 1.84559, 0.811743]
 
-order_min: 4
+order_min: 6
 order_max: 16
 delta_epsilon: 0.1
-lambda_order: 1.2
+lambda_order: 1.1
+
+# 2D
+pose_desired: [-0.146044, -0.989055, -0.0210075, 0.435997,
+-0.987881, 0.144677, 0.0562195, 0.0422674,
+-0.0525649, 0.0289634, -0.998197, 0.517289,
+0.0, 0.0, 0.0, 1.0]
+joint_angle_initial: [0.131458, 0.0758277, -0.423689, -1.29885, 0.0601927, 1.13133, 0.590687]

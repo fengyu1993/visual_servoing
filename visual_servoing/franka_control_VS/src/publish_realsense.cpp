@@ -40,7 +40,6 @@ int main(int argc, char** argv)
     image_transport::ImageTransport it(nh);  
     image_transport::Publisher image_color_raw_pub = it.advertise("/camera/color/image_raw", 1); 
     image_transport::Publisher image_depth_raw_pub = it.advertise("/camera/aligned_depth_to_color/image_raw", 1);
-    image_transport::Publisher image_color_show_pub = it.advertise("/camera/color/image_show", 1);
     image_transport::Publisher image_depth_show_pub = it.advertise("/camera/aligned_depth_to_color/image_show", 1);
 
     ros::Rate loop_rate(30);
@@ -84,7 +83,6 @@ int main(int argc, char** argv)
         sensor_msgs::ImagePtr  depth_show_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_show).toImageMsg(); 
         sensor_msgs::ImagePtr  rgb_raw_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", rgb_show).toImageMsg(); 
         sensor_msgs::ImagePtr  depth_raw_msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", img_depth).toImageMsg(); 
-        image_color_show_pub.publish(rgb_show_msg);
         image_depth_show_pub.publish(depth_show_msg);
         image_color_raw_pub.publish(rgb_raw_msg);
         image_depth_raw_pub.publish(depth_raw_msg);

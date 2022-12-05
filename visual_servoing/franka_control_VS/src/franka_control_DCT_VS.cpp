@@ -21,13 +21,12 @@ int main(int argc, char** argv)
     std::vector<double> joint_group_positions_init_VS;
     ros::param::get("joint_angle_initial", joint_group_positions_init_VS);
     DCT_VS_control.franka_move_to_target_joint_angle(joint_group_positions_init_VS);
-    // 转换控制器
-    DCT_VS_control.control_switcher_.switch_controllers("velocity", "moveit");
     // 视觉伺服控制
     spinner.stop();
     cout << "Start visual servoing control ... " << endl;
     cout << "Press Enter to start..." << endl;
     cin.ignore();
+    DCT_VS_control.control_switcher_.switch_controllers("velocity", "moveit");
     DCT_VS_control.initialize_time_sync();
     DCT_VS_control.start_VS = true;
     ros::Rate loop_rate(DCT_VS_control.control_rate_);
