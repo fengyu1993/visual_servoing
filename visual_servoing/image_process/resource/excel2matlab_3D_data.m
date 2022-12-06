@@ -2,6 +2,7 @@
 clc;
 clear;
 close all
+%%
 %% 准备
 location_name = "./data/";
 camera_velocity_name = "camera velocity";
@@ -60,9 +61,15 @@ end
 function camera_pose = get_camera_pose_data(data, name_begin, name_end)
     [row_begin, ~] = find(strcmp(data, name_begin));
     [row_end, ~] = find(strcmp(data, name_end));
-    camera_pose = cell2mat(data(row_begin+1:row_end-1, 1:7));
+    camera_pose = cell2mat(data(row_begin+1:row_end-1, 1:4));
 end
 
+%% 读取期望位姿
+function camera_desired_pose = get_camera_desired_pose_data(data, name_begin, name_end)
+    [row_begin, ~] = find(strcmp(data, name_begin));
+    [row_end, ~] = find(strcmp(data, name_end));
+    camera_desired_pose = cell2mat(data(row_begin+1:row_end-1, 1:4));    
+end
 %% 读取特征平均误差
 function error_feature = get_camera_error_feature_data(data, name_begin, name_end)
     [row_begin, ~] = find(strcmp(data, name_begin));

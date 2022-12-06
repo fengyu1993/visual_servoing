@@ -49,7 +49,10 @@ void Ros_HM_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConstP
         ROS_INFO("error = %f", ((double)*(this->HM_VS->data_dom.error_pixel_ave_.end<double>() - 1)));
  
         // 判断是否成功并做速度转换
-        if(this->HM_VS->is_success())
+        bool flag = this->HM_VS->is_success();
+        if(this->HM_VS->iteration_num > 220)
+            flag = true;
+        if(flag)
         {
             this->flag_success_ = true;
             this->HM_VS->write_data();  

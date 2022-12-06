@@ -49,7 +49,10 @@ void Ros_TM_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConstP
         cout << "error = " << ((double)*(this->TM_VS->data_dom.error_pixel_ave_.end<double>() - 1)) << endl;
                 
         // 判断是否成功并做速度转换
-        if(this->TM_VS->is_success())
+        bool flag = this->TM_VS->is_success();
+        if(this->TM_VS->iteration_num > 500)
+            flag = true;
+        if(flag)
         {
             this->flag_success_ = true;
             this->TM_VS->write_data();  

@@ -65,8 +65,6 @@ int main(int argc, char** argv)
     rs2::colorizer color_map;
     cfg.enable_stream(RS2_STREAM_COLOR, 640, 480, RS2_FORMAT_BGR8,30);
     cfg.enable_stream(RS2_STREAM_DEPTH, 640, 480, RS2_FORMAT_Z16,30);
-    // cfg.enable_stream(RS2_STREAM_COLOR, 424, 240, RS2_FORMAT_BGR8,15);
-    // cfg.enable_stream(RS2_STREAM_DEPTH, 424, 240, RS2_FORMAT_Z16,15);
     rs2::pipeline_profile profile = pipe.start(cfg);
     rs2::align align_to_color(RS2_STREAM_COLOR); //
 
@@ -209,9 +207,9 @@ void write_data()
 void write_image()
 {
     // 保存深度图
-    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_depth_desired.png", img_depth);
+    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_depth_init.png", img_depth);
     // 保存彩色图
-    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_rgb_desired.png", img_rgb);
+    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_rgb_init.png", img_rgb);
 }
 
 // 保存相机位姿

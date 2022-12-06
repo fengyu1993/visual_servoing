@@ -45,7 +45,10 @@ void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr
         cout << "error = " << ((double)*(this->DVS->data_vs.error_feature_.end<double>() - 1)) << endl;
 
         // 判断是否成功并做速度转换
-        if(this->DVS->is_success())
+        bool flag = this->DVS->is_success();
+        if(this->DVS->iteration_num > 2000)
+            flag = true;
+        if(flag)
         {
             this->flag_success_ = true;
             this->DVS->write_data();  

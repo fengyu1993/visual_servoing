@@ -49,7 +49,10 @@ void Ros_KM_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConstP
         cout << "error = " << ((double)*(this->KM_VS->data_dom.error_pixel_ave_.end<double>() - 1)) << endl;
  
          // 判断是否成功并做速度转换
-        if(this->KM_VS->is_success())
+        bool flag = this->KM_VS->is_success();
+        if(this->KM_VS->iteration_num > 500)
+            flag = true;
+        if(flag)
         {
             this->flag_success_ = true;
             this->KM_VS->write_data();  

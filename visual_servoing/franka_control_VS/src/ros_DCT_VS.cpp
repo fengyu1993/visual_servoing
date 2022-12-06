@@ -49,7 +49,10 @@ void Ros_DCT_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConst
         ROS_INFO("error = %f", ((double)*(this->DCT_VS->data_dom.error_pixel_ave_.end<double>() - 1)));
 
         // 判断是否成功并做速度转换
-        if(this->DCT_VS->is_success())
+        bool flag = this->DCT_VS->is_success();
+        if(this->DCT_VS->iteration_num > 500)
+            flag = true;
+        if(flag)
         {
             this->flag_success_ = true;
             this->DCT_VS->write_data();  
