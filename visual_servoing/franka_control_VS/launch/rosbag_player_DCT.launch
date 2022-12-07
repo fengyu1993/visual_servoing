@@ -1,4 +1,0 @@
-<launch>
- 
-  <node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/data/DCT_VS.bag"/>
-</launch>

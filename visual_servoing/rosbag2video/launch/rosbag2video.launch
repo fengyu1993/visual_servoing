@@ -1,0 +1,16 @@
+<launch>
+ 
+<node pkg="rosbag2video" type="rosbag2video.py" name="player_2D_DCT"  args="/home/cyh/Work/visual_servoing_ws/2D_DCT_VS.bag"/>
+
+<node pkg="rosbag2video" type="rosbag2video.py" name="player_2D_DVS"  args="/home/cyh/Work/visual_servoing_ws/2D_DVS.bag"/>
+
+<node pkg="rosbag2video" type="rosbag2video.py" name="player_2D_HM"  args="/home/cyh/Work/visual_servoing_ws/2D_HM_VS.bag"/>
+
+<node pkg="rosbag2video" type="rosbag2video.py" name="player_2D_TM"  args="/home/cyh/Work/visual_servoing_ws/2D_TM_VS.bag"/>
+
+<node pkg="rosbag2video" type="rosbag2video.py" name="player_3D_KM"  args="/home/cyh/Work/visual_servoing_ws/3D_KM_VS.bag"/>
+
+<node pkg="rosbag2video" type="rosbag2video.py" name="player_3D_HM"  args="/home/cyh/Work/visual_servoing_ws/3D_HM_VS.bag"/>
+
+
+</launch>
