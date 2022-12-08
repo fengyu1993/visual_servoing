@@ -25,7 +25,7 @@ void Ros_TM_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConstP
         // 计算相机速度并保存数据
         this->TM_VS->set_image_depth_current(depth_new);
         this->TM_VS->set_image_gray_current(img_new);
-        if(this->TM_VS->flag_first)
+        if(this->TM_VS->flag_first_)
         {
             // 准备
             double lambda, epsilon;
@@ -33,7 +33,7 @@ void Ros_TM_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConstP
             // 获取参数
             get_parameters_VS(lambda, epsilon, img_old, depth_old, camera_intrinsic, pose_desired);
             this->TM_VS->init_VS(lambda, epsilon, img_old, depth_old, img_new, camera_intrinsic, pose_desired);
-            this->TM_VS->flag_first = false;
+            this->TM_VS->flag_first_ = false;
         }
 
         Mat camera_velocity = this->TM_VS->get_camera_velocity();
@@ -45,14 +45,11 @@ void Ros_TM_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConstP
         // cout << "depth_old = \n" <<  depth_old.rowRange(0,10).colRange(0,5) << endl;
         // cout << "depth_new = \n" <<  depth_new.rowRange(0,10).colRange(0,5) << endl;
         // cout << "camera_velocity = \n" << camera_velocity << endl;
-        cout << "iteration_num = " << this->TM_VS->iteration_num << endl;
+        cout << "iteration_num = " << this->TM_VS->iteration_num_ << endl;
         cout << "error = " << ((double)*(this->TM_VS->data_dom.error_pixel_ave_.end<double>() - 1)) << endl;
                 
         // 判断是否成功并做速度转换
-        bool flag = this->TM_VS->is_success();
-        if(this->TM_VS->iteration_num > 500)
-            flag = true;
-        if(flag)
+        if(this->TM_VS->is_success() || this->TM_VS->iteration_num_ > 500)
         {
             this->flag_success_ = true;
             this->TM_VS->write_data();  

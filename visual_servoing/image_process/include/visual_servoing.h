@@ -4,7 +4,8 @@
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
 #include <time.h>
-# include "geometry_msgs/Twist.h"
+#include "geometry_msgs/Twist.h"
+#include <vector>
 
 using namespace cv;
 using namespace std;
@@ -26,9 +27,9 @@ class Visual_Servoing
         int resolution_y_;
         Mat L_e_;
         Mat error_s_;
-        bool flag_first;
-        int iteration_num;
-
+        bool flag_first_;
+        int iteration_num_;
+        clock_t start_VS_time_;
         struct data
         {
             Mat velocity_;
@@ -37,6 +38,7 @@ class Visual_Servoing
             Mat error_feature_;
             Mat image_gray_init_;
             Mat image_gray_desired_;
+            Mat time_vs_;
         } data_vs;
 
     public: 
@@ -79,6 +81,8 @@ class Visual_Servoing
         virtual void save_data_error_feature();
 
         void save_data_camera_pose(Mat& pose);
+
+        void save_data_vs_time();
 
         virtual void save_data_other_parameter() {};
 

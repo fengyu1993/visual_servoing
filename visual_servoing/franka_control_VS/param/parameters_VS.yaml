@@ -1,7 +1,7 @@
 
 resolution_x:   640
 resolution_y:   480
-epsilon:        5.0e-4
+epsilon:        10.0e-4
 lambda:         0.03
 control_rate:   2
 resource_location:         "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/"

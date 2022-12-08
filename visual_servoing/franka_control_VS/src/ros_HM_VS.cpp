@@ -25,7 +25,7 @@ void Ros_HM_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConstP
         // 计算相机速度并保存数据
         this->HM_VS->set_image_depth_current(depth_new);
         this->HM_VS->set_image_gray_current(img_new);
-        if(this->HM_VS->flag_first)
+        if(this->HM_VS->flag_first_)
         {
             // 准备
             double lambda, epsilon;
@@ -33,26 +33,17 @@ void Ros_HM_VS::Callback(const ImageConstPtr& image_color_msg, const ImageConstP
             // 获取参数
             get_parameters_VS(lambda, epsilon, img_old, depth_old, camera_intrinsic, pose_desired);
             this->HM_VS->init_VS(lambda, epsilon, img_old, depth_old, img_new, camera_intrinsic, pose_desired);
-            this->HM_VS->flag_first = false;
+            this->HM_VS->flag_first_ = false;
         }
  
         Mat camera_velocity = this->HM_VS->get_camera_velocity();
         this->HM_VS->save_data(camera_pose);
          
-        // ROS_INFO("cyh");  
-        // cout << "img_old = \n" <<  img_old.rowRange(0,10).colRange(0,5) << endl;
-        // cout << "img_new = \n" <<  img_new.rowRange(0,10).colRange(0,5) << endl;
-        // cout << "depth_old = \n" <<  depth_old.rowRange(0,10).colRange(0,5) << endl;
-        // cout << "depth_new = \n" <<  depth_new.rowRange(0,10).colRange(0,5) << endl;
-        // cout << "camera_velocity = \n" << camera_velocity << endl;
-        ROS_INFO("iteration_num = %i", this->HM_VS->iteration_num);
+        ROS_INFO("iteration_num = %i", this->HM_VS->iteration_num_);
         ROS_INFO("error = %f", ((double)*(this->HM_VS->data_dom.error_pixel_ave_.end<double>() - 1)));
  
         // 判断是否成功并做速度转换
-        bool flag = this->HM_VS->is_success();
-        if(this->HM_VS->iteration_num > 220)
-            flag = true;
-        if(flag)
+        if(this->HM_VS->is_success() || this->HM_VS->iteration_num_ > 220)
         {
             this->flag_success_ = true;
             this->HM_VS->write_data();  

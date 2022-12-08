@@ -42,7 +42,7 @@ int main(int argc, char** argv)
     image_transport::Publisher image_depth_raw_pub = it.advertise("/camera/aligned_depth_to_color/image_raw", 1);
     image_transport::Publisher image_depth_show_pub = it.advertise("/camera/aligned_depth_to_color/image_show", 1);
 
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(5);
 
     rs2::pipeline pipe;
     rs2::config cfg;

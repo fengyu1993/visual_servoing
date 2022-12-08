@@ -17,8 +17,8 @@ Visual_Servoing::Visual_Servoing(int resolution_x=640, int resolution_y=480)
     this->image_depth_current_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
     this->camera_intrinsic_ = Mat::zeros(3, 3, CV_64FC1);
     this->camera_velocity_ = Mat::zeros(6, 1, CV_64FC1);
-	this->flag_first = true;
-	iteration_num = 0;
+	this->flag_first_ = true;
+	this->iteration_num_ = 0;
 }
 
 // 初始化
@@ -38,8 +38,9 @@ void Visual_Servoing::init_VS(double lambda, double epsilon, Mat& image_gray_des
 // 计算相机速度
 Mat Visual_Servoing::get_camera_velocity()
 {
+	// 计算相机速度
     Mat L_e_inv;
-	this->iteration_num++;
+	this->iteration_num_++;
     get_feature_error_interaction_matrix(); 
     invert(this->L_e_, L_e_inv, DECOMP_SVD);
     this->camera_velocity_ = -this->lambda_ * L_e_inv * this->error_s_;
@@ -50,8 +51,6 @@ Mat Visual_Servoing::get_camera_velocity()
 bool Visual_Servoing::is_success()
 {
 	Mat error_ave = this->error_s_.t() * this->error_s_ / (this->error_s_.rows*this->error_s_.cols);
-
-	// cout << "error_ave = " << error_ave.at<double>(0,0) << endl;
 
 	if(error_ave.at<double>(0,0) < this->epsilon_)
 	{
@@ -159,7 +158,24 @@ void Visual_Servoing::save_data(Mat pose)
     save_data_camera_pose(pose);
     save_data_error_feature(); 
     save_data_other_parameter();
+	save_data_vs_time();
 }
+
+// 记录时间
+void Visual_Servoing::save_data_vs_time()
+{
+	
+	if (this->iteration_num_ == 1)
+	{
+		this->start_VS_time_ = clock();
+		this->data_vs.time_vs_.push_back(0.0);
+	}
+	else
+	{
+		this->data_vs.time_vs_.push_back((double)(clock() - this->start_VS_time_) / CLOCKS_PER_SEC);
+	}
+}
+
 
 // 将数据保存在文件中
 void Visual_Servoing::write_data()
@@ -192,6 +208,8 @@ void Visual_Servoing::write_visual_servoing_data(ofstream& oFile)
     write_to_excel(this->data_vs.pose_desired_, oFile);   
     oFile << "error feature" << endl;
     write_to_excel(this->data_vs.error_feature_, oFile);
+    oFile << "visual servoing time" << endl;
+    write_to_excel(this->data_vs.time_vs_, oFile);	
 }
 
 // 存储数据文件命名

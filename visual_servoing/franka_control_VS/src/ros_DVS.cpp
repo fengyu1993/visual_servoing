@@ -22,14 +22,14 @@ void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr
         this->DVS->set_image_depth_current(depth_new);
         this->DVS->set_image_gray_current(img_new); 
         // 准备
-        if(this->DVS->flag_first)
+        if(this->DVS->flag_first_)
         {  
             double lambda, epsilon;
             Mat img_old, depth_old, camera_intrinsic, pose_desired;
             // 获取参数
             get_parameters_VS(lambda, epsilon, img_old, depth_old, camera_intrinsic, pose_desired);
             this->DVS->init_VS(lambda, epsilon, img_old, depth_old, img_new, camera_intrinsic, pose_desired);
-            this->DVS->flag_first = false;
+            this->DVS->flag_first_ = false;
         }
 
         Mat camera_velocity = this->DVS->get_camera_velocity(); 
@@ -41,14 +41,11 @@ void Ros_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr
         // cout << "depth_old = \n" <<  depth_old.rowRange(0,10).colRange(0,5) << endl;
         // cout << "depth_new = \n" <<  depth_new.rowRange(0,10).colRange(0,5) << endl;
         // cout << "camera_velocity = \n" << camera_velocity << endl;
-        cout << "iteration_num = " << this->DVS->iteration_num << endl;
+        cout << "iteration_num = " << this->DVS->iteration_num_ << endl;
         cout << "error = " << ((double)*(this->DVS->data_vs.error_feature_.end<double>() - 1)) << endl;
 
         // 判断是否成功并做速度转换
-        bool flag = this->DVS->is_success();
-        if(this->DVS->iteration_num > 2000)
-            flag = true;
-        if(flag)
+        if(this->DVS->is_success() || this->DVS->iteration_num_ > 2000)
         {
             this->flag_success_ = true;
             this->DVS->write_data();  
