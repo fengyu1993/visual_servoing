@@ -19,6 +19,6 @@
 
 <node name="HM_VS" pkg="franka_control_VS"  type="franka_control_HM_VS"  output="screen"/>
 
-<node pkg="rosbag" type="record" name="bag_record" args="/camera/color/image_raw -o /home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/data/HM_VS.bag"/>
+<!-- <node pkg="rosbag" type="record" name="bag_record" args="/camera/color/image_raw -o /home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/data/HM_VS.bag"/> -->
 
 </launch>
