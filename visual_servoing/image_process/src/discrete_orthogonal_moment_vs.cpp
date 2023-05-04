@@ -92,12 +92,7 @@ int Discrete_Orthogonal_Moment_VS::get_order_adaption()
     Mat error_ave_0 = err_0.t() * err_0 / (err_0.rows * err_0.cols);
     double error_pixel_ave_0 = error_ave_0.at<double>(0,0);
 
-    double k = 10.0;
-    
-    if (this->error_pixel_ave_ > error_pixel_ave_0)
-        error_pixel_ave = error_pixel_ave_0;
-
-    double t = exp(-k*(error_pixel_ave / (error_pixel_ave_0 - error_pixel_ave)));
+    double t = 1 / (1 + (error_pixel_ave/this->epsilon_) * (error_pixel_ave - this->epsilon_) / (error_pixel_ave_0 - this->epsilon_));
     double order_ = (this->order_max_ - this->order_min_)*t + this->order_min_;
     this->order_ = round(order_);  
 
