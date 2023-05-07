@@ -18,4 +18,6 @@
 
 <!-- <node pkg="rosbag2video" type="rosbag2video.py" name="player_3D_complex_KM"  args="/home/cyh/Work/visual_servoing_ws/3D_Complex_KM_VS.bag"/> -->
 
+<!-- <node pkg="rosbag2video" type="rosbag2video.py" name="player_3D_complex_KM"  args="/home/cyh/Work/visual_servoing_ws/3D_Complex_Change_HM_VS.bag"/> -->
+
 </launch>
