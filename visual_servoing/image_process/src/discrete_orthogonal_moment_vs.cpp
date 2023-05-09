@@ -168,31 +168,7 @@ bool Discrete_Orthogonal_Moment_VS::is_success()
 		return true;
 	}
 	else
-	{
-        int num = this->data_dom.error_pixel_ave_.rows * this->data_dom.error_pixel_ave_.cols - 1;
-        if(num > 1)
-        {
-            double d_error = this->data_dom.error_pixel_ave_.at<double>(num, 0) - this->data_dom.error_pixel_ave_.at<double>(num-1, 0);
-            double h_error = this->data_dom.error_pixel_ave_.at<double>(num, 0) 
-                                - 2*this->data_dom.error_pixel_ave_.at<double>(num-1, 0) 
-                                + this->data_dom.error_pixel_ave_.at<double>(num-2, 0);
-            double delta = abs(d_error / h_error);
-            if(delta < this->delta_epsilon_) 
-            {
-                this->order_max_ = this->lambda_order_ * this->order_max_;
-            }
-        }
-        
+	{        
 		return false;
 	}
 }
-
-        // if i > 1
-        //     d_error = error_pixel_ave(i+1,1) - error_pixel_ave(i,1);
-        //     h_error = error_pixel_ave(i+1,1) - 2*error_pixel_ave(i,1) + error_pixel_ave(i-1,1);
-        //     delta = abs(d_error / h_error);
-        //     fprintf('delta£º%.5f\n', delta); 
-        //     if delta < 0.1
-        //         order_max = 1.2*order_max;
-        //     end
-        // end
