@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- By default use joint position controllers -->
+  <arg name="transmission" default="position" />
+
+  <!-- as well as MoveIt demo -->
+  <include file="$(dirname)/iiwa_control_demo.launch" pass_all_args="true" />
+
+    <!-- Launch real-robot control -->
+  <include file="$(find iiwa_control)/launch/iiwa_control.launch" pass_all_args="true" />
+</launch>
