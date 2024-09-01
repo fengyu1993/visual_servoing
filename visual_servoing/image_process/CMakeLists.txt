@@ -47,6 +47,7 @@ add_executable(test_DCT_VS  src/test/test_DCT_VS.cpp)
 add_executable(test_TM_VS   src/test/test_TM_VS.cpp)
 add_executable(test_KM_VS   src/test/test_KM_VS.cpp)
 add_executable(test_HM_VS   src/test/test_HM_VS.cpp)
+add_executable(test_PVS     src/test/test_PVS.cpp)
 
 
 target_link_libraries(test_DVS    image_process ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
@@ -54,6 +55,7 @@ target_link_libraries(test_DCT_VS image_process ${catkin_LIBRARIES} ${Boost_LIBR
 target_link_libraries(test_TM_VS  image_process ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
 target_link_libraries(test_KM_VS  image_process ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
 target_link_libraries(test_HM_VS  image_process ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
+target_link_libraries(test_PVS    image_process ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
 
 
 install(TARGETS test_DVS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
@@ -61,6 +63,7 @@ install(TARGETS test_DCT_VS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(TARGETS test_TM_VS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(TARGETS test_KM_VS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(TARGETS test_HM_VS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+install(TARGETS test_PVS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 
 install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
