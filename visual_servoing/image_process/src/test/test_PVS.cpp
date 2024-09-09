@@ -4,61 +4,52 @@
 #include <opencv2/opencv.hpp>
 #include <unsupported/Eigen/CXX11/Tensor>
 
-// function [V, n_desired, n_current, S] = get_Phong_model(row, col, camera_intrinsic)
-//     V = ones(row, col, 3); % 需乘以内参矩阵，再归一化
-//     for i = 1 : row
-//         for j = 1 : col
-//             V(i, j, :) = (camera_intrinsic \ [j; i; 1]);
-//             V(i, j, :) = V(i, j, :) ./ norm(reshape(V(i, j, :), 1,[]));
-//         end
-//     end
-//     n_desired = ones(row, col, 3); 
-//     for i = 1 : col
-//         for j = 1 : row
-//             n_desired(i, j, :) = [0; 0; -1];
-//         end
-//     end
-//     n_current = n_desired;
-//     S = ones(row, col, 3); 
-//     for i = 1 : col
-//         for j = 1 : row
-//             S(i, j, :) = [1; 0; -3] / norm([1; 0; -3]);
-//         end
-//     end
-//     S = n_current;
-// end
-
-
 void get_Phong_model(int row, int col, Mat camera_intrinsic, Mat& V, Mat& n_desired, Mat& n_current, Mat& S)
 {
+    Mat camera_intrinsic_inv = camera_intrinsic.inv();
+    Mat P = Mat::zeros(3, 1, CV_64F);
+    Mat temp = Mat::zeros(3, 1, CV_64F);
 
+    for(int i = 0; i < row; i++) 
+    {
+        for(int j = 0; j < col; j++)
+        {
+            P = (cv::Mat_<double>(3, 1) << j+1, i+1, 1); 
+            temp = camera_intrinsic_inv * P;
+            temp = temp / norm(temp);
+            V.at<cv::Vec3d>(i, j) = temp.reshape(1,1);
+            // cout << "V:" << endl << V.at<Vec3d>(0,0) << endl;
+            n_desired.at<cv::Vec3d>(i, j) = cv::Vec3d(0.0, 0.0, -1.0);
+            n_current.at<cv::Vec3d>(i, j) = cv::Vec3d(0.0, 0.0, -1.0);
+            S.at<cv::Vec3d>(i, j) = cv::Vec3d(0.0, 0.0, -1.0);
+        }
+    }
 }
-
 
 
 // test Polarimetric_Visual_Servoing class
 int main()
 {
-    Mat image_I_0_desired_ = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_0_resize.png", IMREAD_GRAYSCALE); 
-    Mat image_I_45_desired_ = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_45_resize.png", IMREAD_GRAYSCALE);
-    Mat image_I_90_desired_ = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_90_resize.png", IMREAD_GRAYSCALE);
-    Mat image_I_135_desired_ = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_135_resize.png", IMREAD_GRAYSCALE);
-    Mat image_I_0_current_ = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_0_resize.png", IMREAD_GRAYSCALE);
-    Mat image_I_45_current_ = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_45_resize.png", IMREAD_GRAYSCALE);
-    Mat image_I_90_current_ = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_90_resize.png", IMREAD_GRAYSCALE);
-    Mat image_I_135_current_ = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_135_resize.png", IMREAD_GRAYSCALE);
+    Mat image_I_0_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_0_resize.png", IMREAD_GRAYSCALE); 
+    Mat image_I_45_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_45_resize.png", IMREAD_GRAYSCALE);
+    Mat image_I_90_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_90_resize.png", IMREAD_GRAYSCALE);
+    Mat image_I_135_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_135_resize.png", IMREAD_GRAYSCALE);
+    Mat image_I_0_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_0_resize.png", IMREAD_GRAYSCALE);
+    Mat image_I_45_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_45_resize.png", IMREAD_GRAYSCALE);
+    Mat image_I_90_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_90_resize.png", IMREAD_GRAYSCALE);
+    Mat image_I_135_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_135_resize.png", IMREAD_GRAYSCALE);
    
-    image_I_0_desired_.convertTo(image_I_0_desired_, CV_64FC1);
-    image_I_45_desired_.convertTo(image_I_45_desired_, CV_64FC1);
-    image_I_90_desired_.convertTo(image_I_90_desired_, CV_64FC1);
-    image_I_135_desired_.convertTo(image_I_135_desired_, CV_64FC1);
-    image_I_0_current_.convertTo(image_I_0_current_, CV_64FC1);
-    image_I_45_current_.convertTo(image_I_45_current_, CV_64FC1);
-    image_I_90_current_.convertTo(image_I_90_current_, CV_64FC1);
-    image_I_135_current_.convertTo(image_I_135_current_, CV_64FC1);
+    image_I_0_desired.convertTo(image_I_0_desired, CV_64FC1);
+    image_I_45_desired.convertTo(image_I_45_desired, CV_64FC1);
+    image_I_90_desired.convertTo(image_I_90_desired, CV_64FC1);
+    image_I_135_desired.convertTo(image_I_135_desired, CV_64FC1);
+    image_I_0_current.convertTo(image_I_0_current, CV_64FC1);
+    image_I_45_current.convertTo(image_I_45_current, CV_64FC1);
+    image_I_90_current.convertTo(image_I_90_current, CV_64FC1);
+    image_I_135_current.convertTo(image_I_135_current, CV_64FC1);
 
-    Mat image_Z_desired = (image_I_0_desired_ + image_I_45_desired_ + image_I_90_desired_ + image_I_135_desired_) / 400;
-    Mat image_Z_current = (image_I_0_current_ + image_I_45_current_ + image_I_90_current_ + image_I_135_current_) / 400;
+    Mat image_Z_desired = (image_I_0_desired + image_I_45_desired + image_I_90_desired + image_I_135_desired) / 400;
+    Mat image_Z_current = (image_I_0_current + image_I_45_current + image_I_90_current + image_I_135_current) / 400;
 
     Mat camera_intrinsic = (Mat_<double>(3,3) << 1000, 0, 128, 0, 1000, 96, 0, 0, 1);
 
@@ -66,28 +57,35 @@ int main()
     double phi_pol = 0.0; 
     double lambda = 0.5;
     double k = 2.0;
-    int size[3] = {image_I_0_desired_.rows, image_I_0_desired_.cols, 3};
+    int size[3] = {image_I_0_desired.rows, image_I_0_desired.cols, 3};
+    Mat pose = (Mat_<double>(7,1) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5, 0.8);
 
-    Mat V(3, size, CV_8UC1, cv::Scalar(0));
-    cv::Mat mat3D(3, size, CV_32FC1, cv::Scalar(0));
-    // , n_desired, n_current, S;
+    Mat V = Mat::zeros(image_I_0_desired.rows, image_I_0_desired.cols, CV_64FC(3));
+    Mat n_desired = Mat::zeros(image_I_0_desired.rows, image_I_0_desired.cols, CV_64FC(3));
+    Mat n_current = Mat::zeros(image_I_0_desired.rows, image_I_0_desired.cols, CV_64FC(3));
+    Mat S = Mat::zeros(image_I_0_desired.rows, image_I_0_desired.cols, CV_64FC(3));
 
-    // get_Phong_model(image_I_0_desired_.rows, image_I_0_desired_.cols, camera_intrinsic, V, n_desired, n_current, S);
+    get_Phong_model(image_I_0_desired.rows, image_I_0_desired.cols, camera_intrinsic, V, n_desired, n_current, S);
 
+    Polarimetric_Visual_Servoing PVS(image_I_0_desired.cols, image_I_0_desired.rows);
 
-    // Polarimetric_Visual_Servoing PVS(image_I_0_desired_.cols, image_I_0_desired_.rows);
+    PVS.init_VS(5e-2, 0.1, image_I_0_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired, image_Z_desired,
+    image_I_0_current, image_I_45_current, image_I_90_current, image_I_135_current, camera_intrinsic, pose);
 
-        // DVS.init_VS(5e-2, 0.1, img_old, depth_old, img_new, camera_intrinsic, pose);
-        // for(int i = 0; i < 10; i++)
-        // {
-        //     DVS.set_image_depth_current(depth_new);
-        //     DVS.set_image_gray_current(img_new);
-        //     camera_velocity = DVS.get_camera_velocity();
-        //     cout << "camera_velocity = \n" << camera_velocity.t() << endl;
-        //     DVS.save_data(pose*i);
-        // }    
-        // DVS.write_data();    
-    cout << "cyh" << endl;
+    Mat camera_velocity;
+
+    PVS.get_O_A_Phi(image_I_0_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired);
+
+    // for(int i = 0; i < 1; i++)
+    // {
+    //     PVS.set_image_depth_current(image_Z_current);
+    //     PVS.set_image_gray_current(image_I_0_current, image_I_45_current, image_I_90_current, image_I_135_current);
+    //     camera_velocity = PVS.get_camera_velocity();
+    //     cout << "camera_velocity = \n" << camera_velocity.t() << endl;
+    //     PVS.save_data(pose*i);
+    // }    
+    // PVS.write_data();    
+    // cout << "cyh" << endl;
 
     return 1;
 }

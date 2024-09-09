@@ -119,12 +119,3 @@ string Direct_Visual_Servoing::get_method_name()
 
 
 
-
-
-    // Mat I_xy_temp = Mat::zeros(1, 2, CV_64FC1); 
-    // Mat L_x_temp = Mat::zeros(2, 6, CV_64FC1); 
-
-            // I_xy_temp = (Mat_<double>(1,2) << -I_x.at<double>(i, j), -I_y.at<double>(i, j));
-            // L_x_temp = (Mat_<double>(2,6) << -Z_inv, 0, x*Z_inv, x*y, -(1+x*x), y,
-            //                                 0, -Z_inv, y*Z_inv, 1+y*y, -x*y, -x);
-            // L_e.row(cnt) = I_xy_temp * L_x_temp;

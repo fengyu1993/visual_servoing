@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<launch>
+ 
+<node name="test_PVS" pkg="image_process"  type="test_PVS"  output="screen"/>
+
+</launch>

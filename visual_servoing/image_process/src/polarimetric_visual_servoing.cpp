@@ -6,6 +6,7 @@
 #include <string>
 #include <ctime> 
 #include <chrono>
+#include <cmath>
 
 
 Polarimetric_Visual_Servoing::Polarimetric_Visual_Servoing(int resolution_x=640, int resolution_y=480)
@@ -48,6 +49,77 @@ void Polarimetric_Visual_Servoing::init_VS(double lambda, double epsilon,
     save_data_image();
     save_pose_desired();
 }
+
+// 计算L_kappa
+Mat Polarimetric_Visual_Servoing::get_L_kappa(Mat& camera_intrinsic)
+{
+    Mat L_kappa = (Mat_<double>(2,2) << camera_intrinsic.at<double>(0,0), 0, 0, camera_intrinsic.at<double>(1,1));
+    return L_kappa;
+}
+
+// 计算偏振参数
+void Polarimetric_Visual_Servoing::get_O_A_Phi(Mat I_0, Mat I_45, Mat I_90, Mat I_135, Mat& O, Mat& A, Mat& Phi)
+{
+    O = (I_0 + I_45 + I_90 + I_135) / 4;
+    Mat err_I0 = I_0 - O;
+    Mat err_I45 = I_45 - O;
+    Mat err_I_90 = I_90 - O;
+    Mat err_I135 = I_135 - O;
+    sqrt((err_I0.mul(err_I0) + err_I45.mul(err_I45) + err_I_90.mul(err_I_90) + err_I135.mul(err_I135)) / 2, A);
+    Mat temp_1 = (I_0 - O) / A;
+    Mat temp_2 = (I_45 - O) / A;
+    Mat temp_3 = (O - I_90) / A;
+    Mat temp_4 = (O - I_135) / A;
+    Mat B = (Mat_<double>(2,2) << 0, 1, 0.5, 0.2);
+    Mat C = cv_asin(B);
+    cout << "B" << endl << B << endl;
+    cout << "C" << endl << C << endl;
+
+    // Phi = 1/4 * (std::acos(temp_1) + std::asin(temp_2) + std::acos(temp_3) + std::asin(temp_4));
+}
+
+
+//     temp_1 = (I_0 - O) ./ A; id_1 = temp_1 > 1; temp_1(id_1) = 1; id_2 = temp_1 < -1; temp_1(id_2) = -1;
+//     temp_2 = (I_45 - O) ./ A; id_1 = temp_2 > 1; temp_2(id_1) = 1; id_2 = temp_2 < -1; temp_2(id_2) = -1;
+//     temp_3 = (O - I_90) ./ A; id_1 = temp_3 > 1; temp_3(id_1) = 1; id_2 = temp_3 < -1; temp_3(id_2) = -1;
+//     temp_4 = (O - I_135) ./ A; id_1 = temp_4 > 1; temp_4(id_1) = 1; id_2 = temp_4 < -1; temp_4(id_2) = -1;   
+//     Phi = 1/4 * (acos(temp_1) + asin(temp_2) + acos(temp_3) + asin(temp_4));
+// end
+
+Mat Polarimetric_Visual_Servoing::cv_acos(Mat a)
+{
+    Mat dst = Mat::zeros(a.size(), a.type());
+    int rows = a.rows;
+    int cols = a.cols;
+    for ( int row = 0; row < rows; row++)
+    {
+        double* current_a = a.ptr<double>(row);
+        double* current_dst = dst.ptr<double>(row);
+        for (int col = 0; col< cols; col++)
+        {
+            current_dst[col] = std::acos(current_a[col]);
+        }
+    }
+    return dst;
+}
+
+Mat Polarimetric_Visual_Servoing::cv_asin(Mat a)
+{
+    Mat dst = Mat::zeros(a.size(), a.type());
+    int rows = a.rows;
+    int cols = a.cols;
+    for ( int row = 0; row < rows; row++)
+    {
+        double* current_a = a.ptr<double>(row);
+        double* current_dst = dst.ptr<double>(row);
+        for (int col = 0; col< cols; col++)
+        {
+            current_dst[col] = std::asin(current_a[col]);
+        }
+    }
+    return dst;
+}
+
 
 
 // 计算相机速度

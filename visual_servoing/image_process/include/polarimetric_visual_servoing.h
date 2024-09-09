@@ -48,6 +48,18 @@ class Polarimetric_Visual_Servoing
             Mat& image_I_0_desired_, Mat& image_I_45_desired_, Mat& image_I_90_desired_, Mat& image_I_135_desired_, Mat& image_depth_desired,  
             Mat& image_I_0_initial_, Mat& image_I_45_initial_, Mat& image_I_90_initial_, Mat& image_I_135_initial_, Mat camera_intrinsic, Mat pose_desired);
 
+        Mat get_L_kappa(Mat& camera_intrinsic);
+
+        void get_O_A_Phi(Mat I_0, Mat I_45, Mat I_90, Mat I_135, Mat& O, Mat& A, Mat& Phi);
+
+
+
+
+
+        Mat cv_acos(Mat a);
+
+        Mat cv_asin(Mat a);
+
         Mat get_camera_velocity();
 
         bool is_success();
