@@ -21,6 +21,9 @@ class Polarimetric_Visual_Servoing
         Mat camera_intrinsic_;
         Mat camera_velocity_; // vx vy vz wx wy wz
         Mat pose_desired_;
+        Mat O_desired_;          Mat O_current_;
+        Mat A_desired_;          Mat A_current_;
+        Mat Phi_desired_;        Mat Phi_current_;
         double lambda_;
         double epsilon_; 
         int resolution_x_;
@@ -51,8 +54,10 @@ class Polarimetric_Visual_Servoing
         Mat get_L_kappa(Mat& camera_intrinsic);
 
         void get_O_A_Phi(Mat I_0, Mat I_45, Mat I_90, Mat I_135, Mat& O, Mat& A, Mat& Phi);
-
-
+        
+        void get_O_A_Phi_desired(Mat I_0, Mat I_45, Mat I_90, Mat I_135);
+        
+        void get_O_A_Phi_current(Mat I_0, Mat I_45, Mat I_90, Mat I_135);
 
 
 

@@ -39,6 +39,12 @@ int main()
     Mat image_I_90_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_90_resize.png", IMREAD_GRAYSCALE);
     Mat image_I_135_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_135_resize.png", IMREAD_GRAYSCALE);
    
+       cout << "image_I_0_desired(0,0)"  << endl << image_I_0_desired.at<double>(0,0) << endl;
+    cout << "image_I_45_desired(0,0)"  << endl << image_I_45_desired.at<double>(0,0) << endl;
+    cout << "image_I_90_desired(0,0)"  << endl << image_I_90_desired.at<double>(0,0) << endl;
+    cout << "image_I_135_desired(0,0)"  << endl << image_I_135_desired.at<double>(0,0) << endl;
+    cout << image_I_0_desired.type() << endl;
+    
     image_I_0_desired.convertTo(image_I_0_desired, CV_64FC1);
     image_I_45_desired.convertTo(image_I_45_desired, CV_64FC1);
     image_I_90_desired.convertTo(image_I_90_desired, CV_64FC1);
@@ -74,7 +80,12 @@ int main()
 
     Mat camera_velocity;
 
-    PVS.get_O_A_Phi(image_I_0_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired);
+    PVS.get_O_A_Phi_desired(image_I_0_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired);
+
+    cout << "image_I_0_desired(0,0)"  << endl << image_I_0_desired.at<double>(0,0) << endl;
+    cout << "image_I_45_desired(0,0)"  << endl << image_I_45_desired.at<double>(0,0) << endl;
+    cout << "image_I_90_desired(0,0)"  << endl << image_I_90_desired.at<double>(0,0) << endl;
+    cout << "image_I_135_desired(0,0)"  << endl << image_I_135_desired.at<double>(0,0) << endl;
 
     // for(int i = 0; i < 1; i++)
     // {

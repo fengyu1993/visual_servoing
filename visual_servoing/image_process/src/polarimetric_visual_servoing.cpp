@@ -31,6 +31,13 @@ Polarimetric_Visual_Servoing::Polarimetric_Visual_Servoing(int resolution_x=640,
     this->camera_velocity_ = Mat::zeros(6, 1, CV_64FC1);
 	this->flag_first_ = true;
 	this->iteration_num_ = 0;
+
+    this->O_desired_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
+    this->O_current_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
+    this->A_desired_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);          
+    this->A_current_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
+    this->Phi_desired_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);        
+    this->Phi_current_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
 }
 
 
@@ -70,21 +77,20 @@ void Polarimetric_Visual_Servoing::get_O_A_Phi(Mat I_0, Mat I_45, Mat I_90, Mat 
     Mat temp_2 = (I_45 - O) / A;
     Mat temp_3 = (O - I_90) / A;
     Mat temp_4 = (O - I_135) / A;
-    Mat B = (Mat_<double>(2,2) << 0, 1, 0.5, 0.2);
-    Mat C = cv_asin(B);
-    cout << "B" << endl << B << endl;
-    cout << "C" << endl << C << endl;
+    Phi = 1/4 * (cv_acos(temp_1) + cv_asin(temp_2) + cv_acos(temp_3) + cv_asin(temp_4));
+}
 
-    // Phi = 1/4 * (std::acos(temp_1) + std::asin(temp_2) + std::acos(temp_3) + std::asin(temp_4));
+void Polarimetric_Visual_Servoing::get_O_A_Phi_desired(Mat I_0, Mat I_45, Mat I_90, Mat I_135)
+{
+    get_O_A_Phi(I_0, I_45, I_90, I_135, O_desired_, A_desired_, Phi_desired_);
+}
+        
+void Polarimetric_Visual_Servoing::get_O_A_Phi_current(Mat I_0, Mat I_45, Mat I_90, Mat I_135)
+{
+    get_O_A_Phi(I_0, I_45, I_90, I_135, O_current_, A_current_, Phi_current_);
 }
 
 
-//     temp_1 = (I_0 - O) ./ A; id_1 = temp_1 > 1; temp_1(id_1) = 1; id_2 = temp_1 < -1; temp_1(id_2) = -1;
-//     temp_2 = (I_45 - O) ./ A; id_1 = temp_2 > 1; temp_2(id_1) = 1; id_2 = temp_2 < -1; temp_2(id_2) = -1;
-//     temp_3 = (O - I_90) ./ A; id_1 = temp_3 > 1; temp_3(id_1) = 1; id_2 = temp_3 < -1; temp_3(id_2) = -1;
-//     temp_4 = (O - I_135) ./ A; id_1 = temp_4 > 1; temp_4(id_1) = 1; id_2 = temp_4 < -1; temp_4(id_2) = -1;   
-//     Phi = 1/4 * (acos(temp_1) + asin(temp_2) + acos(temp_3) + asin(temp_4));
-// end
 
 Mat Polarimetric_Visual_Servoing::cv_acos(Mat a)
 {
