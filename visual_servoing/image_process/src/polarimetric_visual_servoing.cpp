@@ -28,6 +28,7 @@ Polarimetric_Visual_Servoing::Polarimetric_Visual_Servoing(int resolution_x=640,
     this->image_depth_current_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
 
     this->camera_intrinsic_ = Mat::zeros(3, 3, CV_64FC1);
+    this->camera_intrinsic_inv_ = Mat::zeros(3, 3, CV_64FC1);
     this->camera_velocity_ = Mat::zeros(6, 1, CV_64FC1);
 	this->flag_first_ = true;
 	this->iteration_num_ = 0;
@@ -38,6 +39,18 @@ Polarimetric_Visual_Servoing::Polarimetric_Visual_Servoing(int resolution_x=640,
     this->A_current_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
     this->Phi_desired_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);        
     this->Phi_current_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
+
+    this->us_desired_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
+    this->us_current_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
+    this->ud_desired_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
+    this->ud_current_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1); 
+
+    // 多维数组转为行存储
+    this->V_ = Mat::zeros(3, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    this->n_desired_ = Mat::zeros(3, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    this->n_current_ = Mat::zeros(3, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    this->S_desired_ = Mat::zeros(3, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    this->S_current_ = Mat::zeros(3, this->resolution_y_ * this->resolution_x_, CV_64FC1);
 }
 
 
@@ -56,6 +69,59 @@ void Polarimetric_Visual_Servoing::init_VS(double lambda, double epsilon,
     save_data_image();
     save_pose_desired();
 }
+
+// 初始化Phong模型 V_, n_desired_, n_current_, S_desired_, S_current_
+// PVS.V_.col(row * PVS.resolution_x_ + col) << endl;
+void Polarimetric_Visual_Servoing::get_Phong_model_init()
+{
+    double row = 1, col = 1;
+
+    for(int i = 0; i < V_.cols; i++)
+    {
+        this->V_.col(i) = this->camera_intrinsic_inv_ * cv::Vec3d(col, row, 1.0);
+        this->V_.col(i) = this->V_.col(i) / norm(this->V_.col(i));
+        this->n_desired_.col(i)  = cv::Vec3d(0.0, 0.0, -1.0);
+        this->n_current_.col(i)  = cv::Vec3d(0.0, 0.0, -1.0);
+        this->S_desired_.col(i)  = cv::Vec3d(0.0, 0.0, -1.0);
+        this->S_current_.col(i)  = cv::Vec3d(0.0, 0.0, -1.0);
+        if(++col > this->resolution_x_)
+        {
+            col = 1;
+            ++row;
+        }
+    }
+}
+
+// 计算Phong模型 us_desired ud_desired
+void Polarimetric_Visual_Servoing::get_Phong_us_ud_desired()
+{
+    int cnt = 0;
+    for (int row = 0; row < this->us_desired_.rows; ++row) 
+    {
+        double *us_d = (double *)(this->us_desired_.data + row*this->us_desired_.step[0]); 
+        double *ud_d = (double *)(this->ud_desired_.data + row*this->ud_desired_.step[0]); 
+
+        for (int col = 0; col < us_desired_.cols; ++col) 
+        {          
+            ud_d[col] = this->n_desired_.col(cnt).dot(this->S_desired_.col(cnt));
+            us_d[col] = this->V_.col(cnt).dot(2*ud_d[col]*this->n_desired_.col(cnt) - this->S_desired_.col(cnt));
+            cnt++;
+        }
+    }
+}
+
+
+
+
+// %% Phong illumiation model 
+// ud_desired = zeros(row, col); 
+// us_desired = zeros(row, col);
+// for i = 1 : row
+//     for j = 1 : col
+//         ud_desired(i, j) = reshape(n_desired(i, j, :), 1, []) * reshape(S(i, j, :), [], 1);
+//         us_desired(i, j) = reshape((2*ud_desired(i,j)*n_desired(i, j, :) - S(i, j, :)), 1, []) * reshape(V(i, j, :),[], 1);
+//     end
+// end
 
 // 计算L_kappa
 Mat Polarimetric_Visual_Servoing::get_L_kappa(Mat& camera_intrinsic)
@@ -160,6 +226,7 @@ bool Polarimetric_Visual_Servoing::is_success()
 void Polarimetric_Visual_Servoing::set_camera_intrinsic(Mat& camera_intrinsic)
 {
     camera_intrinsic.copyTo(this->camera_intrinsic_);
+    this->camera_intrinsic_inv_ = this->camera_intrinsic_.inv();
 }
 
 // 设置期望灰度图像

@@ -39,12 +39,6 @@ int main()
     Mat image_I_90_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_90_resize.png", IMREAD_GRAYSCALE);
     Mat image_I_135_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_135_resize.png", IMREAD_GRAYSCALE);
    
-       cout << "image_I_0_desired(0,0)"  << endl << image_I_0_desired.at<double>(0,0) << endl;
-    cout << "image_I_45_desired(0,0)"  << endl << image_I_45_desired.at<double>(0,0) << endl;
-    cout << "image_I_90_desired(0,0)"  << endl << image_I_90_desired.at<double>(0,0) << endl;
-    cout << "image_I_135_desired(0,0)"  << endl << image_I_135_desired.at<double>(0,0) << endl;
-    cout << image_I_0_desired.type() << endl;
-    
     image_I_0_desired.convertTo(image_I_0_desired, CV_64FC1);
     image_I_45_desired.convertTo(image_I_45_desired, CV_64FC1);
     image_I_90_desired.convertTo(image_I_90_desired, CV_64FC1);
@@ -66,27 +60,19 @@ int main()
     int size[3] = {image_I_0_desired.rows, image_I_0_desired.cols, 3};
     Mat pose = (Mat_<double>(7,1) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5, 0.8);
 
-    Mat V = Mat::zeros(image_I_0_desired.rows, image_I_0_desired.cols, CV_64FC(3));
-    Mat n_desired = Mat::zeros(image_I_0_desired.rows, image_I_0_desired.cols, CV_64FC(3));
-    Mat n_current = Mat::zeros(image_I_0_desired.rows, image_I_0_desired.cols, CV_64FC(3));
-    Mat S = Mat::zeros(image_I_0_desired.rows, image_I_0_desired.cols, CV_64FC(3));
-
-    get_Phong_model(image_I_0_desired.rows, image_I_0_desired.cols, camera_intrinsic, V, n_desired, n_current, S);
-
     Polarimetric_Visual_Servoing PVS(image_I_0_desired.cols, image_I_0_desired.rows);
 
     PVS.init_VS(5e-2, 0.1, image_I_0_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired, image_Z_desired,
     image_I_0_current, image_I_45_current, image_I_90_current, image_I_135_current, camera_intrinsic, pose);
 
-    Mat camera_velocity;
+    PVS.get_Phong_model_init();
 
     PVS.get_O_A_Phi_desired(image_I_0_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired);
 
-    cout << "image_I_0_desired(0,0)"  << endl << image_I_0_desired.at<double>(0,0) << endl;
-    cout << "image_I_45_desired(0,0)"  << endl << image_I_45_desired.at<double>(0,0) << endl;
-    cout << "image_I_90_desired(0,0)"  << endl << image_I_90_desired.at<double>(0,0) << endl;
-    cout << "image_I_135_desired(0,0)"  << endl << image_I_135_desired.at<double>(0,0) << endl;
+    PVS.get_Phong_us_ud_desired();
 
+
+    //  Mat camera_velocity;   
     // for(int i = 0; i < 1; i++)
     // {
     //     PVS.set_image_depth_current(image_Z_current);

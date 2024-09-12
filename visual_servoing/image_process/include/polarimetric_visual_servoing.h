@@ -18,12 +18,18 @@ class Polarimetric_Visual_Servoing
         Mat image_I_0_initial_, image_I_45_initial_, image_I_90_initial_, image_I_135_initial_;
         Mat image_depth_desired_;
         Mat image_depth_current_; 
-        Mat camera_intrinsic_;
+        Mat camera_intrinsic_; 
+        Mat camera_intrinsic_inv_;
         Mat camera_velocity_; // vx vy vz wx wy wz
         Mat pose_desired_;
         Mat O_desired_;          Mat O_current_;
         Mat A_desired_;          Mat A_current_;
         Mat Phi_desired_;        Mat Phi_current_;
+        Mat V_; 
+        Mat n_desired_;          Mat n_current_;
+        Mat S_desired_;          Mat S_current_;
+        Mat us_desired_;         Mat us_current_;
+        Mat ud_desired_;         Mat ud_current_;        
         double lambda_;
         double epsilon_; 
         int resolution_x_;
@@ -59,6 +65,9 @@ class Polarimetric_Visual_Servoing
         
         void get_O_A_Phi_current(Mat I_0, Mat I_45, Mat I_90, Mat I_135);
 
+        void get_Phong_model_init();
+
+        void get_Phong_us_ud_desired();
 
 
         Mat cv_acos(Mat a);
