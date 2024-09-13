@@ -29,9 +29,18 @@ class Polarimetric_Visual_Servoing
         Mat n_desired_;          Mat n_current_;
         Mat S_desired_;          Mat S_current_;
         Mat us_desired_;         Mat us_current_;
-        Mat ud_desired_;         Mat ud_current_;        
+        Mat ud_desired_;         Mat ud_current_;   
+        Mat Is_desired_;
+        Mat Id_desired_;
+        Mat Iu_;     
         double lambda_;
         double epsilon_; 
+        double eta_; 
+        double phi_pol_; 
+        double k_;
+        double I_in_k_s_pi_;
+        double I_in_k_d_;
+        double I_a_k_a_;
         int resolution_x_;
         int resolution_y_;
         Mat L_e_;
@@ -53,7 +62,7 @@ class Polarimetric_Visual_Servoing
     public: 
         Polarimetric_Visual_Servoing(int resolution_x, int resolution_y);
 
-        void init_VS(double lambda, double epsilon, 
+        void init_VS(double lambda, double epsilon, double eta, double phi_pol, double k, 
             Mat& image_I_0_desired_, Mat& image_I_45_desired_, Mat& image_I_90_desired_, Mat& image_I_135_desired_, Mat& image_depth_desired,  
             Mat& image_I_0_initial_, Mat& image_I_45_initial_, Mat& image_I_90_initial_, Mat& image_I_135_initial_, Mat camera_intrinsic, Mat pose_desired);
 
@@ -69,6 +78,14 @@ class Polarimetric_Visual_Servoing
 
         void get_Phong_us_ud_desired();
 
+        void get_I_in_k_s_pi_I_in_k_d_I_a_k_a();
+
+        void get_Is_Id_Iu_desired();
+
+        void get_rho_theta_phi_desired();
+
+
+        
 
         Mat cv_acos(Mat a);
 

@@ -55,14 +55,14 @@ int main()
 
     double eta = 1.5; 
     double phi_pol = 0.0; 
-    double lambda = 0.5;
     double k = 2.0;
+
     int size[3] = {image_I_0_desired.rows, image_I_0_desired.cols, 3};
     Mat pose = (Mat_<double>(7,1) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5, 0.8);
 
     Polarimetric_Visual_Servoing PVS(image_I_0_desired.cols, image_I_0_desired.rows);
 
-    PVS.init_VS(5e-2, 0.1, image_I_0_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired, image_Z_desired,
+    PVS.init_VS(5e-2, 0.1, eta, phi_pol, k, image_I_0_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired, image_Z_desired,
     image_I_0_current, image_I_45_current, image_I_90_current, image_I_135_current, camera_intrinsic, pose);
 
     PVS.get_Phong_model_init();
@@ -70,6 +70,12 @@ int main()
     PVS.get_O_A_Phi_desired(image_I_0_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired);
 
     PVS.get_Phong_us_ud_desired();
+
+    PVS.get_I_in_k_s_pi_I_in_k_d_I_a_k_a();
+
+    PVS.get_Is_Id_Iu_desired();
+
+    PVS.get_rho_theta_phi_desired();
 
 
     //  Mat camera_velocity;   

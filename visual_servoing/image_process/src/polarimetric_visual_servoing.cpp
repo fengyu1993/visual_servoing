@@ -45,6 +45,10 @@ Polarimetric_Visual_Servoing::Polarimetric_Visual_Servoing(int resolution_x=640,
     this->ud_desired_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
     this->ud_current_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1); 
 
+    this->Is_desired_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1); 
+    this->Id_desired_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1); 
+    this->Iu_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);  
+
     // 多维数组转为行存储
     this->V_ = Mat::zeros(3, this->resolution_y_ * this->resolution_x_, CV_64FC1);
     this->n_desired_ = Mat::zeros(3, this->resolution_y_ * this->resolution_x_, CV_64FC1);
@@ -55,7 +59,7 @@ Polarimetric_Visual_Servoing::Polarimetric_Visual_Servoing(int resolution_x=640,
 
 
 // 初始化
-void Polarimetric_Visual_Servoing::init_VS(double lambda, double epsilon, 
+void Polarimetric_Visual_Servoing::init_VS(double lambda, double epsilon, double eta, double phi_pol, double k, 
             Mat& image_I_0_desired, Mat& image_I_45_desired, Mat& image_I_90_desired, Mat& image_I_135_desired, Mat& image_depth_desired,   
             Mat& image_I_0_initial, Mat& image_I_45_initial, Mat& image_I_90_initial, Mat& image_I_135_initial, Mat camera_intrinsic, Mat pose_desired)
 {
@@ -68,6 +72,9 @@ void Polarimetric_Visual_Servoing::init_VS(double lambda, double epsilon,
     set_pose_desired(pose_desired);
     save_data_image();
     save_pose_desired();
+    this->eta_ = eta; 
+    this->phi_pol_ = phi_pol; 
+    this->k_ = k;
 }
 
 // 初始化Phong模型 V_, n_desired_, n_current_, S_desired_, S_current_
@@ -110,18 +117,62 @@ void Polarimetric_Visual_Servoing::get_Phong_us_ud_desired()
     }
 }
 
+// 计算 I_in_k_s_pi I_in_k_d I_a_k_a
+void Polarimetric_Visual_Servoing::get_I_in_k_s_pi_I_in_k_d_I_a_k_a()
+{
+    Mat US; Mat UD; Mat Jcaob_pinv;
+    cv::pow(this->us_desired_, this->k_, US);
+    UD = this->us_desired_;
+    Mat Jacob = Mat::ones(this->resolution_y_ * this->resolution_x_, 3, CV_64FC1);
+    Jacob.col(0) = US.reshape(0,1).t();
+    Jacob.col(1) = UD.reshape(0,1).t();
+    Mat sov = 2*this->O_desired_.reshape(0,1).t();
+    invert(Jacob, Jcaob_pinv, DECOMP_SVD);
+    Mat temp = Jcaob_pinv * sov;
+    this->I_in_k_s_pi_ = temp.at<double>(0,0);
+    this->I_in_k_d_ = temp.at<double>(1,0);
+    this->I_a_k_a_ = temp.at<double>(2,0);
+}
 
+// 计算 Is_desired Id_desired Iu
+void Polarimetric_Visual_Servoing::get_Is_Id_Iu_desired()
+{
+    Mat US; 
+    cv::pow(this->us_desired_, this->k_, US);
+    this->Is_desired_ = this->I_in_k_s_pi_ * US; 
+    this->Id_desired_ = this->I_in_k_d_ * this->ud_desired_;
+    this->Iu_ = this->I_a_k_a_ * Mat::ones(this->resolution_y_ * this->resolution_x_, 3, CV_64FC1);
+}
 
+// 计算 rho_desired theta_desired phi_desired
+void Polarimetric_Visual_Servoing::get_rho_theta_phi_desired()
+{
 
-// %% Phong illumiation model 
-// ud_desired = zeros(row, col); 
-// us_desired = zeros(row, col);
-// for i = 1 : row
-//     for j = 1 : col
-//         ud_desired(i, j) = reshape(n_desired(i, j, :), 1, []) * reshape(S(i, j, :), [], 1);
-//         us_desired(i, j) = reshape((2*ud_desired(i,j)*n_desired(i, j, :) - S(i, j, :)), 1, []) * reshape(V(i, j, :),[], 1);
+}
+
+// % 计算 rho
+// rho_desired = A_desired ./ O_desired;
+// % 计算 zenith angle
+// theta_desired_old = pi/6 * ones(row, col);
+// for i = 1 : 20
+//     T_s_desired = get_T_perpendicular(theta_desired_old, eta);
+//     T_p_desired = get_T_parallel(theta_desired_old, eta);
+//     K_desired = 2*rho_desired.*O_desired ./ (Id_desired - (Is_desired ./ (2 ./ (T_s_desired + T_p_desired) - 1)));
+//     theta_desired = get_theta(K_desired, eta);
+//     theta_desired = real(theta_desired);
+//     if norm(theta_desired - theta_desired_old) < 1e-6
+//         break;
+//     else
+//         theta_desired_old = theta_desired;
 //     end
 // end
+// id = theta_desired == 0; theta_desired(id) = 0.01;
+// % 计算 azimuth angle
+// phi_desired = Phi_desired / 2;
+// [dZ_dX_desired, dZ_dY_desired] = gradient(image_Z_desired);
+// flag_desired = dZ_dX_desired .* cos(phi_desired) + dZ_dY_desired .* sin(phi_desired);
+// id_desired = flag_desired < 0;
+// phi_desired(id_desired) = phi_desired(id_desired) + pi;
 
 // 计算L_kappa
 Mat Polarimetric_Visual_Servoing::get_L_kappa(Mat& camera_intrinsic)
