@@ -33,9 +33,12 @@ class Polarimetric_Visual_Servoing
         Mat Is_desired_;
         Mat Id_desired_;
         Mat Iu_;     
+        Mat rho_desired_;
+        Mat theta_desired_;
+        Mat phi_desired_;
         double lambda_;
         double epsilon_; 
-        double eta_; 
+        Mat eta_; 
         double phi_pol_; 
         double k_;
         double I_in_k_s_pi_;
@@ -84,8 +87,20 @@ class Polarimetric_Visual_Servoing
 
         void get_rho_theta_phi_desired();
 
-
+        void get_T_perpendicular_parallel(Mat theta, Mat eta, Mat& T_s, Mat& T_p);  
         
+        Mat get_theta(Mat K, Mat eta);
+
+
+        pair<Mat,Mat> gradient(Mat & img, double spaceX, double spaceY);
+
+        static Mat gradientX(Mat & mat, double spacing);
+
+        static Mat gradientY(Mat & mat, double spacing);
+
+        Mat cv_cos(Mat a);
+
+        Mat cv_sin(Mat a);
 
         Mat cv_acos(Mat a);
 

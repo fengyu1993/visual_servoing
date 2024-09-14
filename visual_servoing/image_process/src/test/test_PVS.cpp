@@ -78,6 +78,11 @@ int main()
     PVS.get_rho_theta_phi_desired();
 
 
+
+
+
+  
+
     //  Mat camera_velocity;   
     // for(int i = 0; i < 1; i++)
     // {
@@ -96,7 +101,18 @@ int main()
 
 
 
-
+  // Mat flag = I > 3;
+    // cout << "flag = " << endl << flag << endl;
+    // Mat idx;
+	// cv::findNonZero(flag, idx);
+    // cout << "idx = " << endl << idx << endl;
+    
+    // for(int i = 0; i < idx.cols * idx.rows; i++)
+    // {
+    //     I.at<double>(idx.at<Point>(i).y, idx.at<Point>(i).x) = I.at<double>(idx.at<Point>(i).y, idx.at<Point>(i).x) + 0.5;
+    // }
+    
+    // cout << "I = " << endl << I << endl;
 
 
 
