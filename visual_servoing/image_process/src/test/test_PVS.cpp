@@ -68,20 +68,24 @@ int main()
     PVS.get_Phong_model_init();
 
     PVS.get_O_A_Phi_desired(image_I_0_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired);
+    cout << "cyh_0" << endl;    
+    PVS.get_polar_data_desired();
+    cout << "cyh_n" << endl;
 
-    PVS.get_Phong_us_ud_desired();
+    Mat B = PVS.get_L_n((Mat_<double>(3,1) << 1.0, 5.0, 9.0));
+    cout << "B = " << endl << B << endl;
 
-    PVS.get_I_in_k_s_pi_I_in_k_d_I_a_k_a();
+    // PVS.get_feature_error_interaction_matrix_desired_a();
 
-    PVS.get_Is_Id_Iu_desired();
+    // Mat B = (Mat_<double>(2,3) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5);
 
-    PVS.get_rho_theta_phi_desired();
+    // Mat B_reshape = B.reshape(0, 1);
+    
+    // cout << "B = " << endl << B << endl;
+    // cout << "B_reshape = " << endl << B_reshape << endl;
 
 
 
-
-
-  
 
     //  Mat camera_velocity;   
     // for(int i = 0; i < 1; i++)

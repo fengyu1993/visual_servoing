@@ -34,8 +34,10 @@ class Polarimetric_Visual_Servoing
         Mat Id_desired_;
         Mat Iu_;     
         Mat rho_desired_;
-        Mat theta_desired_;
+        Mat theta_desired_;      Mat theta_current_;
         Mat phi_desired_;
+        Mat rho_dp_desired_;    Mat rho_dp_current_;
+        Mat rho_sp_desired_;    Mat rho_sp_current_;
         double lambda_;
         double epsilon_; 
         Mat eta_; 
@@ -79,6 +81,8 @@ class Polarimetric_Visual_Servoing
 
         void get_Phong_model_init();
 
+        void get_polar_data_desired();
+
         void get_Phong_us_ud_desired();
 
         void get_I_in_k_s_pi_I_in_k_d_I_a_k_a();
@@ -87,10 +91,30 @@ class Polarimetric_Visual_Servoing
 
         void get_rho_theta_phi_desired();
 
+        void get_n_desired();
+
+        void get_rho_dp_sp(Mat theta, Mat eta, Mat& rho_dp, Mat& rho_sp);
+
+        void get_rho_dp_sp_desired();
+        
+        void get_feature_error_interaction_matrix_desired_a();
+
+        void get_feature_error_interaction_matrix_desired_b();
+        
+        Mat get_P_desried();
+        
+        
+        
+        void get_rho_dp_sp_current();
+        
+
+
+
+        Mat get_L_n(Mat n);
+
         void get_T_perpendicular_parallel(Mat theta, Mat eta, Mat& T_s, Mat& T_p);  
         
         Mat get_theta(Mat K, Mat eta);
-
 
         pair<Mat,Mat> gradient(Mat & img, double spaceX, double spaceY);
 
@@ -105,6 +129,8 @@ class Polarimetric_Visual_Servoing
         Mat cv_acos(Mat a);
 
         Mat cv_asin(Mat a);
+
+        Mat VecToso3(Mat omg);
 
         Mat get_camera_velocity();
 
