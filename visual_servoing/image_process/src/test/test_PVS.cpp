@@ -68,21 +68,17 @@ int main()
     PVS.get_Phong_model_init();
 
     PVS.get_O_A_Phi_desired(image_I_0_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired);
-    cout << "cyh_0" << endl;    
+
     PVS.get_polar_data_desired();
-    cout << "cyh_n" << endl;
 
-    Mat B = PVS.get_L_n((Mat_<double>(3,1) << 1.0, 5.0, 9.0));
-    cout << "B = " << endl << B << endl;
+    PVS.get_feature_error_interaction_matrix_desired_a();
 
-    // PVS.get_feature_error_interaction_matrix_desired_a();
+    Mat B = (Mat_<double>(2,3) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5);
 
-    // Mat B = (Mat_<double>(2,3) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5);
-
-    // Mat B_reshape = B.reshape(0, 1);
+    Mat B_reshape = B.reshape(0, 1);
     
-    // cout << "B = " << endl << B << endl;
-    // cout << "B_reshape = " << endl << B_reshape << endl;
+    cout << "B = " << endl << B << endl;
+    cout << "B_reshape = " << endl << B_reshape << endl;
 
 
 
@@ -118,7 +114,8 @@ int main()
     
     // cout << "I = " << endl << I << endl;
 
-
+    // Mat B = PVS.get_L_n((Mat_<double>(3,1) << 1.0, 5.0, 9.0));
+    // cout << "B = " << endl << B << endl;
 
 
 

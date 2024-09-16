@@ -58,6 +58,11 @@ Polarimetric_Visual_Servoing::Polarimetric_Visual_Servoing(int resolution_x=640,
     this->rho_dp_current_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_,  CV_64FC1); 
     this->rho_sp_current_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_,  CV_64FC1); 
 
+    this->d_rho_dp_theta_desired_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_,  CV_64FC1); 
+    this->d_rho_sp_theta_desired_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_,  CV_64FC1);   
+    this->d_rho_dp_theta_current_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_,  CV_64FC1); 
+    this->d_rho_sp_theta_current_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_,  CV_64FC1); 
+
     // 多维数组转为行存储
     this->V_ = Mat::zeros(3, this->resolution_y_ * this->resolution_x_, CV_64FC1);
     this->n_desired_ = Mat::zeros(3, this->resolution_y_ * this->resolution_x_, CV_64FC1);
@@ -81,7 +86,7 @@ void Polarimetric_Visual_Servoing::init_VS(double lambda, double epsilon, double
     set_pose_desired(pose_desired);
     save_data_image();
     save_pose_desired();
-    this->eta_ = eta * Mat::ones(this->resolution_y_, this->resolution_x_, CV_64FC1); 
+    this->eta_ = eta * Mat::ones(1, this->resolution_y_ * this->resolution_x_, CV_64FC1); 
     this->phi_pol_ = phi_pol; 
     this->k_ = k;
 }
@@ -110,19 +115,14 @@ void Polarimetric_Visual_Servoing::get_Phong_model_init()
 
 void Polarimetric_Visual_Servoing::get_polar_data_desired()
 {
-    cout << "cyh_a" << endl;
     get_Phong_us_ud_desired();
 
-cout << "cyh_b" << endl;
     get_I_in_k_s_pi_I_in_k_d_I_a_k_a();
 
-cout << "cyh_c" << endl;
     get_Is_Id_Iu_desired();
 
-cout << "cyh_d" << endl;
-    // get_rho_theta_phi_desired();
+    get_rho_theta_phi_desired();
 
-cout << "cyh_e" << endl;
     get_n_desired();    
 }
 
@@ -196,11 +196,12 @@ void Polarimetric_Visual_Servoing::get_rho_theta_phi_desired()
     // 计算 azimuth angle
     Mat phi_desired = this->Phi_desired_ / 2;
     pair<Mat,Mat> grad = gradient(this->image_depth_desired_, 1.0, 1.0);
-
-    Mat flag_desired = grad.first.mul(cv_cos(phi_desired)) + grad.second.mul(cv_sin(phi_desired));
+    Mat gradX = grad.first.reshape(0,1);
+    Mat gradY = grad.second.reshape(0,1);
+    Mat flag_desired = gradX.mul(cv_cos(phi_desired)) + gradY.mul(cv_sin(phi_desired));
     Mat id_desired = flag_desired < 0;
     Mat idx;
-	cv::findNonZero(id_desired, idx);    
+	cv::findNonZero(id_desired, idx); 
     for(int i = 0; i < idx.cols * idx.rows; i++)
     {
         phi_desired.at<double>(idx.at<Point>(i).y, idx.at<Point>(i).x) = phi_desired.at<double>(idx.at<Point>(i).y, idx.at<Point>(i).x) + CV_PI;
@@ -219,13 +220,18 @@ void Polarimetric_Visual_Servoing::get_n_desired()
     this->n_desired_.row(2) = nz_desired.reshape(0, 1);
 }
 
-// 计算 rho_dp rho_sp
-void Polarimetric_Visual_Servoing::get_rho_dp_sp(Mat theta, Mat eta, Mat& rho_dp, Mat& rho_sp)
+// 计算 rho_dp rho_sp d_rho_sp_theta d_rho_dp_theta
+void Polarimetric_Visual_Servoing::get_rho_dp_sp_d_rho_sp_theta_d_rho_dp_theta
+                (Mat theta, Mat eta, Mat& rho_dp, Mat& rho_sp, Mat& d_rho_dp_theta, Mat& d_rho_sp_theta)
 {
 // rho_dp = ((eta_value - 1/eta_value).^2 .* sin(theta_value).^2) ./ ...
 //     (2+2*eta_value.^2 - (eta_value + 1/eta_value).^2.*sin(theta_value).^2 + 4*cos(theta_value).*sqrt(eta_value.^2 - sin(theta_value).^2));
 // rho_sp = (2*sin(theta_value).^2.*cos(theta_value).*sqrt(eta_value.^2 - sin(theta_value).^2)) ./ ...
 //     (eta_value.^2 - sin(theta_value).^2 - eta_value.^2.*sin(theta_value).^2 + 2*sin(theta_value).^4);
+// d_rho_sp_d_theta = (2*sin(theta).*(eta.^2 - sin(theta).^2 - eta.^2*sin(theta).^2) .* (2*eta.^2 - sin(theta).^2 - eta.^2.*sin(theta).^2)) ./ ...
+//     (sqrt(eta.^2 - sin(theta).^2) .* (eta.^2 - sin(theta).^2 - eta.^2.*sin(theta).^2 + 2*sin(theta).^4).^2);
+// d_rho_dp_d_theta = (eta.^2.*(eta.^2 - 1).^2 .* ((5*eta.^2 - 3).*sin(theta) + (eta.^2 + 1).*(sqrt(2).*sin(2*theta).*sqrt(2*eta.^2 + cos(2*theta) - 1) + sin(3*theta)))) ./ ...
+//     (sqrt(eta.^2 - sin(theta).^2) .* (2*eta.^2 + 2*eta.^4 - (eta.^2 + 1).^2.*sin(theta).^2 + 4*eta.^2*cos(theta).*sqrt(eta.^2 - sin(theta).^2)).^2);
     Mat sin_theta = cv_sin(theta);
     Mat cos_theta = cv_cos(theta);
     Mat sin_theta_2 = sin_theta.mul(sin_theta);
@@ -234,28 +240,42 @@ void Polarimetric_Visual_Servoing::get_rho_dp_sp(Mat theta, Mat eta, Mat& rho_dp
     Mat temp_2 = eta_2 - sin_theta_2;
     Mat temp_sqrt;
     sqrt(temp_2, temp_sqrt);
-    
+    Mat d_rho_sp_theta_dec_temp = temp_2 - eta_2.mul(sin_theta_2) + 2*sin_theta_2.mul(sin_theta_2);
+    Mat temp_d_rho_dp_theta_num_2 = 2*eta_2 + cv_cos(2*theta) - 1;
+    Mat temp_d_rho_dp_theta_num;
+    sqrt(temp_d_rho_dp_theta_num_2, temp_d_rho_dp_theta_num);
+    Mat temp_d_rho_dp_theta_dec_2 = 2*eta_2 + 2*eta_2.mul(eta_2) - (eta_2 + 1).mul(eta_2 + 1).mul(sin_theta_2) + 4*eta_2.mul(cv_cos(theta)).mul(temp_sqrt);
+    Mat temp_d_rho_dp_theta_dec;
+    sqrt(temp_d_rho_dp_theta_dec_2, temp_d_rho_dp_theta_dec);
+    // rho_sp
     Mat rho_sp_num = 2*sin_theta_2.mul(cos_theta).mul(temp_sqrt);
     Mat rho_sp_dec = eta_2 - sin_theta_2 - eta_2.mul(sin_theta_2) + 2*sin_theta_2.mul(sin_theta_2);
-    
+    rho_sp = rho_sp_num / rho_sp_dec;
+    // rho_dp
     Mat rho_dp_num = (eta_2 + eta_2_inv - 2).mul(sin_theta_2);
     Mat rho_dp_dec = 2 + 2*eta_2 - (eta_2 + eta_2_inv + 2).mul(sin_theta_2) + 4*cos_theta.mul(temp_sqrt);
- 
-    rho_sp = rho_sp_num / rho_sp_dec;
     rho_dp = rho_dp_num / rho_dp_dec;
+    // d_rho_sp_theta
+    Mat d_rho_sp_theta_num = 2*sin_theta.mul(temp_2 - eta_2.mul(sin_theta_2)).mul(2*eta_2 - sin_theta_2 - eta_2.mul(sin_theta_2));
+    Mat d_rho_sp_theta_dec = temp_sqrt.mul(d_rho_sp_theta_dec_temp).mul(d_rho_sp_theta_dec_temp);
+    d_rho_sp_theta = d_rho_sp_theta_num / d_rho_sp_theta_dec;
+    // d_rho_dp_theta
+    Mat d_rho_dp_theta_num = eta_2.mul(eta_2 - 1).mul(eta_2 - 1).mul((5*eta_2 - 3).mul(cv_sin(theta)) + (eta_2 + 1).mul(sqrt(2) * cv_sin(2*theta).mul(temp_d_rho_dp_theta_num) + cv_sin(3*theta)));
+    Mat d_rho_dp_theta_dec = temp_sqrt.mul(temp_d_rho_dp_theta_dec);
+    d_rho_dp_theta = d_rho_dp_theta_num / d_rho_dp_theta_dec;
 }
 
 
 // 计算 rho_dp_desired rho_sp_desired
 void Polarimetric_Visual_Servoing::get_rho_dp_sp_desired()
 {
-    get_rho_dp_sp(this->theta_desired_, this->eta_, this->rho_dp_desired_, this->rho_sp_desired_);
+    get_rho_dp_sp_d_rho_sp_theta_d_rho_dp_theta(this->theta_desired_, this->eta_, this->rho_dp_desired_, this->rho_sp_desired_, this->d_rho_dp_theta_desired_, this->d_rho_sp_theta_desired_);
 }
 
 // 计算 rho_dp_current rho_sp_current     
 void Polarimetric_Visual_Servoing::get_rho_dp_sp_current()
 {
-    get_rho_dp_sp(this->theta_current_, this->eta_, this->rho_dp_current_, this->rho_sp_current_);
+    get_rho_dp_sp_d_rho_sp_theta_d_rho_dp_theta(this->theta_current_, this->eta_, this->rho_dp_current_, this->rho_sp_current_, this->d_rho_dp_theta_current_, this->d_rho_sp_theta_current_);
 }
 
 // 计算期望图像交互矩阵和特征 
@@ -265,7 +285,11 @@ void Polarimetric_Visual_Servoing::get_feature_error_interaction_matrix_desired_
     Mat L_n_desired, L_theta_desired, L_phi_desired, L_rho_sp_desired, L_rho_dp_desired, 
         L_V_desired, L_Sa_desired, L_udb_desired, L_usa_desired, L_Ida_desired, L_Isa_desired, 
         L_Iu_desired, L_Oa_desired, L_Aa_desired, L_Phi_desired;
+    
     double* prt_phi = (double*)(this->phi_desired_.data);
+    double* prt_theta = (double*)(this->theta_desired_.data);
+    double* prt_eta = (double*)(this->eta_.data);
+    double* prt_d_rho_sp_d_theta = (double*)(this->d_rho_dp_theta_desired_.data);
 
     Mat P_desired = get_P_desried();
     Mat L_I_pol_a_desired = Mat::zeros(this->resolution_y_ * this->resolution_x_, 6, CV_64FC1);
@@ -273,11 +297,15 @@ void Polarimetric_Visual_Servoing::get_feature_error_interaction_matrix_desired_
 
     for(int cnt = 0; cnt < L_I_pol_a_desired.rows; cnt++)
     {
+        
         // L_n
         L_n_desired = get_L_n(this->n_desired_.col(cnt)); 
         // L_theta
-        // L_theta_desired = get_L_theta(*prt_phi++);
-
+        L_theta_desired = get_L_theta(*prt_phi);
+        // L_phi
+        L_phi_desired = get_L_phi(*prt_theta, *prt_phi);
+        // L_rho_sp
+        L_rho_sp_desired = get_L_rho_sp(*prt_d_rho_sp_d_theta, L_theta_desired);
 
         
         if(++col >= this->resolution_x_)
@@ -285,16 +313,16 @@ void Polarimetric_Visual_Servoing::get_feature_error_interaction_matrix_desired_
             col = 0;
             ++row;
         }
+        prt_phi++;
+        prt_theta++;
+        prt_d_rho_sp_d_theta++;
     }
 
 //     for i = 1 : row
 //     for j = 1 : col
   
 
-//         % L_phi
-//         L_phi_desired = get_L_phi(theta_desired(i,j), phi_desired(i,j));
-//         % L_rho_sp
-//         L_rho_sp_desired = get_L_rho_sp(theta_desired(i,j), phi_desired(i,j), eta);
+
 //         % L_rho_dp 
 //         L_rho_dp_desired = get_L_rho_dp(theta_desired(i,j), phi_desired(i,j), eta);
 //         % L_V
@@ -391,6 +419,27 @@ Mat Polarimetric_Visual_Servoing::get_L_n(Mat n)
                                  0.0, 0.0, 0.0, -n.at<double>(1,0), n.at<double>(0,0), 0);
 }
 
+// 计算 L_theta eq(53)
+Mat Polarimetric_Visual_Servoing::get_L_theta(double phi)
+{
+    return (Mat_<double>(1,6) << 0, 0, 0, -sin(phi), cos(phi), 0);
+}
+
+// 计算 L_phi eq(53)
+Mat Polarimetric_Visual_Servoing::get_L_phi(double theta, double phi)
+{
+    return (Mat_<double>(1,6) << 0, 0, 0, -cos(phi)/tan(theta), -sin(phi)/tan(theta), -1);
+}
+
+// 计算 L_phi eq(55)
+Mat Polarimetric_Visual_Servoing::get_L_rho_sp(double d_rho_sp_d_theta, Mat L_theta)
+{
+    return d_rho_sp_d_theta * L_theta;
+}
+
+
+
+
 // 计算 T_s T_p
 void Polarimetric_Visual_Servoing::get_T_perpendicular_parallel(Mat theta, Mat eta, Mat& T_s, Mat& T_p)
 {
@@ -410,7 +459,6 @@ void Polarimetric_Visual_Servoing::get_T_perpendicular_parallel(Mat theta, Mat e
     Mat Numerator = 4*cv_cos(theta).mul(temp_sqrt);
     Mat Denominator_T_s = 1 + eta_2 - 2*cv_sin_theta_2 + cos_theta_temp;
     T_s = Numerator / Denominator_T_s;
-
     Mat Denominator_T_p = 1 + eta_2 - (eta_2 + 1/eta_2).mul(cv_sin_theta_2) + cos_theta_temp;
     T_p = Numerator / Denominator_T_p;
 }
@@ -497,16 +545,19 @@ void Polarimetric_Visual_Servoing::get_O_A_Phi(Mat I_0, Mat I_45, Mat I_90, Mat 
     Mat temp_3 = (O - I_90) / A;
     Mat temp_4 = (O - I_135) / A;
     Phi = 1/4 * (cv_acos(temp_1) + cv_asin(temp_2) + cv_acos(temp_3) + cv_asin(temp_4));
+    O = O.reshape(0, 1);
+    A = A.reshape(0, 1);
+    Phi = Phi.reshape(0, 1);
 }
 
 void Polarimetric_Visual_Servoing::get_O_A_Phi_desired(Mat I_0, Mat I_45, Mat I_90, Mat I_135)
 {
-    get_O_A_Phi(I_0, I_45, I_90, I_135, O_desired_, A_desired_, Phi_desired_);
+    get_O_A_Phi(I_0, I_45, I_90, I_135, this->O_desired_, this->A_desired_, this->Phi_desired_);
 }
         
 void Polarimetric_Visual_Servoing::get_O_A_Phi_current(Mat I_0, Mat I_45, Mat I_90, Mat I_135)
 {
-    get_O_A_Phi(I_0, I_45, I_90, I_135, O_current_, A_current_, Phi_current_);
+    get_O_A_Phi(I_0, I_45, I_90, I_135, this->O_current_, this->A_current_, this->Phi_current_);
 }
 
 

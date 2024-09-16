@@ -38,6 +38,8 @@ class Polarimetric_Visual_Servoing
         Mat phi_desired_;
         Mat rho_dp_desired_;    Mat rho_dp_current_;
         Mat rho_sp_desired_;    Mat rho_sp_current_;
+        Mat d_rho_dp_theta_desired_;    Mat d_rho_dp_theta_current_;
+        Mat d_rho_sp_theta_desired_;    Mat d_rho_sp_theta_current_;
         double lambda_;
         double epsilon_; 
         Mat eta_; 
@@ -93,7 +95,7 @@ class Polarimetric_Visual_Servoing
 
         void get_n_desired();
 
-        void get_rho_dp_sp(Mat theta, Mat eta, Mat& rho_dp, Mat& rho_sp);
+        void get_rho_dp_sp_d_rho_sp_theta_d_rho_dp_theta(Mat theta, Mat eta, Mat& rho_dp, Mat& rho_sp, Mat& d_rho_dp_theta, Mat& d_rho_sp_theta);
 
         void get_rho_dp_sp_desired();
         
@@ -111,6 +113,15 @@ class Polarimetric_Visual_Servoing
 
 
         Mat get_L_n(Mat n);
+
+        Mat get_L_theta(double phi);
+
+        Mat get_L_phi(double theta, double phi);
+
+        Mat get_L_rho_sp(double d_rho_sp_d_theta, Mat L_theta);
+
+
+
 
         void get_T_perpendicular_parallel(Mat theta, Mat eta, Mat& T_s, Mat& T_p);  
         
