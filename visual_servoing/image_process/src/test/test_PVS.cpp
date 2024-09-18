@@ -67,11 +67,24 @@ int main()
 
     PVS.get_Phong_model_init();
 
-    PVS.get_O_A_Phi_desired(image_I_0_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired);
-
     PVS.get_polar_data_desired();
 
-    PVS.get_feature_error_interaction_matrix_desired_a();
+    PVS.get_interaction_matrix_desired_a();
+
+    PVS.get_interaction_matrix_desired_b();
+
+     Mat camera_velocity;   
+    for(int i = 0; i < 1; i++)
+    {
+        PVS.set_image_depth_current(image_Z_current);
+        PVS.set_image_gray_current(image_I_0_current, image_I_45_current, image_I_90_current, image_I_135_current);
+        PVS.get_polar_data_current();
+
+        // camera_velocity = PVS.get_camera_velocity();
+        // cout << "camera_velocity = \n" << camera_velocity.t() << endl;
+        // PVS.save_data(pose*i);
+    }    
+
 
     Mat B = (Mat_<double>(2,3) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5);
 
@@ -80,18 +93,6 @@ int main()
     cout << "B = " << endl << B << endl;
     cout << "B_reshape = " << endl << B_reshape << endl;
 
-
-
-
-    //  Mat camera_velocity;   
-    // for(int i = 0; i < 1; i++)
-    // {
-    //     PVS.set_image_depth_current(image_Z_current);
-    //     PVS.set_image_gray_current(image_I_0_current, image_I_45_current, image_I_90_current, image_I_135_current);
-    //     camera_velocity = PVS.get_camera_velocity();
-    //     cout << "camera_velocity = \n" << camera_velocity.t() << endl;
-    //     PVS.save_data(pose*i);
-    // }    
     // PVS.write_data();    
     // cout << "cyh" << endl;
 

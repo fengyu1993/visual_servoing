@@ -55,6 +55,8 @@ class Polarimetric_Visual_Servoing
         bool flag_first_;
         int iteration_num_;
         clock_t start_VS_time_;
+        Mat L_I_pol_a_real_desired_;
+        Mat L_I_pol_b_real_desired_;
         struct data
         {
             Mat velocity_;
@@ -77,15 +79,16 @@ class Polarimetric_Visual_Servoing
 
         void get_O_A_Phi(Mat I_0, Mat I_45, Mat I_90, Mat I_135, Mat& O, Mat& A, Mat& Phi);
         
-        void get_O_A_Phi_desired(Mat I_0, Mat I_45, Mat I_90, Mat I_135);
-        
-        void get_O_A_Phi_current(Mat I_0, Mat I_45, Mat I_90, Mat I_135);
+        void get_O_A_Phi_desired();
+        void get_O_A_Phi_current();
 
         void get_Phong_model_init();
 
         void get_polar_data_desired();
+        void get_polar_data_current();
 
         void get_Phong_us_ud_desired();
+        void get_Phong_us_ud_current();
 
         void get_I_in_k_s_pi_I_in_k_d_I_a_k_a();
 
@@ -99,9 +102,9 @@ class Polarimetric_Visual_Servoing
 
         void get_rho_dp_sp_desired();
         
-        void get_feature_error_interaction_matrix_desired_a();
+        void get_interaction_matrix_desired_a();
 
-        void get_feature_error_interaction_matrix_desired_b();
+        void get_interaction_matrix_desired_b();
         
         Mat get_P_desried();
         
@@ -120,7 +123,26 @@ class Polarimetric_Visual_Servoing
 
         Mat get_L_rho_sp(double d_rho_sp_d_theta, Mat L_theta);
 
+        Mat get_L_rho_dp(double d_rho_dp_d_theta, Mat L_theta);
 
+        Mat get_L_V(Mat P);
+
+        Mat get_dV_dP(Mat P);
+
+        Mat get_L_P(Mat P);
+
+        Mat get_L_Sa(Mat S);
+
+        Mat get_L_Sb(Mat P);
+
+        Mat get_L_udb(Mat n, Mat S, Mat L_n, Mat L_Sb);
+
+        Mat get_L_usa(double ud, Mat n, Mat S, Mat V, Mat L_n_desired, Mat L_V_desired, Mat L_Sa_desired);
+
+        Mat get_L_usb(double ud, Mat n, Mat S, Mat V, Mat L_n_desired, Mat L_V_desired, Mat L_Sb_desired, Mat L_udb_desired);
+
+
+    
 
 
         void get_T_perpendicular_parallel(Mat theta, Mat eta, Mat& T_s, Mat& T_p);  
