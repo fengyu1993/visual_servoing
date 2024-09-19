@@ -31,6 +31,7 @@ Polarimetric_Visual_Servoing::Polarimetric_Visual_Servoing(int resolution_x=640,
     this->camera_intrinsic_inv_ = Mat::zeros(3, 3, CV_64FC1);
     this->camera_velocity_ = Mat::zeros(6, 1, CV_64FC1);
 	this->flag_first_ = true;
+    this->flag_a_or_b = true;
 	this->iteration_num_ = 0;
 
     // 多维数组转为行存储
@@ -47,12 +48,16 @@ Polarimetric_Visual_Servoing::Polarimetric_Visual_Servoing(int resolution_x=640,
     this->ud_current_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1); 
 
     this->Is_desired_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1); 
+    this->Is_current_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1); 
     this->Id_desired_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1); 
+    this->Id_current_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1); 
     this->Iu_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1);  
 
     this->rho_desired_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1); 
+    this->rho_current_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1); 
     this->theta_desired_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1); 
     this->phi_desired_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_,  CV_64FC1); 
+    this->phi_current_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_,  CV_64FC1); 
 
     this->rho_dp_desired_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_,  CV_64FC1); 
     this->rho_sp_desired_ = Mat::zeros(1, this->resolution_y_ * this->resolution_x_,  CV_64FC1);   
@@ -70,8 +75,13 @@ Polarimetric_Visual_Servoing::Polarimetric_Visual_Servoing(int resolution_x=640,
     this->S_desired_ = Mat::zeros(3, this->resolution_y_ * this->resolution_x_, CV_64FC1);
     this->S_current_ = Mat::zeros(3, this->resolution_y_ * this->resolution_x_, CV_64FC1);
 
+    this->col_row_reshape_ = Mat::zeros(3, this->resolution_y_ * this->resolution_x_, CV_64FC1); 
+
     this->L_I_pol_a_real_desired_ = Mat::zeros(this->resolution_y_ * this->resolution_x_, 6, CV_64FC1);
+    this->L_I_pol_a_real_current_ = Mat::zeros(this->resolution_y_ * this->resolution_x_, 6, CV_64FC1);
+
     this->L_I_pol_b_real_desired_ = Mat::zeros(this->resolution_y_ * this->resolution_x_, 6, CV_64FC1);
+    this->L_I_pol_b_real_current_ = Mat::zeros(this->resolution_y_ * this->resolution_x_, 6, CV_64FC1);
 }
 
 
@@ -137,13 +147,11 @@ void Polarimetric_Visual_Servoing::get_polar_data_current()
     
     get_Phong_us_ud_current();
 
-    // get_I_in_k_s_pi_I_in_k_d_I_a_k_a();
+    get_Is_Id_Iu_current();
 
-    // get_Is_Id_Iu_current();
+    get_rho_theta_phi_current();
 
-    // get_rho_theta_phi_current();
-
-    // get_n_current();    
+    get_n_current();    
 }
 
 // 计算Phong模型 us_desired ud_desired
@@ -162,16 +170,17 @@ void Polarimetric_Visual_Servoing::get_Phong_us_ud_desired()
     //         cnt++;
     //     }
     // }
-
     this->ud_desired_ = this->n_desired_.row(0).mul(this->S_desired_.row(0)) + 
                 this->n_desired_.row(1).mul(this->S_desired_.row(1)) +
                 this->n_desired_.row(2).mul(this->S_desired_.row(2));
 
-    Mat temp = 2*this->ud_desired_ * this->n_desired_ - this->S_desired_;
+    Mat temp_1 = 2*this->ud_desired_.mul(this->n_desired_.row(0)) - this->S_desired_.row(0);
+    Mat temp_2 = 2*this->ud_desired_.mul(this->n_desired_.row(1)) - this->S_desired_.row(1);
+    Mat temp_3 = 2*this->ud_desired_.mul(this->n_desired_.row(2)) - this->S_desired_.row(2);
 
-    this->us_desired_ =  this->V_.row(0).mul(temp.row(0)) + 
-                this->V_.row(1).mul(temp.row(1)) + 
-                this->V_.row(2).mul(temp.row(2));
+    this->us_desired_ =  this->V_.row(0).mul(temp_1) + 
+                this->V_.row(1).mul(temp_2) + 
+                this->V_.row(2).mul(temp_3);
 }
 // 计算Phong模型 us_current ud_current
 void Polarimetric_Visual_Servoing::get_Phong_us_ud_current()
@@ -180,11 +189,13 @@ void Polarimetric_Visual_Servoing::get_Phong_us_ud_current()
                 this->n_current_.row(1).mul(this->S_current_.row(1)) +
                 this->n_current_.row(2).mul(this->S_current_.row(2));
 
-    Mat temp = 2*this->ud_current_ * this->n_current_ - this->S_current_;
+    Mat temp_1 = 2*this->ud_current_.mul(this->n_current_.row(0)) - this->S_current_.row(0);
+    Mat temp_2 = 2*this->ud_current_.mul(this->n_current_.row(1)) - this->S_current_.row(1);
+    Mat temp_3 = 2*this->ud_current_.mul(this->n_current_.row(2)) - this->S_current_.row(2);
 
-    this->us_current_ =  this->V_.row(0).mul(temp.row(0)) + 
-                this->V_.row(1).mul(temp.row(1)) + 
-                this->V_.row(2).mul(temp.row(2));
+    this->us_current_ =  this->V_.row(0).mul(temp_1) + 
+                this->V_.row(1).mul(temp_2) + 
+                this->V_.row(2).mul(temp_3);
 }
 
 // 计算 I_in_k_s_pi I_in_k_d I_a_k_a
@@ -213,6 +224,14 @@ void Polarimetric_Visual_Servoing::get_Is_Id_Iu_desired()
     this->Id_desired_ = this->I_in_k_d_ * this->ud_desired_;
     this->Iu_ = this->I_a_k_a_ * Mat::ones(this->resolution_y_ * this->resolution_x_, 3, CV_64FC1);
 }
+// 计算 Is_current Id_current Iu
+void Polarimetric_Visual_Servoing::get_Is_Id_Iu_current()
+{
+    Mat US; 
+    cv::pow(this->us_current_, this->k_, US);
+    this->Is_current_ = this->I_in_k_s_pi_ * US; 
+    this->Id_current_ = this->I_in_k_d_ * this->ud_desired_;
+ }
 
 // 计算 rho_desired theta_desired phi_desired
 void Polarimetric_Visual_Servoing::get_rho_theta_phi_desired()
@@ -237,30 +256,77 @@ void Polarimetric_Visual_Servoing::get_rho_theta_phi_desired()
         }     
     }
     // 计算 azimuth angle
-    Mat phi_desired = this->Phi_desired_ / 2;
+    this->phi_desired_ = this->Phi_desired_ / 2;
     pair<Mat,Mat> grad = gradient(this->image_depth_desired_, 1.0, 1.0);
     Mat gradX = grad.first.reshape(0,1);
     Mat gradY = grad.second.reshape(0,1);
-    Mat flag_desired = gradX.mul(cv_cos(phi_desired)) + gradY.mul(cv_sin(phi_desired));
+    Mat flag_desired = gradX.mul(cv_cos(this->phi_desired_)) + gradY.mul(cv_sin(this->phi_desired_));
     Mat id_desired = flag_desired < 0;
     Mat idx;
 	cv::findNonZero(id_desired, idx); 
     for(int i = 0; i < idx.cols * idx.rows; i++)
     {
-        phi_desired.at<double>(idx.at<Point>(i).y, idx.at<Point>(i).x) = phi_desired.at<double>(idx.at<Point>(i).y, idx.at<Point>(i).x) + CV_PI;
+        this->phi_desired_.at<double>(idx.at<Point>(i).y, idx.at<Point>(i).x) = this->phi_desired_.at<double>(idx.at<Point>(i).y, idx.at<Point>(i).x) + CV_PI;
     }
 }
 
-// 计算 n
+// 计算 rho_current theta_current phi_current
+void Polarimetric_Visual_Servoing::get_rho_theta_phi_current()
+{
+    // 计算 rho
+    this->rho_current_ = this->A_current_ / this->O_current_;
+    // 计算 zenith angle
+    Mat T_s_current = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    Mat T_p_current = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    Mat K_current = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    Mat theta_current_old = CV_PI/6 * Mat::ones(1, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    for(int i = 0; i < 20; i++) 
+    {
+        get_T_perpendicular_parallel(theta_current_old, this->eta_ , T_s_current, T_p_current);
+        K_current = 2*this->rho_current_.mul(this->O_current_) / (this->Id_current_ - (this->Is_current_ / (2 / (T_s_current + T_p_current) - 1)));
+        this->theta_current_ = get_theta(K_current, this->eta_);
+        if(norm(this->theta_current_ - theta_current_old) < 1e-6){
+            break;
+        }   
+        else{
+            theta_current_old = this->theta_current_;
+        }     
+    }
+    // 计算 azimuth angle
+    this->phi_current_ = this->Phi_current_ / 2;
+    pair<Mat,Mat> grad = gradient(this->image_depth_current_, 1.0, 1.0);
+    Mat gradX = grad.first.reshape(0,1);
+    Mat gradY = grad.second.reshape(0,1);
+    Mat flag_current = gradX.mul(cv_cos(this->phi_current_)) + gradY.mul(cv_sin(this->phi_current_));
+    Mat id_current = flag_current < 0;
+    Mat idx;
+	cv::findNonZero(id_current, idx); 
+    for(int i = 0; i < idx.cols * idx.rows; i++)
+    {
+        this->phi_current_.at<double>(idx.at<Point>(i).y, idx.at<Point>(i).x) = this->phi_current_.at<double>(idx.at<Point>(i).y, idx.at<Point>(i).x) + CV_PI;
+    }    
+}
+
+// 计算 n_desired
 void Polarimetric_Visual_Servoing::get_n_desired()
 {
-
     Mat nx_desired = cv_cos(this->phi_desired_).mul(cv_sin(this->theta_desired_)); 
     Mat ny_desired = cv_sin(this->phi_desired_).mul(cv_sin(this->theta_desired_));
     Mat nz_desired = -cv_cos(this->theta_desired_);
     this->n_desired_.row(0) = nx_desired.reshape(0, 1);
     this->n_desired_.row(1) = ny_desired.reshape(0, 1);
     this->n_desired_.row(2) = nz_desired.reshape(0, 1);
+}
+
+// 计算 n_current
+void Polarimetric_Visual_Servoing::get_n_current()
+{
+    Mat nx_current = cv_cos(this->phi_current_).mul(cv_sin(this->theta_current_)); 
+    Mat ny_current = cv_sin(this->phi_current_).mul(cv_sin(this->theta_desired_));
+    Mat nz_current = -cv_cos(this->theta_current_);
+    this->n_current_.row(0) = nx_current.reshape(0, 1);
+    this->n_current_.row(1) = ny_current.reshape(0, 1);
+    this->n_current_.row(2) = nz_current.reshape(0, 1);
 }
 
 // 计算 rho_dp rho_sp d_rho_sp_theta d_rho_dp_theta
@@ -321,7 +387,28 @@ void Polarimetric_Visual_Servoing::get_rho_dp_sp_current()
     get_rho_dp_sp_d_rho_sp_theta_d_rho_dp_theta(this->theta_current_, this->eta_, this->rho_dp_current_, this->rho_sp_current_, this->d_rho_dp_theta_current_, this->d_rho_sp_theta_current_);
 }
 
-// 计算期望图像交互矩阵和特征 
+// 计算期望图像交互矩阵 
+void Polarimetric_Visual_Servoing::get_interaction_matrix_desired()
+{
+    if(this->flag_a_or_b){
+        get_interaction_matrix_desired_a();
+    }
+    else{
+        get_interaction_matrix_desired_b();
+    }
+}
+
+// 计算当前图像交互矩阵 
+void Polarimetric_Visual_Servoing::get_interaction_matrix_current()
+{
+    if(this->flag_a_or_b){
+        get_interaction_matrix_current_a();
+    }
+    else{
+        get_interaction_matrix_current_b();
+    }
+}
+// 计算期望图像交互矩阵
 // the light source motionless with respect to the object frame and located at infinity
 void Polarimetric_Visual_Servoing::get_interaction_matrix_desired_a()
 {
@@ -469,7 +556,155 @@ void Polarimetric_Visual_Servoing::get_interaction_matrix_desired_a()
     this->L_I_pol_a_real_desired_ = L_I_pol_a_desired - L_I_desired;
 }
 
-// 计算期望图像交互矩阵和特征 
+// 计算当前图像交互矩阵
+// the light source motionless with respect to the object frame and located at infinity
+void Polarimetric_Visual_Servoing::get_interaction_matrix_current_a()
+{
+    // 计算 L_I_current 
+    Mat L_I_current = Mat::zeros(this->resolution_y_ * this->resolution_x_, 6, CV_64FC1);
+
+    Mat P_current = get_P_current();
+    Mat P_current_x = P_current.row(0);
+    Mat P_current_y = P_current.row(1);
+    Mat P_current_z_inv = 1 / P_current.row(2);
+
+    Mat I;
+    switch ((int)this->phi_pol_) 
+    {
+        case 0:
+            I = this->image_I_0_current_;
+            break;
+        case 45:
+            I = this->image_I_45_current_;
+            break;
+        case 90:
+            I = this->image_I_90_current_;
+            break;
+        case 135:
+            I = this->image_I_135_current_;
+            break;
+        default:
+            I = this->image_I_0_current_;
+            break; 
+    }
+    pair<Mat,Mat> grad = gradient(I, 1.0, 1.0);
+    Mat I_u_current= Mat::zeros(6, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    Mat I_v_current= Mat::zeros(6, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    I_u_current.row(0) = grad.first.reshape(0,1);
+    I_u_current.row(1) = I_u_current.row(0);
+    I_u_current.row(2) = I_u_current.row(0);
+    I_u_current.row(3) = I_u_current.row(0);
+    I_u_current.row(4) = I_u_current.row(0);
+    I_u_current.row(5) = I_u_current.row(0); 
+    I_v_current.row(0) = grad.second.reshape(0,1);
+    I_v_current.row(1) = I_v_current.row(0);
+    I_v_current.row(2) = I_v_current.row(0);
+    I_v_current.row(3) = I_v_current.row(0);
+    I_v_current.row(4) = I_v_current.row(0);
+    I_v_current.row(5) = I_v_current.row(0); 
+
+    Mat L_kappa = get_L_kappa(this->camera_intrinsic_);
+    double ku = L_kappa.at<double>(0, 0);
+    double kv = L_kappa.at<double>(1, 1);
+
+    Mat L_u_current_x = Mat::zeros(6, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    L_u_current_x.col(0) = ku*(-P_current_z_inv);
+
+    L_u_current_x.col(1) = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    L_u_current_x.col(2) = ku*(P_current_x.mul(P_current_z_inv));
+    L_u_current_x.col(3) = ku*(P_current_x.mul(P_current_y));
+    L_u_current_x.col(4) = ku*(-(1 + P_current_x.mul(P_current_x)));
+    L_u_current_x.col(5) = ku*(P_current_y);
+    Mat L_u_current_y = Mat::zeros(6, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    L_u_current_y.col(0) = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    L_u_current_y.col(1) = kv*(P_current_z_inv);
+    L_u_current_y.col(2) = kv*(P_current_y.mul(P_current_z_inv));
+    L_u_current_y.col(3) = kv*(1 + P_current_y.mul(P_current_y));
+    L_u_current_y.col(4) = kv*(-P_current_x.mul(P_current_y));
+    L_u_current_y.col(5) = kv*(-P_current_x);
+
+    L_I_current = (I_u_current.mul(L_u_current_x) + I_v_current.mul(L_u_current_y)).t();
+    // 计算 L_I_pol_a_current  
+    Mat L_n_current, L_theta_current, L_phi_current, L_rho_sp_current, L_rho_dp_current, 
+        L_V_current, L_Sa_current, L_uda_current, L_usa_current, L_Ida_current, L_Isa_current, 
+        L_Iu_current, L_Oa_current, L_Aa_current, L_Phi_current;
+
+    double* prt_phi = (double*)(this->phi_current_.data);
+    double* prt_theta = (double*)(this->theta_current_.data);
+    double* prt_d_rho_sp_theta_current = (double*)(this->d_rho_sp_theta_current_.data);
+    double* prt_d_rho_dp_theta_current = (double*)(this->d_rho_dp_theta_current_.data);
+    double* prt_ud_current = (double*)(this->ud_current_.data);
+    double* prt_us_current = (double*)(this->us_current_.data);
+    double* prt_rho_dp_current = (double*)(this->rho_dp_current_.data);
+    double* prt_rho_sp_current = (double*)(this->rho_sp_current_.data);
+    double* prt_Id_current = (double *)(this->Id_current_.data);
+    double* prt_Is_current = (double *)(this->Is_current_.data);
+    double* prt_phi_current = (double *)(this->phi_current_.data);
+    double* prt_A_current = (double *)(this->A_current_.data);
+
+    Mat L_I_pol_a_current = Mat::zeros(this->resolution_y_ * this->resolution_x_, 6, CV_64FC1);
+    int row = 0, col = 0;
+    for(int cnt = 0; cnt < L_I_pol_a_current.rows; cnt++)
+    {
+        // L_n
+        L_n_current = get_L_n(this->n_current_.col(cnt)); 
+        // L_theta
+        L_theta_current = get_L_theta(*prt_phi);
+        // L_phi
+        L_phi_current = get_L_phi(*prt_theta, *prt_phi);
+        // L_rho_sp
+        L_rho_sp_current = get_L_rho_sp(*prt_d_rho_sp_theta_current, L_theta_current);
+        // L_rho_dp 
+        L_rho_dp_current = get_L_rho_dp(*prt_d_rho_dp_theta_current, L_theta_current);
+        // L_V
+        L_V_current = get_L_V(P_current.col(cnt));
+        // L_S
+        L_Sa_current = get_L_Sa(this->S_current_.col(cnt));
+        // L_ud
+        L_uda_current = Mat::zeros(1, 6, CV_64FC1);
+        // L_us 
+        L_usa_current = get_L_usa(*prt_ud_current, this->n_current_.col(cnt), 
+                            this->S_current_.col(cnt), this->V_.col(cnt), L_n_current, L_V_current, L_Sa_current);
+        // L_Id
+        L_Ida_current = Mat::zeros(1, 6, CV_64FC1);
+        // L_Is
+        L_Isa_current = this->I_in_k_s_pi_ * this->k_ * pow(*prt_us_current, this->k_ - 1) * L_usa_current;
+        // L_Iu
+        L_Iu_current = Mat::zeros(1, 6, CV_64FC1);
+        // L_O
+        L_Oa_current = 1/2 * (L_Isa_current + L_Ida_current + L_Iu_current);
+        // L_A
+        L_Aa_current = 1/2 * (*prt_rho_dp_current * L_Ida_current + *prt_Id_current * L_rho_dp_current 
+                        - *prt_rho_sp_current * L_Isa_current - *prt_Is_current * L_rho_sp_current);
+        // L_Phi
+        L_Phi_current = 2*L_phi_current; 
+        // L_I_pol
+        L_I_pol_a_current.row(cnt) = L_Oa_current + cos(2*this->phi_pol_ - *prt_phi_current) * L_Aa_current + *prt_A_current * sin(2*this->phi_pol_ - *prt_phi_current) * L_Phi_current;
+        // 更新
+        if(++col >= this->resolution_x_)
+        {
+            col = 0;
+            ++row;
+        }
+        prt_phi++;
+        prt_theta++;
+        prt_d_rho_sp_theta_current++;
+        prt_d_rho_dp_theta_current++;
+        prt_ud_current++;
+        prt_us_current++;
+        prt_rho_dp_current++;
+        prt_rho_sp_current++;
+        prt_Id_current++;
+        prt_Is_current++;
+        prt_phi_current++;
+        prt_A_current++;
+        cnt = cnt + 1; 
+    }
+    // 计算 L_I_pol_a_real_current 
+    this->L_I_pol_a_real_current_ = L_I_pol_a_current - L_I_current;
+}
+
+// 计算期望图像交互矩阵 
 // the light source mounted on the camera
 void Polarimetric_Visual_Servoing::get_interaction_matrix_desired_b()
 {
@@ -616,27 +851,191 @@ void Polarimetric_Visual_Servoing::get_interaction_matrix_desired_b()
     this->L_I_pol_b_real_desired_ = L_I_pol_b_desired - L_I_desired;
 }
 
+// 计算当前图像交互矩阵 
+// the light source mounted on the camera
+void Polarimetric_Visual_Servoing::get_interaction_matrix_current_b()
+{
+    // 计算 L_I_current 
+    Mat L_I_current = Mat::zeros(this->resolution_y_ * this->resolution_x_, 6, CV_64FC1);
+
+    Mat P_current = get_P_current();
+    Mat P_current_x = P_current.row(0);
+    Mat P_current_y = P_current.row(1);
+    Mat P_current_z_inv = 1 / P_current.row(2);
+
+    Mat I;
+    switch ((int)this->phi_pol_) 
+    {
+        case 0:
+            I = this->image_I_0_current_;
+            break;
+        case 45:
+            I = this->image_I_45_current_;
+            break;
+        case 90:
+            I = this->image_I_90_current_;
+            break;
+        case 135:
+            I = this->image_I_135_current_;
+            break;
+        default:
+            I = this->image_I_0_current_;
+            break; 
+    }
+    pair<Mat,Mat> grad = gradient(I, 1.0, 1.0);
+    Mat I_u_current= Mat::zeros(6, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    Mat I_v_current= Mat::zeros(6, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    I_u_current.row(0) = grad.first.reshape(0,1);
+    I_u_current.row(1) = I_u_current.row(0);
+    I_u_current.row(2) = I_u_current.row(0);
+    I_u_current.row(3) = I_u_current.row(0);
+    I_u_current.row(4) = I_u_current.row(0);
+    I_u_current.row(5) = I_u_current.row(0); 
+    I_v_current.row(0) = grad.second.reshape(0,1);
+    I_v_current.row(1) = I_v_current.row(0);
+    I_v_current.row(2) = I_v_current.row(0);
+    I_v_current.row(3) = I_v_current.row(0);
+    I_v_current.row(4) = I_v_current.row(0);
+    I_v_current.row(5) = I_v_current.row(0); 
+
+    Mat L_kappa = get_L_kappa(this->camera_intrinsic_);
+    double ku = L_kappa.at<double>(0, 0);
+    double kv = L_kappa.at<double>(1, 1);
+    Mat L_u_current_x = Mat::zeros(6, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    L_u_current_x.col(0) = ku*(-P_current_z_inv);
+    L_u_current_x.col(1) = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    L_u_current_x.col(2) = ku*(P_current_x.mul(P_current_z_inv));
+    L_u_current_x.col(3) = ku*(P_current_x.mul(P_current_y));
+    L_u_current_x.col(4) = ku*(-(1 + P_current_x.mul(P_current_x)));
+    L_u_current_x.col(5) = ku*(P_current_y);
+    Mat L_u_current_y = Mat::zeros(6, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    L_u_current_y.col(0) = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    L_u_current_y.col(1) = kv*(P_current_z_inv);
+    L_u_current_y.col(2) = kv*(P_current_y.mul(P_current_z_inv));
+    L_u_current_y.col(3) = kv*(1 + P_current_y.mul(P_current_y));
+    L_u_current_y.col(4) = kv*(-P_current_x.mul(P_current_y));
+    L_u_current_y.col(5) = kv*(-P_current_x);
+
+    L_I_current = (I_u_current.mul(L_u_current_x) + I_v_current.mul(L_u_current_y)).t();
+    // 计算 L_I_pol_b_current
+    Mat L_n_current, L_theta_current, L_phi_current, L_rho_sp_current, L_rho_dp_current, 
+        L_V_current, L_Sb_current, L_udb_current, L_usb_current, L_Idb_current, L_Isb_current, 
+        L_Iu_current, L_Ob_current, L_Ab_current, L_Phi_current;
+    
+    double* prt_phi = (double*)(this->phi_current_.data);
+    double* prt_theta = (double*)(this->theta_current_.data);
+    double* prt_d_rho_sp_theta_current = (double*)(this->d_rho_sp_theta_current_.data);
+    double* prt_d_rho_dp_theta_current = (double*)(this->d_rho_dp_theta_current_.data);
+    double* prt_ud_current = (double*)(this->ud_current_.data);
+    double* prt_us_current = (double*)(this->us_current_.data);
+    double* prt_rho_dp_current = (double*)(this->rho_dp_current_.data);
+    double* prt_rho_sp_current = (double*)(this->rho_sp_current_.data);
+    double* prt_Id_current = (double *)(this->Id_current_.data);
+    double* prt_Is_current = (double *)(this->Is_current_.data);
+    double* prt_phi_current = (double *)(this->phi_current_.data);
+    double* prt_A_current = (double *)(this->A_current_.data);
+
+    Mat L_I_pol_b_current = Mat::zeros(this->resolution_y_ * this->resolution_x_, 6, CV_64FC1);
+    int row = 0, col = 0;
+
+    for(int cnt = 0; cnt < L_I_pol_b_current.rows; cnt++)
+    {
+        
+        // L_n
+        L_n_current = get_L_n(this->n_current_.col(cnt)); 
+        // L_theta
+        L_theta_current = get_L_theta(*prt_phi);
+        // L_phi
+        L_phi_current = get_L_phi(*prt_theta, *prt_phi);
+        // L_rho_sp
+        L_rho_sp_current = get_L_rho_sp(*prt_d_rho_sp_theta_current, L_theta_current);
+        // L_rho_dp 
+        L_rho_dp_current = get_L_rho_dp(*prt_d_rho_dp_theta_current, L_theta_current);
+        // L_V
+        L_V_current = get_L_V(P_current.col(cnt));
+        // L_S
+        L_Sb_current = get_L_Sb(P_current.col(cnt));
+         // L_ud
+        L_udb_current =  get_L_udb(this->n_current_.col(cnt), this->S_current_.col(cnt), L_n_current, L_Sb_current);
+        // L_us 
+        L_usb_current = get_L_usb(*prt_ud_current, this->n_current_.col(cnt), 
+                            this->S_current_.col(cnt), this->V_.col(cnt), L_n_current, L_V_current, L_Sb_current, L_udb_current);
+        // L_Id
+        L_Idb_current = this->I_in_k_d_ * L_udb_current;
+        // L_Is
+        L_Isb_current = this->I_in_k_s_pi_ * this->k_ * pow(*prt_us_current, this->k_-1) * L_usb_current;
+        // L_Iu
+        L_Iu_current = Mat::zeros(1, 6, CV_64FC1);
+        // L_O
+        L_Ob_current = 1/2 * (L_Isb_current + L_Idb_current + L_Iu_current);
+        // L_A
+        L_Ab_current = 1/2 * (*prt_rho_dp_current * L_Idb_current + *prt_Id_current * L_rho_dp_current - *prt_rho_sp_current * L_Isb_current - *prt_Is_current * L_rho_sp_current);
+        // L_Phi
+        L_Phi_current = 2*L_phi_current; 
+        // L_I_pol
+        L_I_pol_b_current.row(cnt) = L_Ob_current + cos(2*this->phi_pol_ - *prt_phi_current)*L_Ab_current + *prt_A_current*sin(2*this->phi_pol_ - *prt_phi_current)*L_Phi_current;
+        // 更新       
+        if(++col >= this->resolution_x_)
+        {
+            col = 0;
+            ++row;
+        }
+        prt_phi++;
+        prt_theta++;
+        prt_d_rho_sp_theta_current++;
+        prt_d_rho_dp_theta_current++;
+        prt_ud_current++;
+        prt_us_current++;
+        prt_rho_dp_current++;
+        prt_rho_sp_current++;
+        prt_Id_current++;
+        prt_Is_current++;
+        prt_phi_current++;
+        prt_A_current++;
+        cnt = cnt + 1;
+    }
+    // 计算 L_I_pol_b_real_current 
+    this->L_I_pol_b_real_current_ = L_I_pol_b_current - L_I_current;
+}
 
 // % 计算期望图像空间点坐标
 Mat Polarimetric_Visual_Servoing::get_P_desried()
 {
-    Mat P = Mat::zeros(3, this->resolution_y_ * this->resolution_x_, CV_64FC1);
     int row = 1, col = 1;
-    Mat image_Z = image_depth_desired_.reshape(0, 1);
-    double *ptr = image_Z.ptr<double>(0, 0);
 
     for(int i = 0; i < V_.cols; i++)
     {
-        P.col(i) = this->camera_intrinsic_inv_ * cv::Vec3d(col, row, 1.0) 
-                            * ptr[i];
+        this->col_row_reshape_.col(i) = cv::Vec3d(col, row, 1.0); 
         if(++col > this->resolution_x_)
         {
             col = 1;
             ++row;
         }
     }
+
+    Mat image_Z = image_depth_desired_.reshape(0, 1);
+    Mat temp = Mat::zeros(3, this->resolution_x_ * this->resolution_y_, CV_64FC1);
+    temp.row(0) = image_Z;
+    temp.row(1) = image_Z;
+    temp.row(2) = image_Z;
+    Mat P = (this->camera_intrinsic_inv_ * this->col_row_reshape_).mul(temp);
+
     return P;
 }
+
+// % 计算当前图像空间点坐标
+Mat Polarimetric_Visual_Servoing::get_P_current()
+{
+    Mat image_Z = image_depth_current_.reshape(0, 1);
+    Mat temp = Mat::zeros(3, this->resolution_x_ * this->resolution_y_, CV_64FC1);
+    temp.row(0) = image_Z;
+    temp.row(1) = image_Z;
+    temp.row(2) = image_Z;
+    Mat P = (this->camera_intrinsic_inv_ * this->col_row_reshape_).mul(temp);
+
+    return P;
+}
+
 // 计算 theta
 Mat Polarimetric_Visual_Servoing::get_theta(Mat K, Mat eta)
 {
@@ -951,10 +1350,14 @@ Mat Polarimetric_Visual_Servoing::get_camera_velocity()
 {
 	// 计算相机速度
     Mat L_e_inv;
-	this->iteration_num_++;
+	this->iteration_num_++;    
+    cout << "cyh_1" << endl;
     get_feature_error_interaction_matrix(); 
-    invert(this->L_e_, L_e_inv, DECOMP_SVD);
+    cout << "cyh_2" << endl;
+    // invert(this->L_e_, L_e_inv, DECOMP_SVD);
+    cout << "cyh_3" << endl;
     this->camera_velocity_ = -this->lambda_ * L_e_inv * this->error_s_;
+    cout << "cyh_4" << endl;
     return this->camera_velocity_;
 }
 
@@ -1265,58 +1668,42 @@ void Polarimetric_Visual_Servoing::write_to_excel(Mat data, ofstream& oFile)
 
 void Polarimetric_Visual_Servoing::get_feature_error_interaction_matrix()
 {
-    // // 计算特征误差 交互矩阵
-    // void Discrete_Orthogonal_Moment_VS::get_feature_error_interaction_matrix()
-    // {
-    //     // 准备
-    //     get_order_adaption();
-    //     int num = int((double(this->order_) + 2) * (double(this->order_) + 1) / 2.0);
-    //     this->L_e_ = Mat::zeros(num, 6, CV_64FC1); 
-    //     this->error_s_ = Mat::zeros(num, 1, CV_64FC1); 
-    //     Mat feature_new= Mat::zeros(num, 1, CV_64FC1); 
-    //     Mat feature_old= Mat::zeros(num, 1, CV_64FC1); 
-    //     Mat Le_new =  Mat::zeros(num, 6, CV_64FC1);
-    //     Mat Le_old =  Mat::zeros(num, 6, CV_64FC1);
-    //     Mat DOM_XY;
-    //     int cnt = 0;
-    //     // 计算离散正交矩所需矩阵 DOM_x_ DOM_y_
-    //     get_DOM_matrix();
-    //     // 计算灰度交互矩阵
-    //     Mat L_I_new = get_interaction_matrix_gray(this->image_gray_current_, this->image_depth_current_, this->camera_intrinsic_);
-    //     Mat L_I_old = get_interaction_matrix_gray(this->image_gray_desired_, this->image_depth_desired_, this->camera_intrinsic_);
-    //     // 计算特征 交互矩阵
-    //     for(int l = 0; l <= this->order_; l++)
-    //     {
-    //         for(int k = 0; k <= this->order_; k++)
-    //         {
-    //             if(l + k > this->order_){
-    //                 continue;
-    //             }else{
-    //                 // 准备            
-    //                 DOM_XY = repeat(this->DOM_x_.row(l), this->M_, 1).mul(
-    //                     repeat(this->DOM_y_.row(k).t(), 1, this->N_));                     
-    //                 // 计算特征
-    //                 ((double*)feature_new.data)[cnt] = sum(DOM_XY.mul(this->image_gray_current_))[0];
-    //                 ((double*)feature_old.data)[cnt] = sum(DOM_XY.mul(this->image_gray_desired_))[0];
-    //                 // 计算交互矩阵
-    //                 get_interaction_matrix_DOM_once(DOM_XY, L_I_new).copyTo(Le_new.row(cnt));
-    //                 get_interaction_matrix_DOM_once(DOM_XY, L_I_old).copyTo(Le_old.row(cnt));
-    //                 // 计数
-    //                 cnt++;
-    //             }
-    //         }
-    //     }   
-    //     // 计算特征误差 交互矩阵
-    //     this->error_s_ = feature_new.rowRange(0, cnt) - feature_old.rowRange(0, cnt);
-    //     this->L_e_ = 0.5*(Le_new.rowRange(0, cnt) + Le_old.rowRange(0, cnt));
-    // }
+    get_feature_error();
+
+    get_interaction_matrix_current();
+
+    if(this->flag_a_or_b){
+        this->L_e_ = 1/2 * (this->L_I_pol_a_real_current_ + this->L_I_pol_a_real_desired_);
+    }
+    else{
+        this->L_e_ = 1/2 * (this->L_I_pol_b_real_current_ + this->L_I_pol_b_real_desired_);
+    }
+}
+
+void Polarimetric_Visual_Servoing::get_feature_error()
+{
+    switch ((int)this->phi_pol_) 
+    {
+        case 0:
+            this->error_s_ = this->image_I_0_current_ - this->image_I_0_desired_;
+            break;
+        case 45:
+            this->error_s_ = this->image_I_45_current_ - this->image_I_45_desired_;
+            break;
+        case 90:
+            this->error_s_ = this->image_I_90_current_ - this->image_I_90_desired_;
+            break;
+        case 135:
+            this->error_s_ = this->image_I_135_current_ - this->image_I_135_desired_;
+            break;
+        default:
+            this->error_s_ = this->image_I_0_current_ - this->image_I_0_desired_;
+            break; 
+    }    
 }
 
 void Polarimetric_Visual_Servoing::save_data_error_feature()
 {
-    // void Direct_Visual_Servoing::save_data_error_feature()
-    // {
-    //     Mat error_ave = (this->error_s_.t() * this->error_s_) / (this->error_s_.rows * this->error_s_.cols);
-    //     this->data_vs.error_feature_.push_back(error_ave);
-    // }
+    Mat error_ave = (this->error_s_.t() * this->error_s_) / (this->error_s_.rows * this->error_s_.cols);
+    this->data_pvs.error_feature_.push_back(error_ave);
 }

@@ -69,9 +69,7 @@ int main()
 
     PVS.get_polar_data_desired();
 
-    PVS.get_interaction_matrix_desired_a();
-
-    PVS.get_interaction_matrix_desired_b();
+    PVS.get_interaction_matrix_desired();
 
      Mat camera_velocity;   
     for(int i = 0; i < 1; i++)
@@ -79,7 +77,6 @@ int main()
         PVS.set_image_depth_current(image_Z_current);
         PVS.set_image_gray_current(image_I_0_current, image_I_45_current, image_I_90_current, image_I_135_current);
         PVS.get_polar_data_current();
-
         // camera_velocity = PVS.get_camera_velocity();
         // cout << "camera_velocity = \n" << camera_velocity.t() << endl;
         // PVS.save_data(pose*i);
@@ -94,7 +91,7 @@ int main()
     cout << "B_reshape = " << endl << B_reshape << endl;
 
     // PVS.write_data();    
-    // cout << "cyh" << endl;
+    // cout << "cyh_end" << endl;
 
     return 1;
 }

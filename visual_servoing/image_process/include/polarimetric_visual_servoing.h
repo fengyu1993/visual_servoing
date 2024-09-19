@@ -30,14 +30,14 @@ class Polarimetric_Visual_Servoing
         Mat S_desired_;          Mat S_current_;
         Mat us_desired_;         Mat us_current_;
         Mat ud_desired_;         Mat ud_current_;   
-        Mat Is_desired_;
-        Mat Id_desired_;
+        Mat Is_desired_;         Mat Is_current_;
+        Mat Id_desired_;         Mat Id_current_;
         Mat Iu_;     
-        Mat rho_desired_;
+        Mat rho_desired_;        Mat rho_current_;
         Mat theta_desired_;      Mat theta_current_;
-        Mat phi_desired_;
-        Mat rho_dp_desired_;    Mat rho_dp_current_;
-        Mat rho_sp_desired_;    Mat rho_sp_current_;
+        Mat phi_desired_;        Mat phi_current_;
+        Mat rho_dp_desired_;     Mat rho_dp_current_;
+        Mat rho_sp_desired_;     Mat rho_sp_current_;
         Mat d_rho_dp_theta_desired_;    Mat d_rho_dp_theta_current_;
         Mat d_rho_sp_theta_desired_;    Mat d_rho_sp_theta_current_;
         double lambda_;
@@ -53,10 +53,13 @@ class Polarimetric_Visual_Servoing
         Mat L_e_;
         Mat error_s_;
         bool flag_first_;
+        bool flag_a_or_b;
         int iteration_num_;
         clock_t start_VS_time_;
-        Mat L_I_pol_a_real_desired_;
-        Mat L_I_pol_b_real_desired_;
+        Mat col_row_reshape_;
+        Mat L_I_pol_a_real_desired_;        Mat L_I_pol_a_real_current_;
+        Mat L_I_pol_b_real_desired_;        Mat L_I_pol_b_real_current_;       
+
         struct data
         {
             Mat velocity_;
@@ -93,28 +96,32 @@ class Polarimetric_Visual_Servoing
         void get_I_in_k_s_pi_I_in_k_d_I_a_k_a();
 
         void get_Is_Id_Iu_desired();
+        void get_Is_Id_Iu_current();
 
         void get_rho_theta_phi_desired();
+        void get_rho_theta_phi_current();
 
         void get_n_desired();
+        void get_n_current(); 
 
         void get_rho_dp_sp_d_rho_sp_theta_d_rho_dp_theta(Mat theta, Mat eta, Mat& rho_dp, Mat& rho_sp, Mat& d_rho_dp_theta, Mat& d_rho_sp_theta);
 
         void get_rho_dp_sp_desired();
         
+        void get_interaction_matrix_desired();
+        void get_interaction_matrix_current();
+
         void get_interaction_matrix_desired_a();
+        void get_interaction_matrix_current_a();
 
         void get_interaction_matrix_desired_b();
+        void get_interaction_matrix_current_b();
         
         Mat get_P_desried();
-        
-        
+        Mat get_P_current();
         
         void get_rho_dp_sp_current();
         
-
-
-
         Mat get_L_n(Mat n);
 
         Mat get_L_theta(double phi);
@@ -132,18 +139,12 @@ class Polarimetric_Visual_Servoing
         Mat get_L_P(Mat P);
 
         Mat get_L_Sa(Mat S);
-
         Mat get_L_Sb(Mat P);
 
         Mat get_L_udb(Mat n, Mat S, Mat L_n, Mat L_Sb);
 
         Mat get_L_usa(double ud, Mat n, Mat S, Mat V, Mat L_n_desired, Mat L_V_desired, Mat L_Sa_desired);
-
         Mat get_L_usb(double ud, Mat n, Mat S, Mat V, Mat L_n_desired, Mat L_V_desired, Mat L_Sb_desired, Mat L_udb_desired);
-
-
-    
-
 
         void get_T_perpendicular_parallel(Mat theta, Mat eta, Mat& T_s, Mat& T_p);  
         
@@ -170,6 +171,8 @@ class Polarimetric_Visual_Servoing
         bool is_success();
 
         void get_feature_error_interaction_matrix();
+
+        void get_feature_error();
 
         void set_camera_intrinsic(Mat& camera_intrinsic);
 
