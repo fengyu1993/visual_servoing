@@ -109,15 +109,16 @@ void Polarimetric_Visual_Servoing::init_VS(double lambda, double epsilon, double
 void Polarimetric_Visual_Servoing::get_Phong_model_init()
 {
     double row = 1, col = 1;
+    Mat temp = (Mat_<double>(3,1) << 0.0, 0.0, -1.0);
 
     for(int i = 0; i < V_.cols; i++)
     {
         this->V_.col(i) = this->camera_intrinsic_inv_ * cv::Vec3d(col, row, 1.0);
         this->V_.col(i) = this->V_.col(i) / norm(this->V_.col(i));
-        this->n_desired_.col(i)  = cv::Vec3d(0.0, 0.0, -1.0);
-        this->n_current_.col(i)  = cv::Vec3d(0.0, 0.0, -1.0);
-        this->S_desired_.col(i)  = cv::Vec3d(0.0, 0.0, -1.0);
-        this->S_current_.col(i)  = cv::Vec3d(0.0, 0.0, -1.0);
+        temp.copyTo(this->n_desired_.col(i));
+        temp.copyTo(this->n_current_.col(i));
+        temp.copyTo(this->S_desired_.col(i));
+        temp.copyTo(this->S_current_.col(i));
         if(++col > this->resolution_x_)
         {
             col = 1;
@@ -129,6 +130,10 @@ void Polarimetric_Visual_Servoing::get_Phong_model_init()
 void Polarimetric_Visual_Servoing::get_polar_data_desired()
 {
     get_O_A_Phi_desired();
+
+    cout << "O_desired_(4,5)" << endl << this->O_desired_.col(3*this->resolution_x_ + 4) << endl;
+    cout << "A_desired_(4,5)" << endl << this->A_desired_.col(3*this->resolution_x_ + 4) << endl;
+    cout << "Phi_desired_(4,5)" << endl << this->Phi_desired_.col(3*this->resolution_x_ + 4) << endl;
 
     get_Phong_us_ud_desired();
 

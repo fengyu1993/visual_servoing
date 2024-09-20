@@ -2,42 +2,20 @@
 #include "polarimetric_visual_servoing.h"
 #include <iostream>
 #include <opencv2/opencv.hpp>
-#include <unsupported/Eigen/CXX11/Tensor>
 
-void get_Phong_model(int row, int col, Mat camera_intrinsic, Mat& V, Mat& n_desired, Mat& n_current, Mat& S)
-{
-    Mat camera_intrinsic_inv = camera_intrinsic.inv();
-    Mat P = Mat::zeros(3, 1, CV_64F);
-    Mat temp = Mat::zeros(3, 1, CV_64F);
-
-    for(int i = 0; i < row; i++) 
-    {
-        for(int j = 0; j < col; j++)
-        {
-            P = (cv::Mat_<double>(3, 1) << j+1, i+1, 1); 
-            temp = camera_intrinsic_inv * P;
-            temp = temp / norm(temp);
-            V.at<cv::Vec3d>(i, j) = temp.reshape(1,1);
-            // cout << "V:" << endl << V.at<Vec3d>(0,0) << endl;
-            n_desired.at<cv::Vec3d>(i, j) = cv::Vec3d(0.0, 0.0, -1.0);
-            n_current.at<cv::Vec3d>(i, j) = cv::Vec3d(0.0, 0.0, -1.0);
-            S.at<cv::Vec3d>(i, j) = cv::Vec3d(0.0, 0.0, -1.0);
-        }
-    }
-}
 
 
 // test Polarimetric_Visual_Servoing class
 int main()
 {
-    Mat image_I_0_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_0_resize.png", IMREAD_GRAYSCALE); 
-    Mat image_I_45_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_45_resize.png", IMREAD_GRAYSCALE);
-    Mat image_I_90_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_90_resize.png", IMREAD_GRAYSCALE);
-    Mat image_I_135_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_135_resize.png", IMREAD_GRAYSCALE);
-    Mat image_I_0_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_0_resize.png", IMREAD_GRAYSCALE);
-    Mat image_I_45_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_45_resize.png", IMREAD_GRAYSCALE);
-    Mat image_I_90_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_90_resize.png", IMREAD_GRAYSCALE);
-    Mat image_I_135_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_135_resize.png", IMREAD_GRAYSCALE);
+    Mat image_I_0_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_0_resize.png", IMREAD_UNCHANGED); 
+    Mat image_I_45_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_45_resize.png", IMREAD_UNCHANGED);
+    Mat image_I_90_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_90_resize.png", IMREAD_UNCHANGED);
+    Mat image_I_135_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/ball_135_resize.png", IMREAD_UNCHANGED);
+    Mat image_I_0_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_0_resize.png", IMREAD_UNCHANGED);
+    Mat image_I_45_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_45_resize.png", IMREAD_UNCHANGED);
+    Mat image_I_90_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_90_resize.png", IMREAD_UNCHANGED);
+    Mat image_I_135_current = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/apple_135_resize.png", IMREAD_UNCHANGED);
    
     image_I_0_desired.convertTo(image_I_0_desired, CV_64FC1);
     image_I_45_desired.convertTo(image_I_45_desired, CV_64FC1);
@@ -48,8 +26,8 @@ int main()
     image_I_90_current.convertTo(image_I_90_current, CV_64FC1);
     image_I_135_current.convertTo(image_I_135_current, CV_64FC1);
 
-    Mat image_Z_desired = (image_I_0_desired + image_I_45_desired + image_I_90_desired + image_I_135_desired) / 400;
-    Mat image_Z_current = (image_I_0_current + image_I_45_current + image_I_90_current + image_I_135_current) / 400;
+    Mat image_Z_desired = (image_I_0_desired + image_I_45_desired + image_I_90_desired + image_I_135_desired) / 400.0;
+    Mat image_Z_current = (image_I_0_current + image_I_45_current + image_I_90_current + image_I_135_current) / 400.0;
 
     Mat camera_intrinsic = (Mat_<double>(3,3) << 1000, 0, 128, 0, 1000, 96, 0, 0, 1);
 
@@ -57,17 +35,18 @@ int main()
     double phi_pol = 0.0; 
     double k = 2.0;
 
-    int size[3] = {image_I_0_desired.rows, image_I_0_desired.cols, 3};
     Mat pose = (Mat_<double>(7,1) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5, 0.8);
 
     Polarimetric_Visual_Servoing PVS(image_I_0_desired.cols, image_I_0_desired.rows);
 
     PVS.init_VS(5e-2, 0.1, eta, phi_pol, k, image_I_0_desired, image_I_45_desired, image_I_90_desired, image_I_135_desired, image_Z_desired,
     image_I_0_current, image_I_45_current, image_I_90_current, image_I_135_current, camera_intrinsic, pose);
-
+ 
     PVS.get_Phong_model_init();
 
     PVS.get_polar_data_desired();
+
+
 
     PVS.get_interaction_matrix_desired();
 
@@ -135,7 +114,7 @@ int main()
         // resize(img_old, img_old, dsize, 0, 0, INTER_AREA);
         // img_old.resize(512, 512);
 	    // Mat img_new = img_old.clone();
-        // Mat affine_matrix = getRotationMatrix2D(Point2f(img_new.cols / 2, img_new.rows / 2), 90 * -1, 1.0);//ÇóµÃÐý×ª¾ØÕó
+        // Mat affine_matrix = getRotationMatrix2D(Point2f(img_new.cols / 2, img_new.rows / 2), 90 * -1, 1.0);//𸀙ó𸀈𸀕𸀢𸁁×𷿿𸀐𸀩𸀧ó
 	    // warpAffine(img_old, img_new, affine_matrix, img_new.size());
 
         // imshow("grey", img_old);
