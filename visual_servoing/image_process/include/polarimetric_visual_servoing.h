@@ -164,6 +164,8 @@ class Polarimetric_Visual_Servoing
 
         Mat cv_asin(Mat a);
 
+        Mat cv_atan2(Mat a, Mat b);
+
         Mat VecToso3(Mat omg);
 
         Mat get_camera_velocity();
