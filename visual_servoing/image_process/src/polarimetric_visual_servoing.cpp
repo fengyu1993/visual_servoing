@@ -132,27 +132,16 @@ void Polarimetric_Visual_Servoing::get_polar_data_desired()
     get_O_A_Phi_desired();
 
     get_Phong_us_ud_desired(); 
-    
-    cout << "ud_desired_" << endl << this->ud_desired_ << endl;
-    cout << "us_desired_" << endl << this->us_desired_ << endl;
 
     get_I_in_k_s_pi_I_in_k_d_I_a_k_a();
 
-    cout << "I_in_k_s_pi_" << endl << this->I_in_k_s_pi_ << endl;
-    cout << "I_in_k_d_" << endl << this->I_in_k_d_ << endl;
-    cout << "I_a_k_a_" << endl << I_a_k_a_ << endl;
-
     get_Is_Id_Iu_desired();
-
-    cout << "Is_desired_(4,5)" << endl << this->Is_desired_.col(3*this->resolution_x_ + 4) << endl;
-    cout << "Id_desired_(4,5)" << endl << this->Id_desired_.col(3*this->resolution_x_ + 4) << endl;
-    cout << "Iu_(4,5)" << endl << this->Iu_.col(3*this->resolution_x_ + 4) << endl;
 
     get_rho_theta_phi_desired();
 
-    cout << "rho_desired_(4,5)" << endl << this->rho_desired_.col(3*this->resolution_x_ + 4) << endl;
-    cout << "theta_desired_(4,5)" << endl << this->theta_desired_.col(3*this->resolution_x_ + 4) << endl;
-    cout << "phi_desired_(4,5)" << endl << this->phi_desired_.col(3*this->resolution_x_ + 4) << endl;
+    cout << "rho_desired" << endl << this->rho_desired_ << endl;
+    cout << "theta_desired" << endl << this->theta_desired_ << endl;
+    cout << "phi_desired" << endl << this->phi_desired_ << endl;
 
     get_n_desired();    
 
@@ -199,15 +188,9 @@ void Polarimetric_Visual_Servoing::get_Phong_us_ud_desired()
     Mat temp_2 = 2.0*this->ud_desired_.mul(this->n_desired_.row(1)) - this->S_desired_.row(1);
     Mat temp_3 = 2.0*this->ud_desired_.mul(this->n_desired_.row(2)) - this->S_desired_.row(2);
 
-   cout << "temp_1" << endl << temp_1 << endl;
-   cout << "temp_2" << endl << temp_2 << endl;
-   cout << "temp_3" << endl << temp_3 << endl;
-
     this->us_desired_ =  this->V_.row(0).mul(temp_1) + 
                 this->V_.row(1).mul(temp_2) + 
                 this->V_.row(2).mul(temp_3);
-
-    cout << "us_desired_" << endl << this->us_desired_ << endl;
 }
 // 计算Phong模型 us_current ud_current
 void Polarimetric_Visual_Servoing::get_Phong_us_ud_current()
@@ -228,30 +211,20 @@ void Polarimetric_Visual_Servoing::get_Phong_us_ud_current()
 // 计算 I_in_k_s_pi I_in_k_d I_a_k_a
 void Polarimetric_Visual_Servoing::get_I_in_k_s_pi_I_in_k_d_I_a_k_a()
 {
-    Mat US, UD, Jcaob_pinv;
+    Mat US, UD, Jacob_pinv;
     cv::pow(this->us_desired_, this->k_, US);
     UD = this->ud_desired_;
     Mat Jacob = Mat::ones(this->resolution_y_ * this->resolution_x_, 3, CV_64FC1);
     Jacob.col(0) = US.t();
     Jacob.col(1) = UD.t();
-    cout << "us_desired_" << endl << this->us_desired_(Range::all(), Range(0, 8)) << endl;
-    cout << "Jacob" << endl << Jacob(Range(0, 8), Range::all()) << endl;
 
     Mat sov = 2*this->O_desired_.t();
-    invert(Jacob, Jcaob_pinv, DECOMP_SVD);
-    Mat temp = Jcaob_pinv * sov;
+    invert(Jacob, Jacob_pinv, DECOMP_SVD);
+
+    Mat temp = Jacob_pinv * sov;
     this->I_in_k_s_pi_ = temp.at<double>(0,0);
     this->I_in_k_d_ = temp.at<double>(1,0);
     this->I_a_k_a_ = temp.at<double>(2,0);
-
-//     US = us_desired.^k;
-// UD = ud_desired;
-// Jacob = [US(:), UD(:), ones(row*col, 1)];
-// sov = 2*O_desired(:);
-// temp = pinv(Jacob) * sov;
-// I_in_k_s_pi = temp(1);
-// I_in_k_d = temp(2);
-// I_a_k_a = temp(3);
 }
 
 // 计算 Is_desired Id_desired Iu
