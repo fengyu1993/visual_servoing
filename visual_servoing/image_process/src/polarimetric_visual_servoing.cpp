@@ -139,14 +139,9 @@ void Polarimetric_Visual_Servoing::get_polar_data_desired()
 
     get_rho_theta_phi_desired();
 
-    cout << "rho_desired" << endl << this->rho_desired_ << endl;
-    cout << "theta_desired" << endl << this->theta_desired_ << endl;
-    cout << "phi_desired" << endl << this->phi_desired_ << endl;
+    get_rho_dp_sp_desired();
 
-    get_n_desired();    
-
-    cout << "n(4,5)" << endl << this->n_desired_.col(3*this->resolution_x_ + 4) << endl;
-   
+    get_n_desired();       
 }
 
 void Polarimetric_Visual_Servoing::get_polar_data_current()
@@ -158,6 +153,8 @@ void Polarimetric_Visual_Servoing::get_polar_data_current()
     get_Is_Id_Iu_current();
 
     get_rho_theta_phi_current();
+
+    get_rho_dp_sp_current();
 
     get_n_current();    
 }
@@ -258,8 +255,11 @@ void Polarimetric_Visual_Servoing::get_rho_theta_phi_desired()
     for(int i = 0; i < 20; i++) 
     {
         get_T_perpendicular_parallel(theta_desired_old, this->eta_ , T_s_desired, T_p_desired);
-        K_desired = 2*this->rho_desired_.mul(this->O_desired_) / (this->Id_desired_ - (this->Is_desired_ / (2 / (T_s_desired + T_p_desired) - 1)));
+
+        K_desired = 2.0*this->rho_desired_.mul(this->O_desired_) / (this->Id_desired_ - (this->Is_desired_ / (2 / (T_s_desired + T_p_desired) - 1)));
+
         this->theta_desired_ = get_theta(K_desired, this->eta_);
+
         if(norm(this->theta_desired_ - theta_desired_old) < 1e-6){
             break;
         }   
@@ -268,7 +268,7 @@ void Polarimetric_Visual_Servoing::get_rho_theta_phi_desired()
         }     
     }
     // 计算 azimuth angle
-    this->phi_desired_ = this->Phi_desired_ / 2;
+    this->phi_desired_ = this->Phi_desired_ / 2.0;
     pair<Mat,Mat> grad = gradient(this->image_depth_desired_, 1.0, 1.0);
     Mat gradX = grad.first.reshape(0,1);
     Mat gradY = grad.second.reshape(0,1);
@@ -325,9 +325,10 @@ void Polarimetric_Visual_Servoing::get_n_desired()
     Mat nx_desired = cv_cos(this->phi_desired_).mul(cv_sin(this->theta_desired_)); 
     Mat ny_desired = cv_sin(this->phi_desired_).mul(cv_sin(this->theta_desired_));
     Mat nz_desired = -cv_cos(this->theta_desired_);
-    this->n_desired_.row(0) = nx_desired.reshape(0, 1);
-    this->n_desired_.row(1) = ny_desired.reshape(0, 1);
-    this->n_desired_.row(2) = nz_desired.reshape(0, 1);
+
+   nx_desired.copyTo(this->n_desired_.row(0));
+   ny_desired.copyTo(this->n_desired_.row(1));
+   nz_desired.copyTo(this->n_desired_.row(2));
 }
 
 // 计算 n_current
@@ -357,7 +358,7 @@ void Polarimetric_Visual_Servoing::get_rho_dp_sp_d_rho_sp_theta_d_rho_dp_theta
     Mat cos_theta = cv_cos(theta);
     Mat sin_theta_2 = sin_theta.mul(sin_theta);
     Mat eta_2 = eta.mul(eta);
-    Mat eta_2_inv = 1/eta_2_inv;
+    Mat eta_2_inv = 1.0 / eta_2;
     Mat temp_2 = eta_2 - sin_theta_2;
     Mat temp_sqrt;
     sqrt(temp_2, temp_sqrt);
@@ -365,9 +366,7 @@ void Polarimetric_Visual_Servoing::get_rho_dp_sp_d_rho_sp_theta_d_rho_dp_theta
     Mat temp_d_rho_dp_theta_num_2 = 2*eta_2 + cv_cos(2*theta) - 1;
     Mat temp_d_rho_dp_theta_num;
     sqrt(temp_d_rho_dp_theta_num_2, temp_d_rho_dp_theta_num);
-    Mat temp_d_rho_dp_theta_dec_2 = 2*eta_2 + 2*eta_2.mul(eta_2) - (eta_2 + 1).mul(eta_2 + 1).mul(sin_theta_2) + 4*eta_2.mul(cv_cos(theta)).mul(temp_sqrt);
-    Mat temp_d_rho_dp_theta_dec;
-    sqrt(temp_d_rho_dp_theta_dec_2, temp_d_rho_dp_theta_dec);
+    Mat temp_d_rho_dp_theta_dec = 2*eta_2 + 2*eta_2.mul(eta_2) - (eta_2 + 1).mul(eta_2 + 1).mul(sin_theta_2) + 4*eta_2.mul(cv_cos(theta)).mul(temp_sqrt);
     // rho_sp
     Mat rho_sp_num = 2*sin_theta_2.mul(cos_theta).mul(temp_sqrt);
     Mat rho_sp_dec = eta_2 - sin_theta_2 - eta_2.mul(sin_theta_2) + 2*sin_theta_2.mul(sin_theta_2);
@@ -382,7 +381,7 @@ void Polarimetric_Visual_Servoing::get_rho_dp_sp_d_rho_sp_theta_d_rho_dp_theta
     d_rho_sp_theta = d_rho_sp_theta_num / d_rho_sp_theta_dec;
     // d_rho_dp_theta
     Mat d_rho_dp_theta_num = eta_2.mul(eta_2 - 1).mul(eta_2 - 1).mul((5*eta_2 - 3).mul(cv_sin(theta)) + (eta_2 + 1).mul(sqrt(2) * cv_sin(2*theta).mul(temp_d_rho_dp_theta_num) + cv_sin(3*theta)));
-    Mat d_rho_dp_theta_dec = temp_sqrt.mul(temp_d_rho_dp_theta_dec);
+    Mat d_rho_dp_theta_dec = temp_sqrt.mul(temp_d_rho_dp_theta_dec).mul(temp_d_rho_dp_theta_dec);
     d_rho_dp_theta = d_rho_dp_theta_num / d_rho_dp_theta_dec;
 }
 
@@ -428,8 +427,8 @@ void Polarimetric_Visual_Servoing::get_interaction_matrix_desired_a()
     Mat L_I_desired = Mat::zeros(this->resolution_y_ * this->resolution_x_, 6, CV_64FC1);
 
     Mat P_desired = get_P_desried();
-    Mat P_desired_x = P_desired.row(0);
-    Mat P_desired_y = P_desired.row(1);
+    Mat P_desired_x = P_desired.row(0) / P_desired.row(2);
+    Mat P_desired_y = P_desired.row(1) / P_desired.row(2);
     Mat P_desired_z_inv = 1 / P_desired.row(2);
 
     Mat I;
@@ -454,38 +453,38 @@ void Polarimetric_Visual_Servoing::get_interaction_matrix_desired_a()
     pair<Mat,Mat> grad = gradient(I, 1.0, 1.0);
     Mat I_u_desired= Mat::zeros(6, this->resolution_y_ * this->resolution_x_, CV_64FC1);
     Mat I_v_desired= Mat::zeros(6, this->resolution_y_ * this->resolution_x_, CV_64FC1);
-    I_u_desired.row(0) = grad.first.reshape(0,1);
-    I_u_desired.row(1) = I_u_desired.row(0);
-    I_u_desired.row(2) = I_u_desired.row(0);
-    I_u_desired.row(3) = I_u_desired.row(0);
-    I_u_desired.row(4) = I_u_desired.row(0);
-    I_u_desired.row(5) = I_u_desired.row(0); 
-    I_v_desired.row(0) = grad.second.reshape(0,1);
-    I_v_desired.row(1) = I_v_desired.row(0);
-    I_v_desired.row(2) = I_v_desired.row(0);
-    I_v_desired.row(3) = I_v_desired.row(0);
-    I_v_desired.row(4) = I_v_desired.row(0);
-    I_v_desired.row(5) = I_v_desired.row(0); 
+    grad.first.reshape(0,1).copyTo(I_u_desired.row(0));
+    I_u_desired.row(0).copyTo(I_u_desired.row(1));
+    I_u_desired.row(0).copyTo(I_u_desired.row(2));
+    I_u_desired.row(0).copyTo(I_u_desired.row(3));
+    I_u_desired.row(0).copyTo(I_u_desired.row(4));
+    I_u_desired.row(0).copyTo(I_u_desired.row(5));
+    grad.second.reshape(0,1).copyTo(I_v_desired.row(0));
+    I_v_desired.row(0).copyTo(I_v_desired.row(1));
+    I_v_desired.row(0).copyTo(I_v_desired.row(2));
+    I_v_desired.row(0).copyTo(I_v_desired.row(3));
+    I_v_desired.row(0).copyTo(I_v_desired.row(4));
+    I_v_desired.row(0).copyTo(I_v_desired.row(5));
 
     Mat L_kappa = get_L_kappa(this->camera_intrinsic_);
     double ku = L_kappa.at<double>(0, 0);
     double kv = L_kappa.at<double>(1, 1);
 
-    Mat L_u_desired_x = Mat::zeros(6, this->resolution_y_ * this->resolution_x_, CV_64FC1);
-    L_u_desired_x.col(0) = ku*(-P_desired_z_inv);
+    Mat temp = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1);
 
-    L_u_desired_x.col(1) = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1);
-    L_u_desired_x.col(2) = ku*(P_desired_x.mul(P_desired_z_inv));
-    L_u_desired_x.col(3) = ku*(P_desired_x.mul(P_desired_y));
-    L_u_desired_x.col(4) = ku*(-(1 + P_desired_x.mul(P_desired_x)));
-    L_u_desired_x.col(5) = ku*(P_desired_y);
+    Mat L_u_desired_x = Mat::zeros(6, this->resolution_y_ * this->resolution_x_, CV_64FC1);
+    temp = ku*(-P_desired_z_inv);                       temp.copyTo(L_u_desired_x.row(0));
+    temp = ku*(P_desired_x.mul(P_desired_z_inv));       temp.copyTo(L_u_desired_x.row(2));
+    temp = ku*(P_desired_x.mul(P_desired_y));           temp.copyTo(L_u_desired_x.row(3));
+    temp = ku*(-(1 + P_desired_x.mul(P_desired_x)));    temp.copyTo(L_u_desired_x.row(4));
+    temp = ku*(P_desired_y);                            temp.copyTo(L_u_desired_x.row(5));
+
     Mat L_u_desired_y = Mat::zeros(6, this->resolution_y_ * this->resolution_x_, CV_64FC1);
-    L_u_desired_y.col(0) = Mat::zeros(1, this->resolution_y_ * this->resolution_x_, CV_64FC1);
-    L_u_desired_y.col(1) = kv*(P_desired_z_inv);
-    L_u_desired_y.col(2) = kv*(P_desired_y.mul(P_desired_z_inv));
-    L_u_desired_y.col(3) = kv*(1 + P_desired_y.mul(P_desired_y));
-    L_u_desired_y.col(4) = kv*(-P_desired_x.mul(P_desired_y));
-    L_u_desired_y.col(5) = kv*(-P_desired_x);
+    temp = kv*(P_desired_z_inv);                        temp.copyTo(L_u_desired_y.row(1));
+    temp = kv*(P_desired_y.mul(P_desired_z_inv));       temp.copyTo(L_u_desired_y.row(2));
+    temp = kv*(1 + P_desired_y.mul(P_desired_y));       temp.copyTo(L_u_desired_y.row(3));
+    temp = kv*(-P_desired_x.mul(P_desired_y));          temp.copyTo(L_u_desired_y.row(4));
+    temp = kv*(-P_desired_x);                           temp.copyTo(L_u_desired_y.row(5));
 
     L_I_desired = (I_u_desired.mul(L_u_desired_x) + I_v_desired.mul(L_u_desired_y)).t();
     // 计算 L_I_pol_a_desired  
@@ -536,14 +535,25 @@ void Polarimetric_Visual_Servoing::get_interaction_matrix_desired_a()
         // L_Iu
         L_Iu_desired = Mat::zeros(1, 6, CV_64FC1);
         // L_O
-        L_Oa_desired = 1/2 * (L_Isa_desired + L_Ida_desired + L_Iu_desired);
+        L_Oa_desired = 0.5 * (L_Isa_desired + L_Ida_desired + L_Iu_desired);
+                
+        cout << "L_Oa_desired" << endl << L_Oa_desired << endl;
+
         // L_A
-        L_Aa_desired = 1/2 * (*prt_rho_dp_desired * L_Ida_desired + *prt_Id_desired * L_rho_dp_desired 
+        L_Aa_desired = 0.5 * (*prt_rho_dp_desired * L_Ida_desired + *prt_Id_desired * L_rho_dp_desired 
                         - *prt_rho_sp_desired * L_Isa_desired - *prt_Is_desired * L_rho_sp_desired);
+                
+        cout << "L_Aa_desired" << endl << L_Aa_desired << endl;
+
         // L_Phi
         L_Phi_desired = 2*L_phi_desired; 
+                
+        cout << "L_Phi_desired" << endl << L_Phi_desired << endl;
+
         // L_I_pol
         L_I_pol_a_desired.row(cnt) = L_Oa_desired + cos(2*this->phi_pol_ - *prt_phi_desired) * L_Aa_desired + *prt_A_desired * sin(2*this->phi_pol_ - *prt_phi_desired) * L_Phi_desired;
+
+        cout << "L_I_pol_a_desired.row(cnt)" << endl << L_I_pol_a_desired.row(cnt) << endl;
         // 更新
         if(++col >= this->resolution_x_)
         {
@@ -564,6 +574,8 @@ void Polarimetric_Visual_Servoing::get_interaction_matrix_desired_a()
         prt_A_desired++;
         cnt = cnt + 1; 
     }
+
+    cout << "L_I_pol_a_desired" << endl << L_I_pol_a_desired << endl;
     // 计算 L_I_pol_a_real_desired 
     this->L_I_pol_a_real_desired_ = L_I_pol_a_desired - L_I_desired;
 }
@@ -1014,10 +1026,12 @@ void Polarimetric_Visual_Servoing::get_interaction_matrix_current_b()
 Mat Polarimetric_Visual_Servoing::get_P_desried()
 {
     int row = 1, col = 1;
+    Mat temp_col = Mat::zeros(3, 1, CV_64FC1);
 
     for(int i = 0; i < V_.cols; i++)
     {
-        this->col_row_reshape_.col(i) = cv::Vec3d(col, row, 1.0); 
+        temp_col = (Mat_<double>(3,1) << col, row, 1.0);
+        temp_col.copyTo(this->col_row_reshape_.col(i)); 
         if(++col > this->resolution_x_)
         {
             col = 1;
@@ -1027,9 +1041,9 @@ Mat Polarimetric_Visual_Servoing::get_P_desried()
 
     Mat image_Z = image_depth_desired_.reshape(0, 1);
     Mat temp = Mat::zeros(3, this->resolution_x_ * this->resolution_y_, CV_64FC1);
-    temp.row(0) = image_Z;
-    temp.row(1) = image_Z;
-    temp.row(2) = image_Z;
+    image_Z.copyTo(temp.row(0));
+    image_Z.copyTo(temp.row(1));
+    image_Z.copyTo(temp.row(2));
     Mat P = (this->camera_intrinsic_inv_ * this->col_row_reshape_).mul(temp);
 
     return P;

@@ -46,11 +46,14 @@ int main()
 
     PVS.get_polar_data_desired();
 
-
-
     PVS.get_interaction_matrix_desired();
 
-     Mat camera_velocity;   
+
+    cout << "L_I_pol_a_real_desired_" << endl << PVS.L_I_pol_a_real_desired_ << endl;
+
+    cout << "L_I_pol_b_real_desired_" << endl << PVS.L_I_pol_b_real_desired_ << endl;
+
+    Mat camera_velocity;   
     for(int i = 0; i < 1; i++)
     {
         PVS.set_image_depth_current(image_Z_current);
