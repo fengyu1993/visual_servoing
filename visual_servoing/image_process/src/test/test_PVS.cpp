@@ -57,7 +57,6 @@ int main()
         camera_velocity = PVS.get_camera_velocity();
         cout << "camera_velocity = \n" << camera_velocity << endl;
         PVS.save_data(pose*i);
-
     }    
 
     PVS.write_data();    

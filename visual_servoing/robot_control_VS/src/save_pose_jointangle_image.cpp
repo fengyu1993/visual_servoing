@@ -191,7 +191,7 @@ Mat hole_fill(Mat& img_depth)
 void write_data()
 {
     ofstream oFile;
-    string location = "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/";
+    string location = "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/";
     string time = get_date_time();
     string excel_name = location + time + "_pose_data.xls";
     oFile.open(excel_name, ios::out|ios::trunc);
@@ -207,9 +207,9 @@ void write_data()
 void write_image()
 {
     // 保存深度图
-    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_depth_init.png", img_depth);
+    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/image_depth_init.png", img_depth);
     // 保存彩色图
-    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_rgb_init.png", img_rgb);
+    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/image_rgb_init.png", img_rgb);
 }
 
 // 保存相机位姿

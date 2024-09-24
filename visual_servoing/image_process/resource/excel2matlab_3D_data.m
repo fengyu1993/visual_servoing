@@ -53,8 +53,8 @@ HM_VS_error_pixel = get_camera_error_pixel_data(HM_VS_data, error_pixel_ave_name
 HM_VS_order = get_camera_order_data(HM_VS_data, order_name, abxy_name(1));
 HM_VS_abxy = get_camera_HM_abxy_data(HM_VS_data, abxy_name);
 %% 读取图像
-image_rgb_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_rgb_desired.png");
-image_rgb_init = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_rgb_init.png");
+image_rgb_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/image_rgb_desired.png");
+image_rgb_init = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/image_rgb_init.png");
 %% 保存数据
 save("DVS_experience_data_3D.mat", "DVS_camera_velocity", "DVS_camera_pose", "DVS_camera_desired_pose", "DVS_error_feature");
 save("DCT_VS_experience_data_3D.mat", "DCT_VS_camera_velocity", "DCT_VS_camera_pose", "DCT_VS_camera_desired_pose", "DCT_VS_error_feature", "DCT_VS_error_pixel", "DCT_VS_order");

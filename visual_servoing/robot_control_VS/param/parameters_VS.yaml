@@ -4,7 +4,7 @@ resolution_y:   480
 epsilon:        10.0e-4
 lambda:         0.03
 control_rate:   2
-resource_location:         "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/"
+resource_location:         "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/"
 image_rgb_desired_name:    "image_rgb_desired.png"
 image_depth_desired_name:  "image_depth_desired.png"
 camera_intrinsic: [ 605.689, 0.0, 324.855, 

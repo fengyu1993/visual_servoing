@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<launch>
+
+<rosparam file= "$(find robot_control_VS)/param/parameters_VS.yaml" command= "load"/>
+
+<include file="$(dirname)/franka_demo.launch" />
+<include file="$(dirname)/camera_calibration.launch" />
+
+<node name="publish_realsense" pkg="robot_control_VS"  type="publish_realsense"  output="screen"/>
+
+</launch>

@@ -39,8 +39,8 @@ HM_VS_error_pixel = get_camera_error_pixel_data(HM_VS_data, error_pixel_ave_name
 HM_VS_order = get_camera_order_data(HM_VS_data, order_name, abxy_name(1));
 HM_VS_abxy = get_camera_HM_abxy_data(HM_VS_data, abxy_name);
 %% 读取图像
-image_rgb_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_rgb_desired.png");
-image_rgb_init = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/franka_control_VS/param/image_rgb_init.png");
+image_rgb_desired = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/image_rgb_desired.png");
+image_rgb_init = imread("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/image_rgb_init.png");
 %% 保存数据
 save("TM_VS_experience_data_3D_Complex.mat", "TM_VS_camera_velocity", "TM_VS_camera_pose", "TM_VS_camera_desired_pose", "TM_VS_error_feature", "TM_VS_error_pixel", "TM_VS_order");
 save("KM_VS_experience_data_3D_Complex.mat", "KM_VS_camera_velocity", "KM_VS_camera_pose", "KM_VS_camera_desired_pose", "KM_VS_error_feature", "KM_VS_error_pixel", "KM_VS_order", "KM_VS_pxy");
