@@ -48,32 +48,20 @@ int main()
 
     PVS.get_interaction_matrix_desired();
 
-
-    cout << "L_I_pol_a_real_desired_" << endl << PVS.L_I_pol_a_real_desired_ << endl;
-
-    cout << "L_I_pol_b_real_desired_" << endl << PVS.L_I_pol_b_real_desired_ << endl;
-
     Mat camera_velocity;   
-    for(int i = 0; i < 1; i++)
+    for(int i = 0; i < 10; i++)
     {
         PVS.set_image_depth_current(image_Z_current);
         PVS.set_image_gray_current(image_I_0_current, image_I_45_current, image_I_90_current, image_I_135_current);
         PVS.get_polar_data_current();
-        // camera_velocity = PVS.get_camera_velocity();
-        // cout << "camera_velocity = \n" << camera_velocity.t() << endl;
-        // PVS.save_data(pose*i);
+        camera_velocity = PVS.get_camera_velocity();
+        cout << "camera_velocity = \n" << camera_velocity << endl;
+        PVS.save_data(pose*i);
+
     }    
 
-
-    Mat B = (Mat_<double>(2,3) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5);
-
-    Mat B_reshape = B.reshape(0, 1);
-    
-    cout << "B = " << endl << B << endl;
-    cout << "B_reshape = " << endl << B_reshape << endl;
-
-    // PVS.write_data();    
-    // cout << "cyh_end" << endl;
+    PVS.write_data();    
+    cout << "cyh_end" << endl;
 
     return 1;
 }
