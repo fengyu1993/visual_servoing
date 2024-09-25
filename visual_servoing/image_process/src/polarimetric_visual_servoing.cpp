@@ -104,6 +104,25 @@ void Polarimetric_Visual_Servoing::init_VS(double lambda, double epsilon, double
     this->k_ = k;
 }
 
+void Polarimetric_Visual_Servoing::init_VS(double lambda, double epsilon, double eta, double phi_pol, double k, 
+            Mat& image_O_desired, Mat& image_A_desired, Mat& image_Phi_desired, Mat& image_depth_desired,  
+            Mat& image_O_initial, Mat& image_A_initial, Mat& image_Phi_initial, Mat camera_intrinsic, Mat pose_desired)
+{
+    this->lambda_ = lambda;
+    this->epsilon_ = epsilon;
+    set_camera_intrinsic(camera_intrinsic);
+    set_image_depth_desired(image_depth_desired);
+    set_image_polar_desired(image_O_desired, image_A_desired, image_Phi_desired);
+    set_image_polar_initial(image_O_initial, image_A_initial, image_Phi_initial);
+    set_pose_desired(pose_desired);
+    save_data_image();
+    save_pose_desired();
+    this->eta_ = eta * Mat::ones(1, this->resolution_y_ * this->resolution_x_, CV_64FC1); 
+    this->phi_pol_ = phi_pol; 
+    this->k_ = k;
+
+}
+
 // 初始化Phong模型 V_, n_desired_, n_current_, S_desired_, S_current_
 // PVS.V_.col(row * PVS.resolution_x_ + col) << endl;
 void Polarimetric_Visual_Servoing::get_Phong_model_init()
@@ -1432,6 +1451,34 @@ void Polarimetric_Visual_Servoing::set_image_gray_initial(Mat& image_I_0_initial
     image_I_45_initial.copyTo(this->image_I_45_initial_);
     image_I_90_initial.copyTo(this->image_I_90_initial_);
     image_I_135_initial.copyTo(this->image_I_135_initial_);
+}
+
+// 设置偏振图像
+void Polarimetric_Visual_Servoing::set_image_polar_current(Mat& polar_O_current, Mat& polar_A_current, Mat& polar_Phi_current)
+{
+    polar_O_current.reshape(0,1).copyTo(this->O_current_);
+    polar_A_current.reshape(0,1).copyTo(this->A_current_);
+    polar_Phi_current.reshape(0,1).copyTo(this->Phi_current_);
+    this->image_I_0_current_ = polar_O_current + polar_A_current * cv_cos(polar_Phi_current);
+}
+
+void Polarimetric_Visual_Servoing::set_image_polar_desired(Mat& polar_O_desired, Mat& polar_A_desired, Mat& polar_Phi_desired)
+{
+    polar_O_desired.reshape(0,1).copyTo(this->O_desired_);
+    polar_A_desired.reshape(0,1).copyTo(this->A_desired_);
+    polar_Phi_desired.reshape(0,1).copyTo(this->Phi_desired_);
+    this->image_I_0_desired_ = polar_O_desired + polar_A_desired * cv_cos(-polar_Phi_desired);
+    this->image_I_45_desired_ = polar_O_desired + polar_A_desired * cv_cos(CV_PI/2.0 - polar_Phi_desired);
+    this->image_I_90_desired_ = polar_O_desired + polar_A_desired * cv_cos(CV_PI - polar_Phi_desired);
+    this->image_I_135_desired_ = polar_O_desired + polar_A_desired * cv_cos(-CV_PI/2.0 - polar_Phi_desired);  
+}
+
+void Polarimetric_Visual_Servoing::set_image_polar_initial(Mat& image_O_initial, Mat& image_A_initial, Mat& image_Phi_initial)
+{
+    this->image_I_0_initial_ = image_O_initial + image_A_initial * cv_cos(-image_Phi_initial);
+    this->image_I_45_initial_ = image_O_initial + image_A_initial * cv_cos(CV_PI/2.0 - image_Phi_initial);
+    this->image_I_90_initial_ = image_O_initial + image_A_initial * cv_cos(CV_PI - image_Phi_initial);
+    this->image_I_135_initial_ = image_O_initial + image_A_initial * cv_cos(-CV_PI/2.0 - image_Phi_initial);  
 }
 
 // // 设置期望深度图像

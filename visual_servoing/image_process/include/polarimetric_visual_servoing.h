@@ -15,7 +15,7 @@ class Polarimetric_Visual_Servoing
     public:
         Mat image_I_0_desired_, image_I_45_desired_, image_I_90_desired_, image_I_135_desired_;
         Mat image_I_0_current_, image_I_45_current_, image_I_90_current_, image_I_135_current_;
-        Mat image_I_0_initial_, image_I_45_initial_, image_I_90_initial_, image_I_135_initial_;
+        Mat image_I_0_initial_, image_I_45_initial_, image_I_90_initial_, image_I_135_initial_;      
         Mat image_depth_desired_;
         Mat image_depth_current_; 
         Mat camera_intrinsic_; 
@@ -75,8 +75,12 @@ class Polarimetric_Visual_Servoing
         Polarimetric_Visual_Servoing(int resolution_x, int resolution_y);
 
         void init_VS(double lambda, double epsilon, double eta, double phi_pol, double k, 
-            Mat& image_I_0_desired_, Mat& image_I_45_desired_, Mat& image_I_90_desired_, Mat& image_I_135_desired_, Mat& image_depth_desired,  
-            Mat& image_I_0_initial_, Mat& image_I_45_initial_, Mat& image_I_90_initial_, Mat& image_I_135_initial_, Mat camera_intrinsic, Mat pose_desired);
+            Mat& image_I_0_desired, Mat& image_I_45_desired, Mat& image_I_90_desired, Mat& image_I_135_desired, Mat& image_depth_desired,  
+            Mat& image_I_0_initial, Mat& image_I_45_initial, Mat& image_I_90_initial, Mat& image_I_135_initial, Mat camera_intrinsic, Mat pose_desired);
+
+        void init_VS(double lambda, double epsilon, double eta, double phi_pol, double k, 
+            Mat& image_O_desired, Mat& image_A_desired, Mat& image_Phi_desired, Mat& image_depth_desired,  
+            Mat& image_O_initial, Mat& image_A_initial, Mat& image_Phi_initial, Mat camera_intrinsic, Mat pose_desired);
 
         Mat get_L_kappa(Mat& camera_intrinsic);
 
@@ -179,7 +183,7 @@ class Polarimetric_Visual_Servoing
         void set_camera_intrinsic(Mat& camera_intrinsic);
 
         void set_image_gray_desired(Mat& image_I_0_desired_, Mat& image_I_45_desired_, Mat& image_I_90_desired_, Mat& image_I_135_desired_);
-
+        
         void set_image_gray_current(Mat& image_I_0_current, Mat& image_I_45_current, Mat& image_I_90_current, Mat& image_I_135_current);
 
         void set_image_gray_initial(Mat& image_I_0_initial, Mat& image_I_45_initial, Mat& image_I_90_initial, Mat& image_I_135_initial);
@@ -187,6 +191,12 @@ class Polarimetric_Visual_Servoing
         void set_image_depth_desired(Mat& image_depth_desired);
 
         void set_image_depth_current(Mat& image_depth_current);
+
+        void set_image_polar_current(Mat& polar_O_current, Mat& polar_A_current, Mat& polar_Phi_current);
+
+        void set_image_polar_desired(Mat& polar_O_desired, Mat& polar_A_desired, Mat& polar_Phi_desired);
+
+        void set_image_polar_initial(Mat& image_O_initial, Mat& image_A_initial, Mat& image_Phi_initial);
 
         void set_pose_desired(Mat& pose_desired);
 

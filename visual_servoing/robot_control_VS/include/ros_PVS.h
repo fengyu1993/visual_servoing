@@ -74,7 +74,7 @@ class Ros_PVS
 {
     protected:
         ros::NodeHandle                         nh_; 
-        message_filters::Subscriber<Image>      image_color_sub_;
+        message_filters::Subscriber<Image>      image_polar_sub_;
         message_filters::Subscriber<Image>      image_depth_sub_;
         TimeSynchronizer<Image, Image>          *sync_;
         tf::TransformListener                   listener_camera_pose_;
@@ -93,19 +93,26 @@ class Ros_PVS
     public:
         Ros_PVS();
         void Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg);     
-        void initialize_time_sync();
         void get_parameters_resolution(int& resolution_x, int& resolution_y);
-        void get_parameters_PVS(double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& camera_intrinsic, Mat& pose_desired);    
-        void set_resolution_parameters(int resolution_x, int resolution_y);
-        void get_image_data_convert(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg, Mat& color_img, Mat& depth_img);
-        Mat get_camera_pose();
-        Mat velocity_camera_to_base(Mat velocity, Mat pose);
         Mat get_parameter_Matrix(string str, int row, int col);
-        Mat rgb_image_operate(Mat& image_rgb);
+        void initialize_time_sync();
+        void get_image_data_convert(const ImageConstPtr& image_polor_msg, const ImageConstPtr& image_depth_msg, Mat& polar_O_new, Mat& polar_A_new, Mat& polar_Phi_new, Mat& depth_img);
+        void polar_image_operate(Mat& img_polar, Mat& polar_O_new, Mat& polar_A_new, Mat& polar_Phi_new);
         Mat depth_image_operate(Mat& image_depth);
+        Mat get_camera_pose();
         Mat get_T(tf::StampedTransform  transform);
         Mat Quaternion2Matrix (Mat q);
-        void franka_move_to_target_joint_angle(std::vector<double> joint_group_positions_target);
+        void get_parameters_PVS(double& lambda, double& epsilon, double& eta, double& phi_pol, double& k, Mat& polar_O_desired, Mat& polar_A_desired, Mat& polar_Phi_desired, Mat& image_depth_desired, Mat& camera_intrinsic, Mat& pose_desired);    
+        
+        
+        
+        // Mat velocity_camera_to_base(Mat velocity, Mat pose);
+
+        
+        
+        
+        
+        // void franka_move_to_target_joint_angle(std::vector<double> joint_group_positions_target);
 };
 
 #endif

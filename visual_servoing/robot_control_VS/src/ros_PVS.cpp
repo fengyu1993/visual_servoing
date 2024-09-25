@@ -1,5 +1,5 @@
-# include "ros_PVS.h"
-
+#include "ros_PVS.h"
+#include <opencv2/opencv.hpp>
 
 Ros_PVS::Ros_PVS()
 {
@@ -11,33 +11,33 @@ Ros_PVS::Ros_PVS()
     this->flag_success_ = false;
     this->nh_.getParam("control_rate", this->control_rate_);
     this->joint_angle_initial_ = get_parameter_Matrix("joint_angle_initial", 7, 1);
-    this->move_group_interface_ = new moveit::planning_interface::MoveGroupInterface("iiwa");  
+    this->move_group_interface_ = new moveit::planning_interface::MoveGroupInterface("ur");  
     this->pub_camera_twist_ = this->nh_.advertise<geometry_msgs::Twist>("/cartesian_velocity_node_controller/cartesian_velocity", 5);
     this->start_PVS = false;
 }
 
-void Ros_PVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg)
+void Ros_PVS::Callback(const ImageConstPtr& image_polar_msg, const ImageConstPtr& image_depth_msg)
 {
-//     if(this->start_PVS)
-//     {      
-//         // 数据转换
-//         Mat depth_new, img_new;
-//         get_image_data_convert(image_color_msg, image_depth_msg, img_new, depth_new);
-//         // 获取相机位姿
-//         Mat camera_pose = get_camera_pose(); 
-//         // 计算相机速度并保存数据
-//         this->PVS->set_image_depth_current(depth_new);
-//         this->PVS->set_image_gray_current(img_new); 
-//         // 准备
-//         if(this->PVS->flag_first_)
-//         {  
-//             double lambda, epsilon;
-//             Mat img_old, depth_old, camera_intrinsic, pose_desired;
-//             // 获取参数
-//             get_parameters_VS(lambda, epsilon, img_old, depth_old, camera_intrinsic, pose_desired);
-//             this->PVS->init_VS(lambda, epsilon, img_old, depth_old, img_new, camera_intrinsic, pose_desired);
-//             this->PVS->flag_first_ = false;
-//         }
+    if(this->start_PVS)
+    {      
+        // 数据转换
+        Mat depth_new, polar_O_new, polar_A_new, polar_Phi_new;
+        get_image_data_convert(image_polar_msg, image_depth_msg, polar_O_new,  polar_A_new, polar_Phi_new, depth_new);
+        // 获取相机位姿
+        Mat camera_pose = get_camera_pose(); 
+        // 计算相机速度并保存数据
+        this->PVS->set_image_depth_current(depth_new);
+        this->PVS->set_image_polar_current(polar_O_new, polar_A_new, polar_Phi_new); 
+        // 准备
+        if(this->PVS->flag_first_)
+        {  
+            double lambda, epsilon, eta, phi_pol, k;
+            Mat polar_O_old, polar_A_old, polar_Phi_old, depth_old, camera_intrinsic, pose_desired;
+            // 获取参数
+            get_parameters_PVS(lambda, epsilon, eta, phi_pol, k, polar_O_old, polar_A_old, polar_Phi_old, depth_old, camera_intrinsic, pose_desired);
+            this->PVS->init_VS(lambda, epsilon, eta, phi_pol, k, polar_O_old, polar_A_old, polar_Phi_old, depth_old, polar_O_new, polar_A_new, polar_Phi_new, camera_intrinsic, pose_desired);
+            this->PVS->flag_first_ = false;
+        }
 
 //         Mat camera_velocity = this->PVS->get_camera_velocity(); 
 
@@ -75,94 +75,13 @@ void Ros_PVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr
 //         camera_Twist.angular.y = this->camera_velocity_base_.at<double>(4,0);
 //         camera_Twist.angular.z = this->camera_velocity_base_.at<double>(5,0);
 //         this->pub_camera_twist_.publish(camera_Twist);
-//     }
-}
-
-void Ros_PVS::initialize_time_sync()
-{
-    image_color_sub_.subscribe(this->nh_,"/camera/color/image_raw", 1);
-    image_depth_sub_.subscribe(this->nh_,"/camera/aligned_depth_to_color/image_raw", 1);
-    this->sync_ = new TimeSynchronizer<Image, Image>(image_color_sub_, image_depth_sub_, 1);
-    this->sync_->registerCallback(boost::bind(&Ros_PVS::Callback, this, _1, _2));
+    }
 }
 
 void Ros_PVS::get_parameters_resolution(int& resolution_x, int& resolution_y)
 {
     this->nh_.getParam("resolution_x", resolution_x);
     this->nh_.getParam("resolution_y", resolution_y);
-}
-
-void Ros_PVS::get_parameters_PVS(double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& camera_intrinsic, Mat& pose_desired)
-{
-    // 基本参数
-    this->nh_.getParam("lambda", lambda);
-    this->nh_.getParam("epsilon", epsilon);
-    // 图像参数
-    string loaction, name;
-    this->nh_.getParam("resource_location", loaction);
-    // 读彩色图
-    this->nh_.getParam("image_rgb_desired_name", name);
-    Mat image_rgb_desired = imread(loaction + name, IMREAD_COLOR);
-    image_gray_desired = rgb_image_operate(image_rgb_desired);
-    // 读深度图
-    this->nh_.getParam("image_depth_desired_name", name);
-    Mat image_depth_desired_temp = imread(loaction + name, IMREAD_UNCHANGED); 
-    image_depth_desired = depth_image_operate(image_depth_desired_temp);   
-    // 相机内参
-    camera_intrinsic = get_parameter_Matrix("camera_intrinsic", 3, 3);
-    // 期望位姿
-    pose_desired = get_parameter_Matrix("pose_desired", 4, 4);
-}
-
-
-
-void Ros_PVS::set_resolution_parameters(int resolution_x, int resolution_y)
-{
-    this->nh_.setParam("/camera/realsense2_camera/depth_height", resolution_y);
-    this->nh_.setParam("/camera/realsense2_camera/depth_width", resolution_x);
-    this->nh_.setParam("/camera/realsense2_camera/color_height", resolution_y);
-    this->nh_.setParam("/camera/realsense2_camera/color_width", resolution_x);
-}
-
-void Ros_PVS::get_image_data_convert(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg, Mat& gray_img, Mat& depth_img)
-{
-    // rgb转灰度 [0,255]->[1,0]
-    cv_bridge::CvImagePtr cv_ptr_color = cv_bridge::toCvCopy(image_color_msg, sensor_msgs::image_encodings::BGR8);
-    Mat img_new_rgb = cv_ptr_color->image;
-    gray_img = rgb_image_operate(img_new_rgb);
-    // 深度图
-    cv_bridge::CvImagePtr cv_ptr_depth = cv_bridge::toCvCopy(image_depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
-    Mat depth_img_temp = cv_ptr_depth->image;
-    depth_img = depth_image_operate(depth_img_temp);
-}
-
-Mat Ros_PVS::get_camera_pose()
-{
-    tf::StampedTransform transform;
-    this->listener_camera_pose_.waitForTransform("panda_link0", "camera_color_optical_frame", ros::Time(0), ros::Duration(3.0));
-    this->listener_camera_pose_.lookupTransform("panda_link0", "camera_color_optical_frame", ros::Time(0), transform);
-    Mat T = get_T(transform);
-    return T;
-}
-
-Mat Ros_PVS::velocity_camera_to_base(Mat velocity, Mat pose)
-{
-    Mat R_camera_to_base = pose.rowRange(0,3).colRange(0,3);
-    Mat V_effector_to_base = Mat::zeros(6,1,CV_64FC1);
-    V_effector_to_base.rowRange(0,3).colRange(0,1) = R_camera_to_base * velocity.rowRange(0,3).colRange(0,1);
-    V_effector_to_base.rowRange(3,6).colRange(0,1) = R_camera_to_base * velocity.rowRange(3,6).colRange(0,1);
-
-    return V_effector_to_base;
-
-    // Mat p = pose.rowRange(0,3).colRange(3,4);
-    // double xa = p.at<double>(0,0), ya = p.at<double>(1,0), za = p.at<double>(2,0);
-    // Mat p_cross = (Mat_<double>(3,3)<< 0.0, -za, ya, za, 0.0, -xa, -ya, xa, 0.0);
-    // Mat AdT = Mat::zeros(6,6,CV_64FC1);
-    // R.copyTo(AdT.rowRange(0,3).colRange(0,3));
-    // R.copyTo(AdT.rowRange(3,6).colRange(3,6));
-    // AdT.rowRange(0,3).colRange(3,6) = p_cross * R;
-    // Mat V = AdT * velocity;
-    // return V;
 }
 
 Mat Ros_PVS::get_parameter_Matrix(string str, int row, int col)
@@ -180,13 +99,65 @@ Mat Ros_PVS::get_parameter_Matrix(string str, int row, int col)
     return Matrix;
 }
 
-Mat Ros_PVS::rgb_image_operate(Mat& image_rgb)
+void Ros_PVS::initialize_time_sync()
 {
-    Mat image_gray;
-    cvtColor(image_rgb, image_gray, CV_BGR2GRAY);
-    image_gray.convertTo(image_gray, CV_64FC1);
-    image_gray = 1 - image_gray/255.0; 
-    return image_gray;
+    image_polar_sub_.subscribe(this->nh_,"/camera/polarizedimage", 1);
+    image_depth_sub_.subscribe(this->nh_,"/camera/aligned_depth_to_color/image_raw", 1);
+    this->sync_ = new TimeSynchronizer<Image, Image>(image_polar_sub_, image_depth_sub_, 1);
+    this->sync_->registerCallback(boost::bind(&Ros_PVS::Callback, this, _1, _2));
+}
+
+
+
+void Ros_PVS::get_parameters_PVS(double& lambda, double& epsilon, double& eta, double& phi_pol, double& k, 
+                Mat& polar_O_desired, Mat& polar_A_desired, Mat& polar_Phi_desired, 
+                Mat& image_depth_desired, Mat& camera_intrinsic, Mat& pose_desired)
+{
+    // 基本参数
+    this->nh_.getParam("lambda", lambda);
+    this->nh_.getParam("epsilon", epsilon);
+    this->nh_.getParam("eta", eta);
+    this->nh_.getParam("phi_pol", phi_pol);
+    this->nh_.getParam("k", k);
+    // 图像参数
+    string loaction, name_polar, name_depth;
+    this->nh_.getParam("resource_location", loaction);
+    this->nh_.getParam("image_polar_desired_name", name_polar);
+    this->nh_.getParam("image_depth_desired_name", name_depth);
+    // 读偏振图
+    Mat image_polar_desired = imread(loaction + name_polar, IMREAD_COLOR);
+    polar_image_operate(image_polar_desired, polar_O_desired, polar_A_desired, polar_Phi_desired);
+    // 读深度图
+    Mat image_depth_desired_temp = imread(loaction + name_depth, IMREAD_UNCHANGED); 
+    image_depth_desired = depth_image_operate(image_depth_desired_temp);   
+    // 相机内参
+    camera_intrinsic = get_parameter_Matrix("camera_intrinsic", 3, 3);
+    // 期望位姿
+    pose_desired = get_parameter_Matrix("pose_desired", 4, 4);
+}
+
+void Ros_PVS::get_image_data_convert(const ImageConstPtr& image_polar_msg, const ImageConstPtr& image_depth_msg, Mat& polar_O_new, Mat& polar_A_new, Mat& polar_Phi_new, Mat& depth_img)
+{
+    // 偏振数据
+    cv_bridge::CvImagePtr cv_ptr_polar = cv_bridge::toCvCopy(image_polar_msg, sensor_msgs::image_encodings::BGR8);
+    Mat img_polar = cv_ptr_polar->image;
+    polar_image_operate(img_polar, polar_O_new, polar_A_new, polar_Phi_new);
+    // 深度图
+    cv_bridge::CvImagePtr cv_ptr_depth = cv_bridge::toCvCopy(image_depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
+    Mat depth_img_temp = cv_ptr_depth->image;
+    depth_img = depth_image_operate(depth_img_temp);
+}
+
+void Ros_PVS::polar_image_operate(Mat& img_polar, Mat& polar_O_new, Mat& polar_A_new, Mat& polar_Phi_new)
+{
+    Mat polar_gray;
+    vector<Mat> channels;
+
+    img_polar.convertTo(polar_gray, CV_64FC1);
+    split(polar_gray, channels); 
+    channels.at(0).copyTo(polar_O_new);
+    polar_A_new = channels.at(1).mul(polar_O_new + 0.001) / 255.0;
+    polar_Phi_new = 2.0 * (channels.at(2) * CV_PI / 180.0 - CV_PI);
 }
 
 Mat Ros_PVS::depth_image_operate(Mat& image_depth)
@@ -196,6 +167,39 @@ Mat Ros_PVS::depth_image_operate(Mat& image_depth)
     image_depth_return = image_depth_return / 1000.0;
     return image_depth_return;
 }
+
+Mat Ros_PVS::get_camera_pose()
+{
+    tf::StampedTransform transform;
+    this->listener_camera_pose_.waitForTransform("ur_link0", "camera_polar_optical_frame", ros::Time(0), ros::Duration(3.0));
+    this->listener_camera_pose_.lookupTransform("ur_link0", "camera_polar_optical_frame", ros::Time(0), transform);
+    Mat T = get_T(transform);
+    return T;
+}
+
+// Mat Ros_PVS::velocity_camera_to_base(Mat velocity, Mat pose)
+// {
+//     Mat R_camera_to_base = pose.rowRange(0,3).colRange(0,3);
+//     Mat V_effector_to_base = Mat::zeros(6,1,CV_64FC1);
+//     V_effector_to_base.rowRange(0,3).colRange(0,1) = R_camera_to_base * velocity.rowRange(0,3).colRange(0,1);
+//     V_effector_to_base.rowRange(3,6).colRange(0,1) = R_camera_to_base * velocity.rowRange(3,6).colRange(0,1);
+
+//     return V_effector_to_base;
+
+//     // Mat p = pose.rowRange(0,3).colRange(3,4);
+//     // double xa = p.at<double>(0,0), ya = p.at<double>(1,0), za = p.at<double>(2,0);
+//     // Mat p_cross = (Mat_<double>(3,3)<< 0.0, -za, ya, za, 0.0, -xa, -ya, xa, 0.0);
+//     // Mat AdT = Mat::zeros(6,6,CV_64FC1);
+//     // R.copyTo(AdT.rowRange(0,3).colRange(0,3));
+//     // R.copyTo(AdT.rowRange(3,6).colRange(3,6));
+//     // AdT.rowRange(0,3).colRange(3,6) = p_cross * R;
+//     // Mat V = AdT * velocity;
+//     // return V;
+// }
+
+
+
+
 
 Mat Ros_PVS::get_T(tf::StampedTransform  transform)
 {
@@ -250,24 +254,24 @@ Mat Ros_PVS::Quaternion2Matrix (Mat q)
 }
 
 
-void Ros_PVS::franka_move_to_target_joint_angle(std::vector<double> joint_group_positions_target)
-{
-    this->move_group_interface_->setJointValueTarget(joint_group_positions_target);
-    this->move_group_interface_->setMaxAccelerationScalingFactor(0.05);
-    this->move_group_interface_->setMaxVelocityScalingFactor(0.05);
-    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-    bool success = (this->move_group_interface_->plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
-    if(success)
-    {
-        std::cout << "Press Enter to move the robot..." << std::endl;
-        std::cin.ignore();
-        this->move_group_interface_->move();
-        std::cout << "Move finish" << std::endl;
-    }
-    else
-    {
-        std::cout << "moveit joint plan fail ! ! !" << std::endl;
-    }
-}
+// void Ros_PVS::franka_move_to_target_joint_angle(std::vector<double> joint_group_positions_target)
+// {
+//     this->move_group_interface_->setJointValueTarget(joint_group_positions_target);
+//     this->move_group_interface_->setMaxAccelerationScalingFactor(0.05);
+//     this->move_group_interface_->setMaxVelocityScalingFactor(0.05);
+//     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+//     bool success = (this->move_group_interface_->plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+//     if(success)
+//     {
+//         std::cout << "Press Enter to move the robot..." << std::endl;
+//         std::cin.ignore();
+//         this->move_group_interface_->move();
+//         std::cout << "Move finish" << std::endl;
+//     }
+//     else
+//     {
+//         std::cout << "moveit joint plan fail ! ! !" << std::endl;
+//     }
+// }
 
 
