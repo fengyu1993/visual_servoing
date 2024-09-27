@@ -13,6 +13,6 @@
     <arg name="stopped" value="true" />
 </include>
 
-<node name="franka_control_keyboard" pkg="robot_control_VS"  type="franka_control_keyboard"  output="screen"/>
+<node name="robot_control_keyboard" pkg="robot_control_VS"  type="robot_control_keyboard"  output="screen"/>
 
 </launch>

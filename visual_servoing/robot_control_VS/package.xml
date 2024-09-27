@@ -40,6 +40,27 @@
   <build_depend>message_filters</build_depend>
   <build_depend>message_generation</build_depend>
   <build_export_depend>message_filters</build_export_depend>
+  <build_depend>arena_sdk</build_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>camera_control_msgs</build_depend>
+  <build_depend>camera_info_manager</build_depend>
+  <!-- 
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>diagnostic_updater</build_depend>
+  <build_depend>image_geometry</build_depend>
+  <build_depend>image_transport</build_depend>
+  
+  <build_depend>roslaunch</build_depend>
+  <build_depend>roslint</build_depend> -->
+  
+  <!-- 
+  <exec_depend>diagnostic_updater</exec_depend>
+  <exec_depend>cv_bridge</exec_depend>
+  <exec_depend>image_geometry</exec_depend>
+  <exec_depend>image_transport</exec_depend>
+  
+  <exec_depend>roslaunch</exec_depend>
+  <exec_depend>roslint</exec_depend> -->
 
   <exec_depend>message_filters</exec_depend>
   <exec_depend>moveit_core</exec_depend>
@@ -48,6 +69,10 @@
   <exec_depend>moveit_ros_planning_interface</exec_depend>
   <exec_depend>moveit_ros_perception</exec_depend>
   <exec_depend>moveit_visual_tools</exec_depend>
+  <exec_depend>arena_sdk</exec_depend>
+  <exec_depend>actionlib</exec_depend>
+  <exec_depend>camera_control_msgs</exec_depend>
+  <exec_depend>camera_info_manager</exec_depend>
   
   <!-- The export tag contains other, unspecified, tags -->
   <export>

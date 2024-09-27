@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<launch>
+
+<arg name="robot_ip" default="192.168.1.1" />
+
+
+<rosparam file= "$(find robot_control_VS)/param/parameters_PVS.yaml" command= "load"/>
+
+<include file="$(dirname)/franka_demo.launch" /> 
+<!-- <include file="$(dirname)/franka_control.launch" >
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+</include>
+<include file="$(dirname)/camera_calibration.launch" />
+
+<include file="$(find franka_control_wrappers)/launch/cartesian_velocity_controller.launch">
+    <arg name="stopped" value="true" />
+</include>
+
+<node name="publish_realsense" pkg="robot_control_VS"  type="publish_realsense"  output="screen"/>
+
+<node name="DVS" pkg="robot_control_VS"  type="franka_control_DVS"  output="screen"/>
+
+<node pkg="rosbag" type="record" name="bag_record" args="/camera/color/image_raw -o /home/cyh/Work/visual_servoing_ws/src/visual_servoing/image_process/resource/data/DVS.bag"/> -->
+
+</launch>
