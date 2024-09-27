@@ -39,42 +39,42 @@ void Ros_PVS::Callback(const ImageConstPtr& image_polar_msg, const ImageConstPtr
             this->PVS->flag_first_ = false;
         }
 
-//         Mat camera_velocity = this->PVS->get_camera_velocity(); 
+        Mat camera_velocity = this->PVS->get_camera_velocity(); 
 
-//         this->PVS->save_data(camera_pose);
-//         // ROS_INFO("cyh");  
-//         // cout << "img_old = \n" <<  img_old.rowRange(0,10).colRange(0,5) << endl;
-//         // cout << "img_new = \n" <<  img_new.rowRange(0,10).colRange(0,5) << endl;
-//         // cout << "depth_old = \n" <<  depth_old.rowRange(0,10).colRange(0,5) << endl;
-//         // cout << "depth_new = \n" <<  depth_new.rowRange(0,10).colRange(0,5) << endl;
-//         // cout << "camera_velocity = \n" << camera_velocity << endl;
-//         cout << "iteration_num = " << this->PVS->iteration_num_ << endl;
-//         cout << "error = " << ((double)*(this->PVS->data_vs.error_feature_.end<double>() - 1)) << endl;
+        this->PVS->save_data(camera_pose);
+        // ROS_INFO("cyh");  
+        // cout << "img_old = \n" <<  img_old.rowRange(0,10).colRange(0,5) << endl;
+        // cout << "img_new = \n" <<  img_new.rowRange(0,10).colRange(0,5) << endl;
+        // cout << "depth_old = \n" <<  depth_old.rowRange(0,10).colRange(0,5) << endl;
+        // cout << "depth_new = \n" <<  depth_new.rowRange(0,10).colRange(0,5) << endl;
+        // cout << "camera_velocity = \n" << camera_velocity << endl;
+        cout << "iteration_num = " << this->PVS->iteration_num_ << endl;
+        cout << "error = " << ((double)*(this->PVS->data_pvs.error_feature_.end<double>() - 1)) << endl;
 
-//         // 判断是否成功并做速度转换
-//         if(this->PVS->is_success() || this->PVS->iteration_num_ > 2000)
-//         {
-//             this->flag_success_ = true;
-//             this->PVS->write_data();  
-//             this->camera_velocity_base_ = 0 * camera_velocity;
-//             this->start_VS = false;
-//         }
-//         else
-//         {
-//             this->flag_success_ = false;
-//             // 速度转换
-//             this->camera_velocity_base_ = velocity_camera_to_base(camera_velocity, camera_pose);
-//         }
+        // 判断是否成功并做速度转换
+        if(this->PVS->is_success() || this->PVS->iteration_num_ > 2000)
+        {
+            this->flag_success_ = true;
+            this->PVS->write_data();  
+            this->camera_velocity_base_ = 0 * camera_velocity;
+            this->start_PVS = false;
+        }
+        else
+        {
+            this->flag_success_ = false;
+            // 速度转换
+            this->camera_velocity_base_ = velocity_camera_to_base(camera_velocity, camera_pose);
+        }
 
-//        // 发布速度信息
-//         geometry_msgs::Twist camera_Twist;
-//         camera_Twist.linear.x = this->camera_velocity_base_.at<double>(0,0);
-//         camera_Twist.linear.y = this->camera_velocity_base_.at<double>(1,0);
-//         camera_Twist.linear.z = this->camera_velocity_base_.at<double>(2,0);
-//         camera_Twist.angular.x = this->camera_velocity_base_.at<double>(3,0);
-//         camera_Twist.angular.y = this->camera_velocity_base_.at<double>(4,0);
-//         camera_Twist.angular.z = this->camera_velocity_base_.at<double>(5,0);
-//         this->pub_camera_twist_.publish(camera_Twist);
+       // 发布速度信息
+        geometry_msgs::Twist camera_Twist;
+        camera_Twist.linear.x = this->camera_velocity_base_.at<double>(0,0);
+        camera_Twist.linear.y = this->camera_velocity_base_.at<double>(1,0);
+        camera_Twist.linear.z = this->camera_velocity_base_.at<double>(2,0);
+        camera_Twist.angular.x = this->camera_velocity_base_.at<double>(3,0);
+        camera_Twist.angular.y = this->camera_velocity_base_.at<double>(4,0);
+        camera_Twist.angular.z = this->camera_velocity_base_.at<double>(5,0);
+        this->pub_camera_twist_.publish(camera_Twist);
     }
 }
 
@@ -119,6 +119,8 @@ void Ros_PVS::get_parameters_PVS(double& lambda, double& epsilon, double& eta, d
     this->nh_.getParam("eta", eta);
     this->nh_.getParam("phi_pol", phi_pol);
     this->nh_.getParam("k", k);
+    this->nh_.getParam("name_link0", this->name_link0_);
+    this->nh_.getParam("name_camera_frame", this->name_camera_frame_);
     // 图像参数
     string loaction, name_polar, name_depth;
     this->nh_.getParam("resource_location", loaction);
@@ -168,37 +170,15 @@ Mat Ros_PVS::depth_image_operate(Mat& image_depth)
     return image_depth_return;
 }
 
-Mat Ros_PVS::get_camera_pose()
+Mat Ros_PVS::velocity_camera_to_base(Mat velocity, Mat pose)
 {
-    tf::StampedTransform transform;
-    this->listener_camera_pose_.waitForTransform("ur_link0", "camera_polar_optical_frame", ros::Time(0), ros::Duration(3.0));
-    this->listener_camera_pose_.lookupTransform("ur_link0", "camera_polar_optical_frame", ros::Time(0), transform);
-    Mat T = get_T(transform);
-    return T;
+    Mat R_camera_to_base = pose.rowRange(0,3).colRange(0,3);
+    Mat V_effector_to_base = Mat::zeros(6,1,CV_64FC1);
+    V_effector_to_base.rowRange(0,3).colRange(0,1) = R_camera_to_base * velocity.rowRange(0,3).colRange(0,1);
+    V_effector_to_base.rowRange(3,6).colRange(0,1) = R_camera_to_base * velocity.rowRange(3,6).colRange(0,1);
+
+    return V_effector_to_base;
 }
-
-// Mat Ros_PVS::velocity_camera_to_base(Mat velocity, Mat pose)
-// {
-//     Mat R_camera_to_base = pose.rowRange(0,3).colRange(0,3);
-//     Mat V_effector_to_base = Mat::zeros(6,1,CV_64FC1);
-//     V_effector_to_base.rowRange(0,3).colRange(0,1) = R_camera_to_base * velocity.rowRange(0,3).colRange(0,1);
-//     V_effector_to_base.rowRange(3,6).colRange(0,1) = R_camera_to_base * velocity.rowRange(3,6).colRange(0,1);
-
-//     return V_effector_to_base;
-
-//     // Mat p = pose.rowRange(0,3).colRange(3,4);
-//     // double xa = p.at<double>(0,0), ya = p.at<double>(1,0), za = p.at<double>(2,0);
-//     // Mat p_cross = (Mat_<double>(3,3)<< 0.0, -za, ya, za, 0.0, -xa, -ya, xa, 0.0);
-//     // Mat AdT = Mat::zeros(6,6,CV_64FC1);
-//     // R.copyTo(AdT.rowRange(0,3).colRange(0,3));
-//     // R.copyTo(AdT.rowRange(3,6).colRange(3,6));
-//     // AdT.rowRange(0,3).colRange(3,6) = p_cross * R;
-//     // Mat V = AdT * velocity;
-//     // return V;
-// }
-
-
-
 
 
 Mat Ros_PVS::get_T(tf::StampedTransform  transform)
@@ -254,24 +234,31 @@ Mat Ros_PVS::Quaternion2Matrix (Mat q)
 }
 
 
-// void Ros_PVS::franka_move_to_target_joint_angle(std::vector<double> joint_group_positions_target)
-// {
-//     this->move_group_interface_->setJointValueTarget(joint_group_positions_target);
-//     this->move_group_interface_->setMaxAccelerationScalingFactor(0.05);
-//     this->move_group_interface_->setMaxVelocityScalingFactor(0.05);
-//     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-//     bool success = (this->move_group_interface_->plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
-//     if(success)
-//     {
-//         std::cout << "Press Enter to move the robot..." << std::endl;
-//         std::cin.ignore();
-//         this->move_group_interface_->move();
-//         std::cout << "Move finish" << std::endl;
-//     }
-//     else
-//     {
-//         std::cout << "moveit joint plan fail ! ! !" << std::endl;
-//     }
-// }
+void Ros_PVS::robot_move_to_target_joint_angle(std::vector<double> joint_group_positions_target)
+{
+    this->move_group_interface_->setJointValueTarget(joint_group_positions_target);
+    this->move_group_interface_->setMaxAccelerationScalingFactor(0.05);
+    this->move_group_interface_->setMaxVelocityScalingFactor(0.05);
+    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    bool success = (this->move_group_interface_->plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    if(success)
+    {
+        std::cout << "Press Enter to move the robot..." << std::endl;
+        std::cin.ignore();
+        this->move_group_interface_->move();
+        std::cout << "Move finish" << std::endl;
+    }
+    else
+    {
+        std::cout << "moveit joint plan fail ! ! !" << std::endl;
+    }
+}
 
-
+Mat Ros_PVS::get_camera_pose()
+{
+    tf::StampedTransform transform;
+    this->listener_camera_pose_.waitForTransform(this->name_link0_, this->name_camera_frame_, ros::Time(0), ros::Duration(3.0));
+    this->listener_camera_pose_.lookupTransform(this->name_link0_, this->name_camera_frame_, ros::Time(0), transform);
+    Mat T = get_T(transform);
+    return T;
+}

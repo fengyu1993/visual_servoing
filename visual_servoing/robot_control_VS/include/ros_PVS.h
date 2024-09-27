@@ -89,6 +89,7 @@ class Ros_PVS
         Mat                 joint_angle_initial_;
         bool                start_PVS;
         ControlSwitcher     control_switcher_;
+        string name_link0_, name_camera_frame_;
 
     public:
         Ros_PVS();
@@ -103,16 +104,8 @@ class Ros_PVS
         Mat get_T(tf::StampedTransform  transform);
         Mat Quaternion2Matrix (Mat q);
         void get_parameters_PVS(double& lambda, double& epsilon, double& eta, double& phi_pol, double& k, Mat& polar_O_desired, Mat& polar_A_desired, Mat& polar_Phi_desired, Mat& image_depth_desired, Mat& camera_intrinsic, Mat& pose_desired);    
-        
-        
-        
-        // Mat velocity_camera_to_base(Mat velocity, Mat pose);
-
-        
-        
-        
-        
-        // void franka_move_to_target_joint_angle(std::vector<double> joint_group_positions_target);
+        Mat velocity_camera_to_base(Mat velocity, Mat pose);
+        void robot_move_to_target_joint_angle(std::vector<double> joint_group_positions_target);
 };
 
 #endif
