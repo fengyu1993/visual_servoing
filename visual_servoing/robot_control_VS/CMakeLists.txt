@@ -36,6 +36,9 @@ set(ROSLINT_CPP_OPTS
    "--extensions=cpp,h,hpp" "--filter=-runtime/references,-readability/todo,-build/include_what_you_use"
 )
 
+add_definitions("-std=gnu++11")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(THIS_PACKAGE_INCLUDE_DIRS
   ./include
 )
@@ -60,7 +63,8 @@ include_directories(${THIS_PACKAGE_INCLUDE_DIRS})
 include_directories(SYSTEM  ${catkin_INCLUDE_DIRS} 
                             ${Boost_INCLUDE_DIR} 
                             ${EIGEN3_INCLUDE_DIRS}
-                            ${FRANKA_INCLUDE_DIRS})
+                            ${FRANKA_INCLUDE_DIRS}
+                            ${arena_sdk_INCLUDE_DIRS})
 
 add_executable(franka_control_DVS       src/franka_control_DVS.cpp)
 add_executable(franka_control_DCT_VS    src/franka_control_DCT_VS.cpp)
@@ -74,17 +78,17 @@ add_executable(rosbag_record            src/rosbag_record.cpp)
 add_executable(ur_control_PVS           src/ur_control_PVS.cpp)
 add_executable(publish_l515_polar       src/publish_l515_polar.cpp)
 
-target_link_libraries(franka_control_DVS    robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
-target_link_libraries(franka_control_DCT_VS robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
-target_link_libraries(franka_control_TM_VS  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
-target_link_libraries(franka_control_KM_VS  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
-target_link_libraries(franka_control_HM_VS  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY})
-target_link_libraries(save_pose_image  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY}) 
-target_link_libraries(publish_realsense  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY}) 
-target_link_libraries(robot_control_keyboard  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY}) 
-target_link_libraries(rosbag_record  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY}) 
-target_link_libraries(ur_control_PVS  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY}) 
-target_link_libraries(publish_l515_polar  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY}) 
+target_link_libraries(franka_control_DVS    robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES})
+target_link_libraries(franka_control_DCT_VS robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES})
+target_link_libraries(franka_control_TM_VS  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES})
+target_link_libraries(franka_control_KM_VS  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES})
+target_link_libraries(franka_control_HM_VS  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES})
+target_link_libraries(save_pose_image  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES}) 
+target_link_libraries(publish_realsense  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES}) 
+target_link_libraries(robot_control_keyboard  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES}) 
+target_link_libraries(rosbag_record  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES}) 
+target_link_libraries(ur_control_PVS  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES}) 
+target_link_libraries(publish_l515_polar  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES}) 
 
 install(TARGETS franka_control_DVS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(TARGETS franka_control_DCT_VS DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

@@ -99,10 +99,11 @@ Mat Ros_PVS::get_parameter_Matrix(string str, int row, int col)
     return Matrix;
 }
 
+
 void Ros_PVS::initialize_time_sync()
 {
-    image_polar_sub_.subscribe(this->nh_,"/camera/polarizedimage", 1);
-    image_depth_sub_.subscribe(this->nh_,"/camera/aligned_depth_to_color/image_raw", 1);
+    image_polar_sub_.subscribe(this->nh_,"/camera/polarized_image", 1);
+    image_depth_sub_.subscribe(this->nh_,"/camera/depth_image", 1);
     this->sync_ = new TimeSynchronizer<Image, Image>(image_polar_sub_, image_depth_sub_, 1);
     this->sync_->registerCallback(boost::bind(&Ros_PVS::Callback, this, _1, _2));
 }

@@ -1,0 +1,7 @@
+<launch>
+
+    <node pkg="pub_polarized_img_pkg" type="pub_polarized_img_node" name="pub_polarized_img_node"/>
+
+    <node pkg="sub_polarized_img_pkg" type="sub_polarized_img_node" name="sub_polarized_img_node" output="screen"/>
+
+</launch>
