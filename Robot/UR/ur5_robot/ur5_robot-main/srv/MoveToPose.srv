@@ -1,0 +1,6 @@
+# MoveToPose.srv
+# Request part
+geometry_msgs/Pose pose_goal
+---
+# Response part
+bool success

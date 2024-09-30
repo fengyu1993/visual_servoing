@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<launch>
+
+<rosparam file= "$(find robot_control_VS)/param/parameters_PVS.yaml" command= "load"/>
+
+<include file="$(find ur5_moveit_config)/launch/demo.launch"/>
+
+<include file="$(dirname)/camera_ur_calibration.launch" />
+
+<node name="publish_l515_polar" pkg="robot_control_VS"  type="publish_l515_polar"  output="screen"/>
+
+</launch>

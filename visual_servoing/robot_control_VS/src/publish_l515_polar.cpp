@@ -24,10 +24,6 @@
 
 #define IMAGE_TIMEOUT 2000
 #define SYSTEM_TIMEOUT 100
-#define TAB1 "  "
-#define TAB2 "    "
-#define NEW_WIDTH 500
-#define NEW_HEIGHT 300
 #define CHANNEL1 0
 #define CHANNEL2 1
 #define CHANNEL3 2
@@ -61,7 +57,7 @@ int main(int argc, char** argv)
     image_transport::Publisher depth_pub = it.advertise("/camera/depth_image", 1);
     image_transport::Publisher depth_show_pub = it.advertise("/camera/depth_show_image", 1);
 
-    ros::Rate loop_rate(20);
+    ros::Rate loop_rate(50);
 
 	bool exceptionThrown = false;
     try
@@ -124,7 +120,7 @@ int main(int argc, char** argv)
 				continue;
 			}
 			cv::Mat image_polar;
-			cv::resize(srcImage, image_polar, cv::Size(NEW_WIDTH, NEW_HEIGHT));
+			cv::resize(srcImage, image_polar, cv::Size(resolution_x, resolution_y));
 			// publist
 			sensor_msgs::ImagePtr  depth_show_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_show).toImageMsg(); 
 			sensor_msgs::ImagePtr  depth_raw_msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", img_depth).toImageMsg(); 
@@ -170,7 +166,7 @@ int main(int argc, char** argv)
 
 void FetchData(const uint8_t* pSrc_Angles, size_t srcBytesPerPixel_Angles, uint8_t* pDst)
 {
-	// std::cout << TAB2 << "Fetch Data To pDst\n";
+	// std::cout << "\t" << "Fetch Data To pDst\n";
 	uint16_t I_0 = 0;
 	uint8_t I_45 = 0;
 	uint8_t I_90 = 0;
@@ -210,16 +206,16 @@ void FetchData(const uint8_t* pSrc_Angles, size_t srcBytesPerPixel_Angles, uint8
 void GetPolarizedData(Arena::IDevice* pDevice, uint8_t* pDst)
 {
 
-	// std::cout << TAB2 << "111111\n";
+	// std::cout << "\t" << "111111\n";
 	
 	Arena::IImage* pImage_Angles = pDevice->GetImage(IMAGE_TIMEOUT);
 	// SaveImage(pImage, FILE_NAME_SRC);
 
-	// std::cout << TAB2 << "2222222\n";
+	// std::cout << "\t" << "2222222\n";
 
 	// src info
 	uint64_t srcPF_Angles = pImage_Angles->GetPixelFormat();
-	// std::cout << TAB2 << "333333\n";
+	// std::cout << "\t" << "333333\n";
 	// size_t srcWidth_Angles = pImage_Angles->GetWidth();
 	size_t srcHeight_Angles = pImage_Angles->GetHeight();
 	size_t srcBitsPerPixel_Angles = Arena::GetBitsPerPixel(srcPF_Angles);
@@ -229,7 +225,7 @@ void GetPolarizedData(Arena::IDevice* pDevice, uint8_t* pDst)
 
 	const uint8_t* pSrc_Angles = pImage_Angles->GetData();
 	
-	// std::cout << TAB2 << "srcWidth:" << srcWidth_Angles << "\t\tsrcHeight:" << srcHeight_Angles << "\t\tsrcBytesPerPixel:" 
+	// std::cout << "\t" << "srcWidth:" << srcWidth_Angles << "\t\tsrcHeight:" << srcHeight_Angles << "\t\tsrcBytesPerPixel:" 
 	// << srcBytesPerPixel_Angles << "\t\tsrcStride:" << srcStride_Angles << "\t\tsrcDataSize:" << srcDataSize_Angles << "\n";
 
 	FetchData(pSrc_Angles, srcBytesPerPixel_Angles, pDst);
@@ -238,7 +234,7 @@ void GetPolarizedData(Arena::IDevice* pDevice, uint8_t* pDst)
 	pDevice->RequeueBuffer(pImage_Angles);
 
 
-	// std::cout << TAB2 << "Polarized Data is Ready\n";
+	// std::cout << "\t" << "Polarized Data is Ready\n";
 	
 }
 
@@ -246,32 +242,32 @@ Arena::DeviceInfo SelectDevice(std::vector<Arena::DeviceInfo>& deviceInfos)
 {
     if (deviceInfos.size() == 1)
     {
-        std::cout  << "\n" << TAB1 << "Only one device detected: "  << deviceInfos[0].ModelName() << TAB1 << deviceInfos[0].SerialNumber() << TAB1 << deviceInfos[0].IpAddressStr() << ".\n";
-        std::cout  << TAB1 << "Automatically selecting this device.\n";
+        std::cout  << "\n" << "\tOnly one device detected: "  << deviceInfos[0].ModelName() << "\t" << deviceInfos[0].SerialNumber() << "\t" << deviceInfos[0].IpAddressStr() << ".\n";
+        std::cout  << "\tAutomatically selecting this device.\n";
         return deviceInfos[0];
     }
     
     std::cout << "\nSelect device:\n";
     for (size_t i = 0; i < deviceInfos.size(); i++)
     {
-        std::cout << TAB1 << i + 1 << ". " << deviceInfos[i].ModelName() << TAB1 << deviceInfos[i].SerialNumber() << TAB1 << deviceInfos[i].IpAddressStr() << "\n";
+        std::cout << "\t" << i + 1 << ". " << deviceInfos[i].ModelName() << "\t" << deviceInfos[i].SerialNumber() << "\t" << deviceInfos[i].IpAddressStr() << "\n";
     }
     size_t selection = 0;
 	
 	do
 	{
-		std::cout << TAB1 << "Make selection (1-" << deviceInfos.size() << "): ";
+		std::cout << "\t" << "Make selection (1-" << deviceInfos.size() << "): ";
 		std::cin >> selection;
 		
 		if (std::cin.fail())
 		{
 			std::cin.clear();
 			while (std::cin.get() != '\n');
-			std::cout << TAB1 << "Invalid input. Please enter a number.\n";			
+			std::cout << "\t" << "Invalid input. Please enter a number.\n";			
 		}
 		else if (selection <= 0 || selection > deviceInfos.size())
         {
-            std::cout << TAB1 << "Invalid device selected. Please select a device in the range (1-" << deviceInfos.size() << ").\n";
+            std::cout << "\t" << "Invalid device selected. Please select a device in the range (1-" << deviceInfos.size() << ").\n";
         }
 		
 	} while (selection <= 0 || selection > deviceInfos.size());
@@ -283,7 +279,7 @@ GenICam::gcstring Device_Init(Arena::IDevice* pDevice)
 {
 	//打印相机初始图像格式
 	GenICam::gcstring pixelFormatInitial = Arena::GetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "PixelFormat");
-	std::cout << TAB1 << "pixelFormatInitial:" << pixelFormatInitial << "\n";
+	std::cout << "\t" << "pixelFormatInitial:" << pixelFormatInitial << "\n";
 	
 	//初始化相机参数
 	// enable stream auto negotiate packet size
@@ -293,7 +289,7 @@ GenICam::gcstring Device_Init(Arena::IDevice* pDevice)
 	true);
 
 	// bool StreamAutoNegotiatePacketSize = Arena::GetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamAutoNegotiatePacketSize");
-	// std::cout << TAB2 << "Device Init" << StreamAutoNegotiatePacketSize;
+	// std::cout << "\t" << "Device Init" << StreamAutoNegotiatePacketSize;
 
 
 	// enable stream packet resend
@@ -303,13 +299,13 @@ GenICam::gcstring Device_Init(Arena::IDevice* pDevice)
 	true);	
 
 	//设置图像格式
-	std::cout << TAB2 << "Set PolarizedAngles_0d_45d_90d_135d_BayerRG8 to pixel format\n";
+	std::cout << "\t" << "Set PolarizedAngles_0d_45d_90d_135d_BayerRG8 to pixel format\n";
 	Arena::SetNodeValue<GenICam::gcstring>(
 		pDevice->GetNodeMap(),
 		"PixelFormat",
 		"PolarizedAngles_0d_45d_90d_135d_BayerRG8");
 
-	std::cout << TAB2 << "Device Init\n";
+	std::cout << "\t" << "Device Init\n";
 
 	return pixelFormatInitial;
 }
