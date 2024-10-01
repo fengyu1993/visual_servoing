@@ -33,7 +33,7 @@ Mat cross_w(Mat& w);
 int main(int argc, char** argv)
 {
     // ×¼±¸
-    ros::init(argc, argv, "DVS");  
+    ros::init(argc, argv, "control_keyboard");  
     ros::AsyncSpinner spinner(1);
     spinner.start();  
     ros::NodeHandle nh; 

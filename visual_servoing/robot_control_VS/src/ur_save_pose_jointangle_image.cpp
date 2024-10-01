@@ -35,8 +35,6 @@ using namespace message_filters;
 
 Mat joint_group_positions;
 Mat T_base_camera;
-Mat img_polar;
-Mat img_depth;
 double depth_scale;
 
 rs2::frame depth_filter(rs2::frame& depth_img);
@@ -52,7 +50,7 @@ void write_to_excel(Mat data, ofstream& oFile);
 string get_date_time();
 void save_joint_positions(moveit::planning_interface::MoveGroupInterface& move_group_interface);
 void save_camera_pose();
-void write_image();
+void write_image(Mat& img_polar, Mat& img_depth);
 void write_data();
 
 int main(int argc, char** argv)
@@ -68,7 +66,7 @@ int main(int argc, char** argv)
     ros::AsyncSpinner spinner(1);
     spinner.start();
 
-    static const std::string PLANNING_GROUP = "ur";
+    static const std::string PLANNING_GROUP = "manipulator";
     moveit::planning_interface::MoveGroupInterface move_group_interface(PLANNING_GROUP);
     
     // Realsense L515
@@ -102,7 +100,7 @@ int main(int argc, char** argv)
 	uint8_t* pDst = new uint8_t[dstBytesPerPixel * dstWidth * dstHeight];
 	pDevice->StartStream();
 
-    cout<< "Press space to save rgb_raw and depth_raw to a file."<<endl;
+    cout<< "\nPress space to save polar_raw and depth_raw to a file.\n"<<endl;
 
     while (ros::ok())
     {
@@ -133,18 +131,18 @@ int main(int argc, char** argv)
         imshow("Polar", img_polar);
         imshow("Depth", depth_show);
         // test
-        cout << "Depth = \n" <<  img_depth.rowRange(1,10).colRange(0,5) << endl;
+        // cout << "Depth = \n" <<  img_depth.rowRange(1,10).colRange(0,5) << endl;
         // save
         if((char)waitKey(10) == 32) // Spacebar
         {
             save_joint_positions(move_group_interface);
             save_camera_pose();
             std::cout << "Save data successfully" << endl;
-            std::cout << "Press space to start..." << std::endl;
+            std::cout << "Press space to start write ..." << std::endl;
             if((char)waitKey() == 32)
             {
                 write_data();
-                write_image();
+                write_image(img_polar, img_depth);
                 std::cout << "Save image successfully" << endl;
             }
         }
@@ -164,18 +162,6 @@ int main(int argc, char** argv)
     return 0;
 }
 
-// Mat save_camera_intrinsic(rs2::stream_profile cprofile)
-// {
-//     ///获取彩色相机内参
-//     rs2::video_stream_profile cvsprofile(cprofile);
-//     rs2_intrinsics color_intrin =  cvsprofile.get_intrinsics();
-//     camera_intrinsic = (Mat_<double>(3,3) << color_intrin.fx, 0, color_intrin.ppx,
-//                                         0, color_intrin.fy, color_intrin.ppy,0, 0, 1);
-//     cout << "camera_intrinsic = " << camera_intrinsic << endl;
-//     return  camera_intrinsic; 
-// }
-
-
 
 void write_data()
 {
@@ -191,12 +177,12 @@ void write_data()
     oFile.close();
 }
 
-void write_image()
+void write_image(Mat& img_polar, Mat& img_depth)
 {
     // 保存深度图
     imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/image_depth_init.png", img_depth);
     // 保存彩色图
-    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/image_rgb_init.png", img_polar);
+    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/image_polar_init.png", img_polar);
 }
 
 // 保存相机位姿

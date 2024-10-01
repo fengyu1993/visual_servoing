@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+<launch>
+
+<include file="$(find ur5_moveit_config)/launch/demo.launch"/>
+
+<include file="$(dirname)/camera_ur_calibration.launch" />
+
+<arg name="stopped" default="false" />
+<rosparam command="load" file="$(find ur_robot_driver)/config/ur5_controllers.yaml" />
+<node unless="$(arg stopped)" name="controller_spawner_cv" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="twist_controller"/>
+<node if="$(arg stopped)" name="controller_spawner_cv" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="--stopped twist_controller"/>
+
+
+<node name="ur_control_keyboard" pkg="robot_control_VS"  type="ur_control_keyboard"  output="screen"/>
+
+</launch>

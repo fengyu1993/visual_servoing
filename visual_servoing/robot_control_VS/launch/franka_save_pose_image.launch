@@ -5,6 +5,6 @@
 <include file="$(dirname)/franka_control.launch" />
 <include file="$(dirname)/camera_calibration.launch" />
 
-<node name="save_pose_image" pkg="robot_control_VS"  type="save_pose_image"  output="screen"/>
+<node name="save_pose_image" pkg="robot_control_VS"  type="franka_save_pose_jointangle_image"  output="screen"/>
 
 </launch>

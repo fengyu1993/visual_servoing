@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<launch>
+
+<rosparam file= "$(find robot_control_VS)/param/parameters_PVS.yaml" command= "load"/>
+
+<include file="$(find ur5_moveit_config)/launch/demo.launch"/>
+
+<!-- <include file="$(dirname)/franka_control.launch" /> -->
+
+<include file="$(dirname)/camera_ur_calibration.launch" />
+
+<node name="save_pose_image" pkg="robot_control_VS"  type="ur_save_pose_jointangle_image"  output="screen"/>
+
+</launch>
