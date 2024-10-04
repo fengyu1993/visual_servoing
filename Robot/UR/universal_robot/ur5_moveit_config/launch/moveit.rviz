@@ -4,6 +4,8 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /TF1
+        - /TF1/Frames1
         - /Image1
         - /Image2
       Splitter Ratio: 0.5175438523292542
@@ -247,7 +249,7 @@ Visualization Manager:
         shoulder_link:
           Value: false
         tool0:
-          Value: true
+          Value: false
         upper_arm_link:
           Value: false
         wrist_1_link:

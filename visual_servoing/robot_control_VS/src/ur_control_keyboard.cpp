@@ -17,6 +17,8 @@
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <thread>
 #include "ros_VS.h"
+ #include <cartesian_interface/cartesian_command_interface.h>
+ #include <twist_controller/TwistControllerConfig.h>
 
 using namespace cv;
 using namespace std;
@@ -38,18 +40,21 @@ int main(int argc, char** argv)
     ros::NodeHandle nh; 
     moveit::planning_interface::MoveGroupInterface move_group_interface("manipulator");
     Mat camera_velocity_base;
-    ros::Publisher pub_camera_twist = nh.advertise<geometry_msgs::Twist>("/twist_controller/velocity", 5); 
+    ros::Publisher pub_camera_twist = nh.advertise<geometry_msgs::Twist>("twist", 5); 
     cout << "\ncyh_2\n" << endl;
     // 机械臂移动到起始位姿
     ControlSwitcher     control_switcher;
+    cout << "\ncyh_3\n" << endl;
     control_switcher.switch_controllers("moveit", "ros_controllers_cartesian");
+    cout << "\ncyh_4\n" << endl;
     std::vector<double> joint_group_positions_start= {0, -CV_PI/3.0, CV_PI/3.0, -CV_PI/2.0, -CV_PI/2.0, 0};
     cout << "Move to initial pose ... " << endl;
     cout << "Press Enter to start..." << endl;
     cin.ignore();
     robot_move_to_target_joint_angle(move_group_interface, joint_group_positions_start);
     // 转换控制器
-    control_switcher.switch_controllers("twist_controller", "moveit");
+    
+    // control_switcher.switch_controllers("twist_controller", "moveit");
     spinner.stop();
     // 按键控制
     cout << "Start keyboard control ... " << endl;
@@ -123,7 +128,7 @@ int main(int argc, char** argv)
         Mat effector_velocity_base = velocity_camera_to_base(camera_velocity, camera_to_base);
 
         // 发布速度信息
-        cout << "effector_velocity_base = \n" << effector_velocity_base << endl;
+        // cout << "effector_velocity_base = \n" << effector_velocity_base << endl;
         geometry_msgs::Twist effector_Twist;
         effector_Twist.linear.x = effector_velocity_base.at<double>(0,0);
         effector_Twist.linear.y = effector_velocity_base.at<double>(1,0);
@@ -136,7 +141,7 @@ int main(int argc, char** argv)
         loop_rate.sleep();
     }
     // 机械臂移动到起始位姿
-    control_switcher.switch_controllers("moveit", "twist_controller");
+    // control_switcher.switch_controllers("moveit", "twist_controller");
     robot_move_to_target_joint_angle(move_group_interface, joint_group_positions_start);
     // 结束
     return 0;
