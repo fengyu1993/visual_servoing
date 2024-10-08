@@ -25,10 +25,12 @@ using namespace std;
 using namespace sensor_msgs;
 
 void robot_move_to_target_joint_angle(moveit::planning_interface::MoveGroupInterface& move_group_interface, std::vector<double> joint_group_positions_target);
-void get_camera_pose(Mat& camera_to_base, Mat& effector_to_camera);
+void get_camera_pose(Mat& effector_to_base, Mat& camera_to_effector);
 Mat get_T(tf::StampedTransform  transform);
 Mat Quaternion2Matrix (Mat q);
-Mat velocity_camera_to_base(Mat velocity, Mat camera_to_base);
+Mat velocity_effector_to_base(Mat velocity, Mat camera_to_base);
+Mat get_effector_velocity_base(Mat camera_velocity, Mat effector_to_camera);
+Mat VecToso3(Mat p);
 
 int main(int argc, char** argv)
 {
@@ -38,20 +40,20 @@ int main(int argc, char** argv)
     ros::AsyncSpinner spinner(1);
     spinner.start();  
     ros::NodeHandle nh; 
-    moveit::planning_interface::MoveGroupInterface move_group_interface("manipulator");
+    // moveit::planning_interface::MoveGroupInterface move_group_interface("manipulator");
     Mat camera_velocity_base;
-    ros::Publisher pub_camera_twist = nh.advertise<geometry_msgs::Twist>("twist", 5); 
-    cout << "\ncyh_2\n" << endl;
+    ros::Publisher pub_camera_twist = nh.advertise<geometry_msgs::Twist>("/twist_controller/command", 5); 
+    // cout << "\ncyh_2\n" << endl;
     // 机械臂移动到起始位姿
-    ControlSwitcher     control_switcher;
-    cout << "\ncyh_3\n" << endl;
-    control_switcher.switch_controllers("moveit", "ros_controllers_cartesian");
-    cout << "\ncyh_4\n" << endl;
-    std::vector<double> joint_group_positions_start= {0, -CV_PI/3.0, CV_PI/3.0, -CV_PI/2.0, -CV_PI/2.0, 0};
-    cout << "Move to initial pose ... " << endl;
-    cout << "Press Enter to start..." << endl;
-    cin.ignore();
-    robot_move_to_target_joint_angle(move_group_interface, joint_group_positions_start);
+    // ControlSwitcher     control_switcher;
+    // cout << "\ncyh_3\n" << endl;
+    // control_switcher.switch_controllers("moveit", "ros_controllers_cartesian");
+    // cout << "\ncyh_4\n" << endl;
+    // std::vector<double> joint_group_positions_start= {0, -CV_PI/3.0, CV_PI/3.0, -CV_PI/2.0, -CV_PI/2.0, 0};
+    // cout << "Move to initial pose ... " << endl;
+    // cout << "Press Enter to start..." << endl;
+    // cin.ignore();
+    // robot_move_to_target_joint_angle(move_group_interface, joint_group_positions_start);
     // 转换控制器
     
     // control_switcher.switch_controllers("twist_controller", "moveit");
@@ -61,11 +63,14 @@ int main(int argc, char** argv)
     cout << "w -> +vx" << endl << "s -> -vx" << endl << "a -> +vy" << endl << "d -> -vy"<< endl << "r -> +vz" << endl << "f -> -vz" << endl;
     cout << "W -> +wx" << endl << "S -> -wx" << endl << "A -> +wy" << endl << "D -> -wy"<< endl << "R -> +wz" << endl << "F -> -wz" << endl;
 
+    cout << "Press Enter to start..." << endl;
+    cin.ignore();
     ros::Rate loop_rate(30);
 
     bool flag = false;
     namedWindow("cyh", WINDOW_NORMAL);
-    double vel = 0.035;
+    double vel_linear = 0.01;
+    double vel_angle = 0.03;
     while (ros::ok())
     {
         if(flag)
@@ -76,40 +81,40 @@ int main(int argc, char** argv)
         switch (key) 
         {
             case 'w' : // vx+
-                camera_velocity = (Mat_<double>(6,1) << vel, 0.0, 0.0, 0.0, 0.0, 0.0);
+                camera_velocity = (Mat_<double>(6,1) << vel_linear, 0.0, 0.0, 0.0, 0.0, 0.0);
                 break;
             case 's': // vx-
-                camera_velocity = (Mat_<double>(6,1) << -vel, 0.0, 0.0, 0.0, 0.0, 0.0);
+                camera_velocity = (Mat_<double>(6,1) << -vel_linear, 0.0, 0.0, 0.0, 0.0, 0.0);
                 break;
             case 'a': // vy+
-                camera_velocity = (Mat_<double>(6,1) << 0.0, vel, 0.0, 0.0, 0.0, 0.0);
+                camera_velocity = (Mat_<double>(6,1) << 0.0, vel_linear, 0.0, 0.0, 0.0, 0.0);
                 break;
             case 'd': // vy-
-                camera_velocity = (Mat_<double>(6,1) << 0.0, -vel, 0.0, 0.0, 0.0, 0.0);
+                camera_velocity = (Mat_<double>(6,1) << 0.0, -vel_linear, 0.0, 0.0, 0.0, 0.0);
                 break;
             case 'r': // vz+
-                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, vel, 0.0, 0.0, 0.0);
+                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, vel_linear, 0.0, 0.0, 0.0);
                 break;
             case 'f': // vz-
-                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, -vel, 0.0, 0.0, 0.0);
+                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, -vel_linear, 0.0, 0.0, 0.0);
                 break;
             case 'W': // wx+
-                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, vel, 0.0, 0.0);
+                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, vel_angle, 0.0, 0.0);
                 break;      
             case 'S': // wx-
-                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, -vel, 0.0, 0.0);
+                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, -vel_angle, 0.0, 0.0);
                 break;     
             case 'A': // wy+
-                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, vel, 0.0);
+                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, vel_angle, 0.0);
                 break;   
             case 'D': // wy-
-                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, -vel, 0.0);
+                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, -vel_angle, 0.0);
                 break;  
             case 'R': // wz+
-                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, vel);
+                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, vel_angle);
                 break; 
             case 'F': // wz-
-                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, -vel);
+                camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, -vel_angle);
                 break; 
             case 'q':
                 flag = true;
@@ -121,11 +126,12 @@ int main(int argc, char** argv)
         }
 
         // 速度转换
-        Mat camera_to_base = Mat::eye(4, 4, CV_64F);
-        Mat effector_to_camera = Mat::eye(4, 4, CV_64F);
-        get_camera_pose(camera_to_base, effector_to_camera);
-        
-        Mat effector_velocity_base = velocity_camera_to_base(camera_velocity, camera_to_base);
+        Mat effector_to_base = Mat::eye(4, 4, CV_64F);
+        Mat camera_to_effector = Mat::eye(4, 4, CV_64F);
+        get_camera_pose(effector_to_base, camera_to_effector);
+        Mat effector_twist = get_effector_velocity_base(camera_velocity, camera_to_effector);
+        // Mat effector_twist = camera_velocity;
+        Mat effector_velocity_base = velocity_effector_to_base(effector_twist, effector_to_base);
 
         // 发布速度信息
         // cout << "effector_velocity_base = \n" << effector_velocity_base << endl;
@@ -140,9 +146,12 @@ int main(int argc, char** argv)
         // 休息
         loop_rate.sleep();
     }
+
+
+
     // 机械臂移动到起始位姿
     // control_switcher.switch_controllers("moveit", "twist_controller");
-    robot_move_to_target_joint_angle(move_group_interface, joint_group_positions_start);
+    // robot_move_to_target_joint_angle(move_group_interface, joint_group_positions_start);
     // 结束
     return 0;
 
@@ -168,17 +177,17 @@ void robot_move_to_target_joint_angle(moveit::planning_interface::MoveGroupInter
     }
 }
 
-void get_camera_pose(Mat& camera_to_base, Mat& effector_to_camera)
+void get_camera_pose(Mat& effector_to_base, Mat& camera_to_effector)
 {
     tf::TransformListener listener_camera_pose;
     tf::StampedTransform transform;
-    listener_camera_pose.waitForTransform("base_link", "camera_polar_frame", ros::Time(0), ros::Duration(3.0));
-    listener_camera_pose.lookupTransform("base_link", "camera_polar_frame", ros::Time(0), transform);
-    camera_to_base = get_T(transform);
+    listener_camera_pose.waitForTransform("base", "tool0_controller", ros::Time(0), ros::Duration(3.0));
+    listener_camera_pose.lookupTransform("base", "tool0_controller", ros::Time(0), transform);
+    effector_to_base = get_T(transform);
 
-    listener_camera_pose.waitForTransform("camera_polar_frame", "tool0", ros::Time(0), ros::Duration(3.0));
-    listener_camera_pose.lookupTransform("camera_polar_frame", "tool0", ros::Time(0), transform);
-    effector_to_camera = get_T(transform);
+    listener_camera_pose.waitForTransform("tool0_controller", "camera_polar_frame", ros::Time(0), ros::Duration(3.0));
+    listener_camera_pose.lookupTransform("tool0_controller", "camera_polar_frame", ros::Time(0), transform);
+    camera_to_effector = get_T(transform);
 
 }
 
@@ -235,7 +244,7 @@ Mat Quaternion2Matrix (Mat q)
   return cv::Mat(3,3,CV_64FC1,ret).clone();    
 }
 
-Mat velocity_camera_to_base(Mat velocity, Mat camera_to_base)
+Mat velocity_effector_to_base(Mat velocity, Mat camera_to_base)
 {
     Mat R_camera_to_base = camera_to_base.rowRange(0,3).colRange(0,3);
     Mat V_effector_to_base = Mat::zeros(6,1,CV_64FC1);
@@ -245,3 +254,22 @@ Mat velocity_camera_to_base(Mat velocity, Mat camera_to_base)
     return V_effector_to_base;
 }
 
+Mat get_effector_velocity_base(Mat camera_velocity, Mat camera_to_effector)
+{
+    Mat AdT = Mat::zeros(6,6,CV_64FC1);
+    Mat R = camera_to_effector.rowRange(0,3).colRange(0,3);
+    Mat p = camera_to_effector.rowRange(0,3).colRange(3,4);
+    Mat effector_velocity_base= Mat::zeros(6,1,CV_64FC1);
+    effector_velocity_base.rowRange(0,3).colRange(0,1) = R * camera_velocity.rowRange(0,3).colRange(0,1) + 
+                        VecToso3(p) * R * camera_velocity.rowRange(3,6).colRange(0,1);                   
+    effector_velocity_base.rowRange(3,6).colRange(0,1) = R * camera_velocity.rowRange(3,6).colRange(0,1);
+
+    return  effector_velocity_base;
+}
+
+Mat VecToso3(Mat p)
+{
+    return (Mat_<double>(3,3) << 0, -p.at<double>(2,0), p.at<double>(1,0), 
+                                p.at<double>(2,0), 0, -p.at<double>(0,0),
+                                 -p.at<double>(1,0), p.at<double>(0,0), 0);
+}
