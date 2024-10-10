@@ -27,18 +27,18 @@ using namespace sensor_msgs;
 using namespace message_filters;
 
 
-class ControlSwitcher
+class ControlSwitcher_PVS
 {
     ros::NodeHandle nh_;
     map<string, string> controllers_;
     ros::ServiceClient switcher_srv_;
     
     public:
-    ControlSwitcher()
+    ControlSwitcher_PVS()
     {
         map<string, string> controllers;
-        controllers.insert(pair<string,string>("moveit","position_joint_trajectory_controller"));
-        controllers.insert(pair<string,string>("velocity","cartesian_velocity_node_controller"));
+        controllers.insert(pair<string,string>("position","pos_joint_traj_controller"));
+        controllers.insert(pair<string,string>("twist","twist_controller"));
 
         this->controllers_ = controllers;
         ros::service::waitForService("/controller_manager/switch_controller");
@@ -88,7 +88,7 @@ class Ros_PVS
         bool                flag_success_;
         Mat                 joint_angle_initial_;
         bool                start_PVS;
-        ControlSwitcher     control_switcher_;
+        ControlSwitcher_PVS control_switcher_;
         string name_link0_, name_camera_frame_;
 
     public:
