@@ -10,7 +10,10 @@ Ros_PVS::Ros_PVS()
     this->PVS = new Polarimetric_Visual_Servoing(resolution_x, resolution_y);
     this->flag_success_ = false;
     this->nh_.getParam("control_rate", this->control_rate_);
-    this->joint_angle_initial_ = get_parameter_Matrix("joint_angle_initial", 7, 1);
+    this->nh_.getParam("name_link0", this->name_link0_);
+    this->nh_.getParam("name_camera_frame", this->name_camera_frame_);
+    this->nh_.getParam("name_effector", this->name_effector_);
+    this->joint_angle_initial_VS_ = get_parameter_Matrix("joint_angle_initial_VS", 6, 1);
     this->pub_twist_ = this->nh_.advertise<geometry_msgs::Twist>("/twist_controller/command", 5);
     this->start_PVS = false;
     this->goal.trajectory.joint_names.push_back("shoulder_pan_joint");
@@ -89,6 +92,7 @@ Mat Ros_PVS::get_camera_pose()
             tf::StampedTransform transform; 
             // 尝试获取当前时刻的变换
             this->listener_pose_.lookupTransform(this->name_link0_, this->name_camera_frame_, ros::Time(0), transform);
+            // this->listener_pose_.lookupTransform("base", "camera_polar_frame", ros::Time(0), transform);
             Mat camera_to_base = get_T(transform);  
             return camera_to_base;
         }
@@ -108,7 +112,7 @@ void Ros_PVS::twist_publist(Mat camera_velocity)
     Mat T_camera_to_effector = Mat::eye(4, 4, CV_64F);
     get_camera_effector_pose(T_effector_to_base, T_camera_to_effector);
     // 速度转换
-    Mat effector_twist = get_effector_velocity_base(camera_velocity, T_camera_to_effector);
+    Mat effector_twist = get_effector_velocity(camera_velocity, T_camera_to_effector);
     this->effector_velocity_base_ = velocity_effector_to_base(effector_twist, T_effector_to_base);
     // 发布速度信息
     geometry_msgs::Twist effector_Twist;
@@ -163,14 +167,13 @@ void Ros_PVS::get_parameters_PVS(double& lambda, double& epsilon, double& eta, d
     this->nh_.getParam("eta", eta);
     this->nh_.getParam("phi_pol", phi_pol);
     this->nh_.getParam("k", k);
-    this->nh_.getParam("name_link0", this->name_link0_);
-    this->nh_.getParam("name_camera_frame", this->name_camera_frame_);
-    this->nh_.getParam("name_effector", this->name_effector_);
+
     // 图像参数
     string loaction, name_polar, name_depth;
     this->nh_.getParam("resource_location", loaction);
     this->nh_.getParam("image_polar_desired_name", name_polar);
     this->nh_.getParam("image_depth_desired_name", name_depth);
+
     // 读偏振图
     Mat image_polar_desired = imread(loaction + name_polar, IMREAD_COLOR);
     polar_image_operate(image_polar_desired, polar_O_desired, polar_A_desired, polar_Phi_desired);
@@ -279,9 +282,11 @@ void Ros_PVS::get_camera_effector_pose(Mat& effector_to_base, Mat& camera_to_eff
             tf::StampedTransform transform; //tool0_controller
             // 尝试获取当前时刻的变换
             this->listener_pose_.lookupTransform(this->name_link0_, this->name_effector_, ros::Time(0), transform);
+            // this->listener_pose_.lookupTransform("base", "tool0_controller", ros::Time(0), transform);
             effector_to_base = get_T(transform);
 
             this->listener_pose_.lookupTransform(this->name_effector_, this->name_camera_frame_, ros::Time(0), transform);
+            // this->listener_pose_.lookupTransform("tool0_controller", "camera_polar_frame", ros::Time(0), transform);
             camera_to_effector = get_T(transform);  
         }
         catch (tf::TransformException &ex)
@@ -293,7 +298,7 @@ void Ros_PVS::get_camera_effector_pose(Mat& effector_to_base, Mat& camera_to_eff
     }
 }
 
-Mat Ros_PVS::get_effector_velocity_base(Mat camera_velocity, Mat camera_to_effector)
+Mat Ros_PVS::get_effector_velocity(Mat camera_velocity, Mat camera_to_effector)
 {
     Mat AdT = Mat::zeros(6,6,CV_64FC1);
     Mat R = camera_to_effector.rowRange(0,3).colRange(0,3);

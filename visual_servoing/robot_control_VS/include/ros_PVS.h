@@ -89,7 +89,7 @@ class Ros_PVS
         Polarimetric_Visual_Servoing *PVS;
         double              control_rate_;
         bool                flag_success_;
-        Mat                 joint_angle_initial_;
+        Mat                 joint_angle_initial_VS_;
         bool                start_PVS;
         ControlSwitcher_PVS control_switcher_;
         string name_link0_, name_camera_frame_, name_effector_;
@@ -108,7 +108,7 @@ class Ros_PVS
         void robot_move_to_target_joint_angle(std::vector<double> joint_group_positions_target);
         void get_camera_effector_pose(Mat& effector_to_base, Mat& camera_to_effector);
         Mat get_camera_pose();
-        Mat get_effector_velocity_base(Mat camera_velocity, Mat effector_to_camera);
+        Mat get_effector_velocity(Mat camera_velocity, Mat effector_to_camera);
         Mat velocity_effector_to_base(Mat velocity, Mat effector_to_base);
         void twist_publist(Mat camera_velocity);
 };

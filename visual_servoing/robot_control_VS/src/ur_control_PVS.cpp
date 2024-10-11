@@ -13,44 +13,41 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "PVS");  
     ros::AsyncSpinner spinner(1);
     spinner.start();  
+    cout << "Move to initial pose ... " << endl;
+    cout << "Press Enter to start the experiment ..." << endl;
+    cin.ignore();
     Ros_PVS PVS_control;
     // 机械臂移动到起始位姿
-    cout << "Move to initial pose ... " << endl;
-    cout << "Press Enter to switcher controller to position ..." << endl;
-    cin.ignore();
     PVS_control.control_switcher_.switch_controllers("position", "twist");
     std::vector<double> joint_group_positions_start= {-62.34*CV_PI/180.0, -79.66*CV_PI/180.0, -87.52*CV_PI/180.0, -199.25*CV_PI/180.0, -55.19*CV_PI/180.0, 84.33*CV_PI/180.0};
+    cout << "Move to initial pose ... " << endl;
     cout << "Press Enter to start..." << endl;
     cin.ignore();
     PVS_control.robot_move_to_target_joint_angle(joint_group_positions_start);
     cout << "Move to initial pose finished " << endl;
     // 机械臂移动到初始伺服位姿
-    std::vector<double> joint_group_positions_init_VS;
-    ros::param::get("joint_angle_initial_VS", joint_group_positions_init_VS);
     cout << "Move to initial VS pose ... " << endl;
     cout << "Press Enter to start..." << endl;
     cin.ignore();
-    PVS_control.robot_move_to_target_joint_angle(joint_group_positions_init_VS);
+    PVS_control.robot_move_to_target_joint_angle(PVS_control.joint_angle_initial_VS_);
     spinner.stop();
     // 转换控制器
-    cout << "Press Enter to switcher controller to twist ..." << endl;
-    cin.ignore();
     PVS_control.control_switcher_.switch_controllers("twist", "position");
     // 视觉伺服控制
     cout << "Start visual servoing control ... " << endl;
     cout << "Press Enter to start..." << endl;
     cin.ignore();
-    PVS_control.initialize_time_sync();
-    PVS_control.start_PVS = true;
+    // PVS_control.initialize_time_sync();
+    // PVS_control.start_PVS = true;
     ros::Rate loop_rate(PVS_control.control_rate_);
     int num = 0; 
 
     auto KBC = Keyboard_ctrl();
     double vel_linear = 0.01;
-    double vel_angle = 0.04;
+    double vel_angle = 0.03;
     bool flag_finish = false;
     Mat camera_velocity = Mat::zeros(6,1,CV_64FC1);
-
+  
     while (ros::ok())
     {
         if(flag_finish)
@@ -60,60 +57,60 @@ int main(int argc, char** argv)
         switch (key) 
         {
             case KEYCODE_W : // w: vx+
-                cout << "Move to vx+ ..." << endl; 
+                // cout << "Move to vx+ ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << vel_linear, 0.0, 0.0, 0.0, 0.0, 0.0);
                 break;
             case KEYCODE_S: // s: vx-
-                cout << "Move to vx- ..." << endl; 
+                // cout << "Move to vx- ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << -vel_linear, 0.0, 0.0, 0.0, 0.0, 0.0);
                 break;
             case KEYCODE_A: // a: vy+
-                cout << "Move to vy+ ..." << endl; 
+                // cout << "Move to vy+ ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << 0.0, vel_linear, 0.0, 0.0, 0.0, 0.0);
                 break;
             case KEYCODE_D: // d: vy-
-                cout << "Move to vy- ..." << endl; 
+                // cout << "Move to vy- ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << 0.0, -vel_linear, 0.0, 0.0, 0.0, 0.0);
                 break;
             case KEYCODE_R: // r: vz+
-                cout << "Move to vz+ ..." << endl; 
+                // cout << "Move to vz+ ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, vel_linear, 0.0, 0.0, 0.0);
                 break;
             case KEYCODE_F: // f: vz-
-                cout << "Move to vz- ..." << endl; 
+                // cout << "Move to vz- ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, -vel_linear, 0.0, 0.0, 0.0);
                 break;
             case KEYCODE_Q: // q: stop
-                cout << "Stop ..." << endl; 
+                // cout << "Stop ..." << endl; 
                 flag_finish = true;
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
                 break;
             case KEYCODE_W_CAP: // W: wx+
-                cout << "Move to wx+ ..." << endl; 
+                // cout << "Move to wx+ ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, vel_angle, 0.0, 0.0);
                 break;      
             case KEYCODE_S_CAP: // S: wx-
-                cout << "Move to wx- ..." << endl; 
+                // cout << "Move to wx- ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, -vel_angle, 0.0, 0.0);
                 break;     
             case KEYCODE_A_CAP: // A: wy+
-                cout << "Move to vy+ ..." << endl; 
+                // cout << "Move to vy+ ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, vel_angle, 0.0);
                 break;   
             case KEYCODE_D_CAP: // D: wy-
-                cout << "Move to wy- ..." << endl; 
+                // cout << "Move to wy- ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, -vel_angle, 0.0);
                 break;  
             case KEYCODE_R_CAP: // R: wz+
-                cout << "Move to wz+ ..." << endl; 
+                // cout << "Move to wz+ ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, vel_angle);
                 break; 
             case KEYCODE_F_CAP: // F: wz-
-                cout << "Move to wz- ..." << endl; 
+                // cout << "Move to wz- ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, -vel_angle);
                 break; 
             case KEYCODE_Q_CAP: // Q: stop
-            cout << "Stop ..." << endl; 
+            // cout << "Stop ..." << endl; 
                 flag_finish = true;
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
                 break;
@@ -121,6 +118,8 @@ int main(int argc, char** argv)
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
                 break;   
         }
+ 
+        camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, -vel_angle, 0.0);
         PVS_control.twist_publist(camera_velocity);
 
         // try{
@@ -137,8 +136,6 @@ int main(int argc, char** argv)
         // }
     }
     // 转换控制器
-    cout << "Press Enter to switcher controller to position ..." << endl;
-    cin.ignore();
     PVS_control.control_switcher_.switch_controllers("position", "twist");
     // 机械臂移动到起始位姿
     cout << "Move to work position ... " << endl;
