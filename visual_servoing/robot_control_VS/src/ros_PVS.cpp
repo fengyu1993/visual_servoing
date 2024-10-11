@@ -11,7 +11,7 @@ Ros_PVS::Ros_PVS()
     this->flag_success_ = false;
     this->nh_.getParam("control_rate", this->control_rate_);
     this->joint_angle_initial_ = get_parameter_Matrix("joint_angle_initial", 7, 1);
-    this->pub_camera_twist_ = this->nh_.advertise<geometry_msgs::Twist>("/cartesian_velocity_node_controller/cartesian_velocity", 5);
+    this->pub_twist_ = this->nh_.advertise<geometry_msgs::Twist>("/twist_controller/command", 5);
     this->start_PVS = false;
     this->goal.trajectory.joint_names.push_back("shoulder_pan_joint");
     this->goal.trajectory.joint_names.push_back("shoulder_lift_joint");
@@ -33,10 +33,7 @@ void Ros_PVS::Callback(const ImageConstPtr& image_polar_msg, const ImageConstPtr
         Mat depth_new, polar_O_new, polar_A_new, polar_Phi_new;
         get_image_data_convert(image_polar_msg, image_depth_msg, polar_O_new,  polar_A_new, polar_Phi_new, depth_new);
         // 获取相机位姿
-        Mat T_effector_to_base = Mat::eye(4, 4, CV_64F);
-        Mat T_camera_to_effector = Mat::eye(4, 4, CV_64F);
-        get_camera_effector_pose(T_effector_to_base, T_camera_to_effector);
-        Mat camera_pose = T_effector_to_base * T_camera_to_effector;
+        Mat camera_pose = get_camera_pose();
         // 计算相机速度并保存数据
         this->PVS->set_image_depth_current(depth_new);
         this->PVS->set_image_polar_current(polar_O_new, polar_A_new, polar_Phi_new); 
@@ -68,27 +65,60 @@ void Ros_PVS::Callback(const ImageConstPtr& image_polar_msg, const ImageConstPtr
         {
             this->flag_success_ = true;
             this->PVS->write_data();  
-            this->effector_velocity_base_ = 0 * camera_velocity;
+            camera_velocity = 0 * camera_velocity;
             this->start_PVS = false;
         }
         else
         {
             this->flag_success_ = false;
-            // 速度转换
-            Mat effector_twist = get_effector_velocity_base(camera_velocity, T_camera_to_effector);
-            this->effector_velocity_base_ = velocity_effector_to_base(effector_twist, T_effector_to_base);
         }
 
-       // 发布速度信息
-        geometry_msgs::Twist camera_Twist;
-        camera_Twist.linear.x = this->effector_velocity_base_.at<double>(0,0);
-        camera_Twist.linear.y = this->effector_velocity_base_.at<double>(1,0);
-        camera_Twist.linear.z = this->effector_velocity_base_.at<double>(2,0);
-        camera_Twist.angular.x = this->effector_velocity_base_.at<double>(3,0);
-        camera_Twist.angular.y = this->effector_velocity_base_.at<double>(4,0);
-        camera_Twist.angular.z = this->effector_velocity_base_.at<double>(5,0);
-        this->pub_camera_twist_.publish(camera_Twist);
+        twist_publist(camera_velocity);
     }
+}
+
+Mat Ros_PVS::get_camera_pose()
+{
+    tf::StampedTransform transform;
+    const int max_attempts = 5;
+    const double retry_delay = 0.1;
+    for (int attempt = 0; attempt < max_attempts; ++attempt)
+    {
+        try
+        {
+            tf::StampedTransform transform; 
+            // 尝试获取当前时刻的变换
+            this->listener_pose_.lookupTransform(this->name_link0_, this->name_camera_frame_, ros::Time(0), transform);
+            Mat camera_to_base = get_T(transform);  
+            return camera_to_base;
+        }
+        catch (tf::TransformException &ex)
+        {
+            // 如果获取变换失败，打印错误信息并稍作等待
+            ROS_WARN("Failed to get transform, retrying... (%d/%d)", attempt + 1, max_attempts);
+            ros::Duration(retry_delay).sleep();
+        }
+    }
+    return Mat::eye(4,4,CV_64FC1);
+}
+
+void Ros_PVS::twist_publist(Mat camera_velocity)
+{
+    Mat T_effector_to_base = Mat::eye(4, 4, CV_64F);
+    Mat T_camera_to_effector = Mat::eye(4, 4, CV_64F);
+    get_camera_effector_pose(T_effector_to_base, T_camera_to_effector);
+    // 速度转换
+    Mat effector_twist = get_effector_velocity_base(camera_velocity, T_camera_to_effector);
+    this->effector_velocity_base_ = velocity_effector_to_base(effector_twist, T_effector_to_base);
+    // 发布速度信息
+    geometry_msgs::Twist effector_Twist;
+    effector_Twist.linear.x = this->effector_velocity_base_.at<double>(0,0);
+    effector_Twist.linear.y = this->effector_velocity_base_.at<double>(1,0);
+    effector_Twist.linear.z = this->effector_velocity_base_.at<double>(2,0);
+    effector_Twist.angular.x = this->effector_velocity_base_.at<double>(3,0);
+    effector_Twist.angular.y = this->effector_velocity_base_.at<double>(4,0);
+    effector_Twist.angular.z = this->effector_velocity_base_.at<double>(5,0);
+    this->pub_twist_.publish(effector_Twist);
 }
 
 void Ros_PVS::get_parameters_resolution(int& resolution_x, int& resolution_y)

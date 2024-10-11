@@ -83,7 +83,7 @@ class Ros_PVS
         TimeSynchronizer<Image, Image>          *sync_;
         tf::TransformListener                   listener_pose_;
         Mat                                     effector_velocity_base_;
-        ros::Publisher                          pub_camera_twist_; 
+        ros::Publisher                          pub_twist_; 
 
     public:
         Polarimetric_Visual_Servoing *PVS;
@@ -107,8 +107,10 @@ class Ros_PVS
         void get_parameters_PVS(double& lambda, double& epsilon, double& eta, double& phi_pol, double& k, Mat& polar_O_desired, Mat& polar_A_desired, Mat& polar_Phi_desired, Mat& image_depth_desired, Mat& camera_intrinsic, Mat& pose_desired);    
         void robot_move_to_target_joint_angle(std::vector<double> joint_group_positions_target);
         void get_camera_effector_pose(Mat& effector_to_base, Mat& camera_to_effector);
+        Mat get_camera_pose();
         Mat get_effector_velocity_base(Mat camera_velocity, Mat effector_to_camera);
         Mat velocity_effector_to_base(Mat velocity, Mat effector_to_base);
+        void twist_publist(Mat camera_velocity);
 };
 
 #endif
