@@ -28,13 +28,13 @@ camera_intrinsic: [ 605.689, 0.0, 324.855,
                     0.0, 0.0, 1.0]
 
 pose_desired: [0.124625,-0.311249,0.942121,0.261991,
--0.953552,-0.300013,0.027022,0.199968,
-0.274238,-0.901729,-0.334182,0.776654,
-0.0, 0.0, 0.0, 1.0]
+              -0.953552,-0.300013,0.027022,0.199968,
+              0.274238,-0.901729,-0.334182,0.776654,
+              0.0, 0.0, 0.0, 1.0]
 
-name_link0:     "ur_link0"
+name_link0:         "base"
 
-name_camera_frame: "camera_optical_frame"
+name_camera_frame:  "camera_optical_frame"
 
-
+name_effector:      "tool0_controller"
 

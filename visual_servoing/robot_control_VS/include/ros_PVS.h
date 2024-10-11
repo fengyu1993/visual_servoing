@@ -20,13 +20,15 @@
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <thread>
 #include "polarimetric_visual_servoing.h"
+#include <actionlib/client/simple_action_client.h>
+#include <control_msgs/FollowJointTrajectoryAction.h>
 
 using namespace cv;
 using namespace std;
 using namespace sensor_msgs;
 using namespace message_filters;
 
-
+typedef actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> Client;
 class ControlSwitcher_PVS
 {
     ros::NodeHandle nh_;
@@ -76,10 +78,11 @@ class Ros_PVS
         ros::NodeHandle                         nh_; 
         message_filters::Subscriber<Image>      image_polar_sub_;
         message_filters::Subscriber<Image>      image_depth_sub_;
+        actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> *client;
+        control_msgs::FollowJointTrajectoryGoal goal;
         TimeSynchronizer<Image, Image>          *sync_;
-        tf::TransformListener                   listener_camera_pose_;
-        moveit::planning_interface::MoveGroupInterface *move_group_interface_;
-        Mat                                     camera_velocity_base_;
+        tf::TransformListener                   listener_pose_;
+        Mat                                     effector_velocity_base_;
         ros::Publisher                          pub_camera_twist_; 
 
     public:
@@ -89,7 +92,7 @@ class Ros_PVS
         Mat                 joint_angle_initial_;
         bool                start_PVS;
         ControlSwitcher_PVS control_switcher_;
-        string name_link0_, name_camera_frame_;
+        string name_link0_, name_camera_frame_, name_effector_;
 
     public:
         Ros_PVS();
@@ -100,12 +103,14 @@ class Ros_PVS
         void get_image_data_convert(const ImageConstPtr& image_polor_msg, const ImageConstPtr& image_depth_msg, Mat& polar_O_new, Mat& polar_A_new, Mat& polar_Phi_new, Mat& depth_img);
         void polar_image_operate(Mat& img_polar, Mat& polar_O_new, Mat& polar_A_new, Mat& polar_Phi_new);
         Mat depth_image_operate(Mat& image_depth);
-        Mat get_camera_pose();
         Mat get_T(tf::StampedTransform  transform);
-        Mat Quaternion2Matrix (Mat q);
         void get_parameters_PVS(double& lambda, double& epsilon, double& eta, double& phi_pol, double& k, Mat& polar_O_desired, Mat& polar_A_desired, Mat& polar_Phi_desired, Mat& image_depth_desired, Mat& camera_intrinsic, Mat& pose_desired);    
-        Mat velocity_camera_to_base(Mat velocity, Mat pose);
         void robot_move_to_target_joint_angle(std::vector<double> joint_group_positions_target);
+        void get_camera_effector_pose(Mat& effector_to_base, Mat& camera_to_effector);
+        Mat get_effector_velocity_base(Mat camera_velocity, Mat effector_to_camera);
+        Mat velocity_effector_to_base(Mat velocity, Mat effector_to_base);
 };
 
 #endif
+
+
