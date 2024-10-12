@@ -279,14 +279,12 @@ void Ros_PVS::get_camera_effector_pose(Mat& effector_to_base, Mat& camera_to_eff
     {
         try
         {
-            tf::StampedTransform transform; //tool0_controller
+            tf::StampedTransform transform; //"base" "tool0_controller" "camera_polar_frame"
             // 尝试获取当前时刻的变换
             this->listener_pose_.lookupTransform(this->name_link0_, this->name_effector_, ros::Time(0), transform);
-            // this->listener_pose_.lookupTransform("base", "tool0_controller", ros::Time(0), transform);
             effector_to_base = get_T(transform);
 
             this->listener_pose_.lookupTransform(this->name_effector_, this->name_camera_frame_, ros::Time(0), transform);
-            // this->listener_pose_.lookupTransform("tool0_controller", "camera_polar_frame", ros::Time(0), transform);
             camera_to_effector = get_T(transform);  
         }
         catch (tf::TransformException &ex)
