@@ -115,13 +115,13 @@ int main(int argc, char** argv)
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
                 break;
             default :
-                cout << "default ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
                 break;   
         }
-        cout << "camera_velocity = " << camera_velocity.t() << endl;
-        PVS_control.twist_publist(camera_velocity);
 
+        PVS_control.twist_publist(camera_velocity);
+        // ÐÝÏ¢
+        loop_rate.sleep();
         // try{
         //     if(PVS_control.flag_success_){
         //         ROS_INFO("visual servoing success");
