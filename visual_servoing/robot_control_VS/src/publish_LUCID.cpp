@@ -35,6 +35,8 @@ using namespace cv;
 using namespace sensor_msgs;
 using namespace message_filters;
 
+size_t dstWidth = 1224;
+size_t dstHeight = 1024;
 
 rs2::frame depth_filter(rs2::frame& depth_img);
 Mat hole_fill(Mat& img_depth);
@@ -42,35 +44,22 @@ float get_depth_scale(rs2::device dev);
 GenICam::gcstring Device_Init(Arena::IDevice* pDevice);
 Arena::DeviceInfo SelectDevice(std::vector<Arena::DeviceInfo>& deviceInfos);
 void GetPolarizedData(Arena::IDevice* pDevice, uint8_t* pDst);
+Mat GetPolarizedData(Arena::IDevice* pDevice);
 void FetchData(const uint8_t* pSrc_Angles, size_t srcBytesPerPixel_Angles, uint8_t* pDst);
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "publish_l515_polar");
+    ros::init(argc, argv, "publish_LUCID");
     ros::NodeHandle nh;
-    int resolution_x, resolution_y;
-    nh.getParam("resolution_x", resolution_x);
-    nh.getParam("resolution_y", resolution_y);
 
     image_transport::ImageTransport it(nh); 
-    image_transport::Publisher polar_pub = it.advertise("/camera/polarized_image", 1);
-    image_transport::Publisher depth_pub = it.advertise("/camera/depth_image", 1);
+    image_transport::Publisher polar_pub = it.advertise("/LUCID/polarized_image_raw", 1);
 
     ros::Rate loop_rate(50);
 
 	bool exceptionThrown = false;
     try
     {
-        // Realsense L515
-		rs2::pipeline pipe;
-		rs2::config cfg;
-		rs2::colorizer color_map;
-		cfg.enable_stream(RS2_STREAM_COLOR, 960, 540, RS2_FORMAT_BGR8,30);
-		cfg.enable_stream(RS2_STREAM_DEPTH, resolution_x, resolution_y, RS2_FORMAT_Z16,30);
-		rs2::pipeline_profile profile = pipe.start(cfg);
-		rs2::align align_to(RS2_STREAM_DEPTH);
-		// rs2::align align_to(RS2_STREAM_COLOR);
-
         // arena
 		Arena::ISystem* pSystem = Arena::OpenSystem();
 		pSystem->UpdateDevices(SYSTEM_TIMEOUT);
@@ -85,8 +74,6 @@ int main(int argc, char** argv)
 		Arena::IDevice* pDevice = pSystem->CreateDevice(selectedDeviceInfo);
 
 		GenICam::gcstring pixelFormatInitial = Device_Init(pDevice);
-		size_t dstWidth = 1224;
-		size_t dstHeight = 1024;
 		size_t dstBitsPerPixel = 3 * 8;
 		size_t dstBytesPerPixel = dstBitsPerPixel / 8;
 		size_t dstStride = dstWidth * dstBitsPerPixel / 8;
@@ -94,49 +81,21 @@ int main(int argc, char** argv)
 		uint8_t* pDst = new uint8_t[dstBytesPerPixel * dstWidth * dstHeight];
 		pDevice->StartStream();
 
-		// 
-		int w_depth, h_depth, w_rgb, h_rgb;
-
 		while (ros::ok())
 		{
-			// realsense l515
-			rs2::frameset frameset = pipe.wait_for_frames();
-			rs2::frameset frameset_align = align_to.process(frameset);
-			auto depth = frameset_align.get_depth_frame();
-			auto color = frameset_align.get_color_frame();
-			float depth_scale = get_depth_scale(profile.get_device());
-			depth = depth_filter(depth);
-			w_depth = depth.as<rs2::video_frame>().get_width();
-			h_depth = depth.as<rs2::video_frame>().get_height();
-			w_rgb = color.as<rs2::video_frame>().get_width();
-        	h_rgb = color.as<rs2::video_frame>().get_height();
-			
-			Mat img_depth(cv::Size(w_depth, h_depth), CV_16UC1, (void*)depth.get_data(), cv::Mat::AUTO_STEP);
-			img_depth = hole_fill(img_depth);
-			img_depth.convertTo(img_depth, CV_64FC1);
-			img_depth = img_depth * (1000*depth_scale);
-			img_depth.convertTo(img_depth, CV_16UC1);
 			// Arena
-			GetPolarizedData(pDevice, pDst);
-			cv::Mat srcImage(dstHeight, dstWidth, CV_8UC3, pDst);
+            Mat srcImage = GetPolarizedData(pDevice);
 			if (srcImage.empty()) {
 				std::cerr << "Could not open or find the image!" << std::endl;
 				continue;
 			}
-			cv::Mat image_polar;
-			cv::resize(srcImage, image_polar, cv::Size(resolution_x, resolution_y));
 			// publist
-			sensor_msgs::ImagePtr  depth_raw_msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", img_depth).toImageMsg(); 
-			sensor_msgs::ImagePtr  polar_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", image_polar).toImageMsg();
-			depth_raw_msg->header.stamp = ros::Time::now();
+			sensor_msgs::ImagePtr  polar_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", srcImage).toImageMsg();
 			polar_msg->header.stamp = ros::Time::now();  
-			depth_pub.publish(depth_raw_msg);
 			polar_pub.publish(polar_msg);
 
 			loop_rate.sleep();
 		}
-		// close L515
-		pipe.stop();
 		// close arena
 		pDst = NULL;
 		delete[] pDst;
@@ -193,7 +152,7 @@ void FetchData(const uint8_t* pSrc_Angles, size_t srcBytesPerPixel_Angles, uint8
 		phi0 = 0.5 * atan2(I_45 - I_135, I_0 - I_90); 
 
 		Dolp = (A * 255) / O;
-		Aolp = (phi0 + 3.14159 / 2) / 3.14159 * 255.0;
+		Aolp = (phi0 + 3.14159 / 2) / 3.14159 * 255.0;//„1¤7„1¤70©2„1¤7„1¤7
 
 		pDst[i * 3 + CHANNEL1] = O;
 		pDst[i * 3 + CHANNEL2] = Dolp;
@@ -202,6 +161,33 @@ void FetchData(const uint8_t* pSrc_Angles, size_t srcBytesPerPixel_Angles, uint8
 
 	// printf("\tpSrc_Angles[0]:%d\tpSrc_Angles[2]:%d\t\n", pSrc_Angles[test_num * 4 + 0], pSrc_Angles[test_num * 4 + 2]);
 }
+
+Mat GetPolarizedData(Arena::IDevice* pDevice)
+{
+
+	// std::cout << TAB2 << "111111\n";
+	
+	Arena::IImage* pImage_Angles_data = pDevice->GetImage(IMAGE_TIMEOUT);
+
+	Arena::IImage* pImage_Angles = Arena::ImageFactory::Copy(pImage_Angles_data);
+ 		
+ 	pDevice->RequeueBuffer(pImage_Angles_data);
+
+ 	// src info
+	uint64_t srcPF_Angles = pImage_Angles->GetPixelFormat();
+	// std::cout << TAB2 << "333333\n";
+	// size_t srcWidth_Angles = pImage_Angles->GetWidth();
+	size_t srcHeight_Angles = pImage_Angles->GetHeight();
+	size_t srcBitsPerPixel_Angles = Arena::GetBitsPerPixel(srcPF_Angles);
+	size_t srcBytesPerPixel_Angles = srcBitsPerPixel_Angles / 8;
+	// size_t srcStride_Angles = srcWidth_Angles * srcBitsPerPixel_Angles / 8;
+	// size_t srcDataSize_Angles = srcWidth_Angles * srcHeight_Angles * srcBitsPerPixel_Angles / 8;
+
+    cv::Mat srcImage(dstHeight, dstWidth, CV_8UC(4), (void*)pImage_Angles->GetData());
+
+	return srcImage;
+}
+
 
 void GetPolarizedData(Arena::IDevice* pDevice, uint8_t* pDst)
 {
@@ -214,10 +200,7 @@ void GetPolarizedData(Arena::IDevice* pDevice, uint8_t* pDst)
  		
  	pDevice->RequeueBuffer(pImage_Angles_data);
 
- 
-
-
-	// src info
+ 	// src info
 	uint64_t srcPF_Angles = pImage_Angles->GetPixelFormat();
 	// std::cout << TAB2 << "333333\n";
 	// size_t srcWidth_Angles = pImage_Angles->GetWidth();
@@ -278,11 +261,11 @@ Arena::DeviceInfo SelectDevice(std::vector<Arena::DeviceInfo>& deviceInfos)
 
 GenICam::gcstring Device_Init(Arena::IDevice* pDevice)
 {
-	//ï¿½ï¿½Ó¡ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼Í¼ï¿½ï¿½ï¿½Ê½
+	//„1¤7„1¤70á3„1¤7„1¤7„1¤7„1¤7„1¤70¶30É0„1¤7„1¤7„1¤70¶4
 	GenICam::gcstring pixelFormatInitial = Arena::GetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "PixelFormat");
 	std::cout << "\t" << "pixelFormatInitial:" << pixelFormatInitial << "\n";
 	
-	//ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	//„1¤7„1¤70¶3„1¤7„1¤7„1¤7„1¤7„1¤7„1¤7„1¤7„1¤7„1¤7
 	// enable stream auto negotiate packet size
 	Arena::SetNodeValue<bool>(
 	pDevice->GetTLStreamNodeMap(),
@@ -299,7 +282,7 @@ GenICam::gcstring Device_Init(Arena::IDevice* pDevice)
 	"StreamPacketResendEnable",
 	true);	
 
-	//ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½Ê½
+	//„1¤7„1¤7„1¤7„1¤70É0„1¤7„1¤7„1¤70¶4
 	std::cout << "\t" << "Set PolarizedAngles_0d_45d_90d_135d_BayerRG8 to pixel format\n";
 	Arena::SetNodeValue<GenICam::gcstring>(
 		pDevice->GetNodeMap(),
