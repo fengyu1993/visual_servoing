@@ -55,7 +55,6 @@ int main(int argc, char** argv)
     image_transport::ImageTransport it(nh); 
     image_transport::Publisher polar_pub = it.advertise("/camera/polarized_image", 1);
     image_transport::Publisher depth_pub = it.advertise("/camera/depth_image", 1);
-    image_transport::Publisher depth_show_pub = it.advertise("/camera/depth_show_image", 1);
 
     ros::Rate loop_rate(50);
 
@@ -65,7 +64,6 @@ int main(int argc, char** argv)
         // Realsense L515
         rs2::pipeline pipe;
         rs2::config cfg;
-        rs2::colorizer color_map;
         cfg.enable_stream(RS2_STREAM_DEPTH, resolution_x, resolution_y, RS2_FORMAT_Z16,30);
         rs2::pipeline_profile profile = pipe.start(cfg);
         rs2::align align_to_color(RS2_STREAM_COLOR);
@@ -93,7 +91,7 @@ int main(int argc, char** argv)
 		uint8_t* pDst = new uint8_t[dstBytesPerPixel * dstWidth * dstHeight];
 		pDevice->StartStream();
 
-		// Ñ­»·
+		// Ñ­ï¿½ï¿½
 		int w_depth, h_depth;
 
 		while (ros::ok())
@@ -106,7 +104,6 @@ int main(int argc, char** argv)
 			depth = depth_filter(depth);
 			w_depth = depth.as<rs2::video_frame>().get_width();
 			h_depth = depth.as<rs2::video_frame>().get_height();
-			Mat depth_show(cv::Size(w_depth, h_depth), CV_8UC3, (void*)depth.apply_filter(color_map).get_data(), cv::Mat::AUTO_STEP);
 			Mat img_depth(cv::Size(w_depth, h_depth), CV_16UC1, (void*)depth.get_data(), cv::Mat::AUTO_STEP);
 			img_depth = hole_fill(img_depth);
 			img_depth.convertTo(img_depth, CV_64FC1);
@@ -122,14 +119,10 @@ int main(int argc, char** argv)
 			cv::Mat image_polar;
 			cv::resize(srcImage, image_polar, cv::Size(resolution_x, resolution_y));
 			// publist
-			sensor_msgs::ImagePtr  depth_show_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_show).toImageMsg(); 
 			sensor_msgs::ImagePtr  depth_raw_msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", img_depth).toImageMsg(); 
 			sensor_msgs::ImagePtr  polar_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", image_polar).toImageMsg();
-			depth_show_msg->header.stamp = ros::Time::now();
 			depth_raw_msg->header.stamp = ros::Time::now();
 			polar_msg->header.stamp = ros::Time::now();  
-			
-			depth_show_pub.publish(depth_show_msg);
 			depth_pub.publish(depth_raw_msg);
 			polar_pub.publish(polar_msg);
 
@@ -190,10 +183,10 @@ void FetchData(const uint8_t* pSrc_Angles, size_t srcBytesPerPixel_Angles, uint8
 
 		O = (I_0 + I_90) / 2.0;
 		A = sqrt(((I_0 - I_90) * (I_0 - I_90) + (I_45 - I_135) * (I_45 - I_135)) / 4.0);
-		phi0 = 0.5 * atan2(I_45 - I_135, I_0 - I_90); // Ê¹ÓÃatan2À´´¦ÀíÏóÏÞÎÊÌâ
+		phi0 = 0.5 * atan2(I_45 - I_135, I_0 - I_90); // Ê¹ï¿½ï¿½atan2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 		Dolp = (A * 255) / O;
-		Aolp = (phi0 + 3.14159 / 2) / 3.14159 * 255.0;//²»È·¶¨
+		Aolp = (phi0 + 3.14159 / 2) / 3.14159 * 255.0;//ï¿½ï¿½È·ï¿½ï¿½
 
 		pDst[i * 3 + CHANNEL1] = O;
 		pDst[i * 3 + CHANNEL2] = Dolp;
@@ -277,11 +270,11 @@ Arena::DeviceInfo SelectDevice(std::vector<Arena::DeviceInfo>& deviceInfos)
 
 GenICam::gcstring Device_Init(Arena::IDevice* pDevice)
 {
-	//´òÓ¡Ïà»ú³õÊ¼Í¼Ïñ¸ñÊ½
+	//ï¿½ï¿½Ó¡ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼Í¼ï¿½ï¿½ï¿½Ê½
 	GenICam::gcstring pixelFormatInitial = Arena::GetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "PixelFormat");
 	std::cout << "\t" << "pixelFormatInitial:" << pixelFormatInitial << "\n";
 	
-	//³õÊ¼»¯Ïà»ú²ÎÊý
+	//ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	// enable stream auto negotiate packet size
 	Arena::SetNodeValue<bool>(
 	pDevice->GetTLStreamNodeMap(),
@@ -298,7 +291,7 @@ GenICam::gcstring Device_Init(Arena::IDevice* pDevice)
 	"StreamPacketResendEnable",
 	true);	
 
-	//ÉèÖÃÍ¼Ïñ¸ñÊ½
+	//ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½Ê½
 	std::cout << "\t" << "Set PolarizedAngles_0d_45d_90d_135d_BayerRG8 to pixel format\n";
 	Arena::SetNodeValue<GenICam::gcstring>(
 		pDevice->GetNodeMap(),
