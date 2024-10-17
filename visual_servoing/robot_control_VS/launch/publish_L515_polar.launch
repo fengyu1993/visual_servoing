@@ -9,6 +9,8 @@
 
 <node name="publish_LUCID" pkg="robot_control_VS"  type="publish_LUCID"  output="screen"/> 
 
+<node name="publish_L515_LUCID" pkg="robot_control_VS"  type="publish_L515_LUCID"  output="screen"/> 
+
 <!-- <node name="publish_l515_polar" pkg="robot_control_VS"  type="publish_l515_polar"  output="screen"/> -->
 
 </launch>

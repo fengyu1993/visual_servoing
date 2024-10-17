@@ -80,6 +80,8 @@ int main(int argc, char** argv)
         // publist
         sensor_msgs::ImagePtr  rgb_raw_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", rgb_show).toImageMsg(); 
         sensor_msgs::ImagePtr  depth_raw_msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", img_depth).toImageMsg(); 
+        rgb_raw_msg->header.stamp = ros::Time::now(); 
+        depth_raw_msg->header.stamp = ros::Time::now(); 
         image_color_raw_pub.publish(rgb_raw_msg);
         image_depth_raw_pub.publish(depth_raw_msg);
 

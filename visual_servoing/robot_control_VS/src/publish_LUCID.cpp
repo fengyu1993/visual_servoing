@@ -35,16 +35,9 @@ using namespace cv;
 using namespace sensor_msgs;
 using namespace message_filters;
 
-size_t dstWidth = 1224;
-size_t dstHeight = 1024;
-
-rs2::frame depth_filter(rs2::frame& depth_img);
-Mat hole_fill(Mat& img_depth);
-float get_depth_scale(rs2::device dev);
 GenICam::gcstring Device_Init(Arena::IDevice* pDevice);
 Arena::DeviceInfo SelectDevice(std::vector<Arena::DeviceInfo>& deviceInfos);
 void GetPolarizedData(Arena::IDevice* pDevice, uint8_t* pDst);
-Mat GetPolarizedData(Arena::IDevice* pDevice);
 void FetchData(const uint8_t* pSrc_Angles, size_t srcBytesPerPixel_Angles, uint8_t* pDst);
 
 int main(int argc, char** argv)
@@ -53,7 +46,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
 
     image_transport::ImageTransport it(nh); 
-    image_transport::Publisher polar_pub = it.advertise("/LUCID/polarized_image_raw", 1);
+    image_transport::Publisher image_polar_raw_pub = it.advertise("/LUCID/polarized_image_raw", 1);
 
     ros::Rate loop_rate(50);
 
@@ -74,6 +67,8 @@ int main(int argc, char** argv)
 		Arena::IDevice* pDevice = pSystem->CreateDevice(selectedDeviceInfo);
 
 		GenICam::gcstring pixelFormatInitial = Device_Init(pDevice);
+		size_t dstWidth = 1224;
+		size_t dstHeight = 1024;
 		size_t dstBitsPerPixel = 3 * 8;
 		size_t dstBytesPerPixel = dstBitsPerPixel / 8;
 		size_t dstStride = dstWidth * dstBitsPerPixel / 8;
@@ -84,7 +79,8 @@ int main(int argc, char** argv)
 		while (ros::ok())
 		{
 			// Arena
-            Mat srcImage = GetPolarizedData(pDevice);
+			GetPolarizedData(pDevice, pDst);
+			cv::Mat srcImage(dstHeight, dstWidth, CV_8UC3, pDst);
 			if (srcImage.empty()) {
 				std::cerr << "Could not open or find the image!" << std::endl;
 				continue;
@@ -92,7 +88,7 @@ int main(int argc, char** argv)
 			// publist
 			sensor_msgs::ImagePtr  polar_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", srcImage).toImageMsg();
 			polar_msg->header.stamp = ros::Time::now();  
-			polar_pub.publish(polar_msg);
+			image_polar_raw_pub.publish(polar_msg);
 
 			loop_rate.sleep();
 		}
@@ -152,7 +148,7 @@ void FetchData(const uint8_t* pSrc_Angles, size_t srcBytesPerPixel_Angles, uint8
 		phi0 = 0.5 * atan2(I_45 - I_135, I_0 - I_90); 
 
 		Dolp = (A * 255) / O;
-		Aolp = (phi0 + 3.14159 / 2) / 3.14159 * 255.0;//��ȷ��
+		Aolp = (phi0 + 3.14159 / 2) / 3.14159 * 255.0;
 
 		pDst[i * 3 + CHANNEL1] = O;
 		pDst[i * 3 + CHANNEL2] = Dolp;
@@ -161,33 +157,6 @@ void FetchData(const uint8_t* pSrc_Angles, size_t srcBytesPerPixel_Angles, uint8
 
 	// printf("\tpSrc_Angles[0]:%d\tpSrc_Angles[2]:%d\t\n", pSrc_Angles[test_num * 4 + 0], pSrc_Angles[test_num * 4 + 2]);
 }
-
-Mat GetPolarizedData(Arena::IDevice* pDevice)
-{
-
-	// std::cout << TAB2 << "111111\n";
-	
-	Arena::IImage* pImage_Angles_data = pDevice->GetImage(IMAGE_TIMEOUT);
-
-	Arena::IImage* pImage_Angles = Arena::ImageFactory::Copy(pImage_Angles_data);
- 		
- 	pDevice->RequeueBuffer(pImage_Angles_data);
-
- 	// src info
-	uint64_t srcPF_Angles = pImage_Angles->GetPixelFormat();
-	// std::cout << TAB2 << "333333\n";
-	// size_t srcWidth_Angles = pImage_Angles->GetWidth();
-	size_t srcHeight_Angles = pImage_Angles->GetHeight();
-	size_t srcBitsPerPixel_Angles = Arena::GetBitsPerPixel(srcPF_Angles);
-	size_t srcBytesPerPixel_Angles = srcBitsPerPixel_Angles / 8;
-	// size_t srcStride_Angles = srcWidth_Angles * srcBitsPerPixel_Angles / 8;
-	// size_t srcDataSize_Angles = srcWidth_Angles * srcHeight_Angles * srcBitsPerPixel_Angles / 8;
-
-    cv::Mat srcImage(dstHeight, dstWidth, CV_8UC(4), (void*)pImage_Angles->GetData());
-
-	return srcImage;
-}
-
 
 void GetPolarizedData(Arena::IDevice* pDevice, uint8_t* pDst)
 {
@@ -200,7 +169,10 @@ void GetPolarizedData(Arena::IDevice* pDevice, uint8_t* pDst)
  		
  	pDevice->RequeueBuffer(pImage_Angles_data);
 
- 	// src info
+ 
+
+
+	// src info
 	uint64_t srcPF_Angles = pImage_Angles->GetPixelFormat();
 	// std::cout << TAB2 << "333333\n";
 	// size_t srcWidth_Angles = pImage_Angles->GetWidth();

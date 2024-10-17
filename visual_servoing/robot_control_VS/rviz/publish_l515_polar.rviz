@@ -4,10 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
-        - /Status1
-        - /Image1
-        - /Image2
+        - /Image3
       Splitter Ratio: 0.5
     Tree Height: 308
   - Class: rviz/Selection
@@ -55,7 +52,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /L515/color_image_raw
+      Image Topic: /VS/color_image
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -67,7 +64,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /L515/depth_image_raw
+      Image Topic: /VS/depth_image
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -79,7 +76,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /LUCID/polarized_image_raw
+      Image Topic: /VS/polarized_image
       Max Value: 1
       Median window: 5
       Min Value: 0

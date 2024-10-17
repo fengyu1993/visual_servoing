@@ -1,9 +1,9 @@
 
-resolution_x:   640
+resolution_x:   200
 
-resolution_y:   480
+resolution_y:   150
 
-control_rate:   30
+control_rate:   10
 
 joint_angle_initial_VS: [-1.38, -1.59, -1.64, 0.02, 1.17, 2.99]
 
