@@ -12,7 +12,7 @@ const int KEYCODE_D = 0x64;
 const int KEYCODE_R = 0x72;
 const int KEYCODE_F = 0x66;
 const int KEYCODE_Q = 0x71;
- 
+
 const int KEYCODE_A_CAP = 0x41;
 const int KEYCODE_D_CAP = 0x44;
 const int KEYCODE_S_CAP = 0x53;
@@ -20,6 +20,8 @@ const int KEYCODE_W_CAP = 0x57;
 const int KEYCODE_R_CAP = 0x52;
 const int KEYCODE_F_CAP = 0x46;
 const int KEYCODE_Q_CAP = 0x51;
+
+const int KEYCODE_ENTER = 0x0D;
 
 class Keyboard_ctrl {
   struct termios initial_settings, new_settings;

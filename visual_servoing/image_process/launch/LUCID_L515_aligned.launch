@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<launch>
+ 
+<node name="test_LUCID_L515_aligned" pkg="image_process"  type="test_LUCID_L515_aligned"  output="screen"/>
+
+</launch>
