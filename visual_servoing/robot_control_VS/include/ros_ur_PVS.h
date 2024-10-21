@@ -22,6 +22,7 @@
 #include "polarimetric_visual_servoing.h"
 #include <actionlib/client/simple_action_client.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
+#include "control_switcher_ur.h"
 
 using namespace cv;
 using namespace std;
@@ -29,48 +30,7 @@ using namespace sensor_msgs;
 using namespace message_filters;
 
 typedef actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> Client;
-class ControlSwitcher_PVS
-{
-    ros::NodeHandle nh_;
-    map<string, string> controllers_;
-    ros::ServiceClient switcher_srv_;
-    
-    public:
-    ControlSwitcher_PVS()
-    {
-        map<string, string> controllers;
-        controllers.insert(pair<string,string>("position","pos_joint_traj_controller"));
-        controllers.insert(pair<string,string>("twist","twist_controller"));
 
-        this->controllers_ = controllers;
-        ros::service::waitForService("/controller_manager/switch_controller");
-        this->switcher_srv_ = this->nh_.serviceClient<controller_manager_msgs::SwitchController>("/controller_manager/switch_controller");
-    }
-
-    bool switch_controllers(string start_controller_name, string stop_controller_name)
-    {
-        sleep(0.5);
-
-        string start_controller = this->controllers_[start_controller_name];
-        string stop_controller = this->controllers_[stop_controller_name];
-
-        controller_manager_msgs::SwitchController controller_switch_msg;
-        controller_switch_msg.request.strictness = 1;
-        controller_switch_msg.request.start_controllers.push_back(start_controller);
-        controller_switch_msg.request.stop_controllers.push_back(stop_controller);
-
-        if (this->switcher_srv_.call(controller_switch_msg))
-        {
-            cout << "Successfully switched " << stop_controller_name << " to " << start_controller_name << endl;
-            return true;
-        }
-        else
-        {
-            cout << "Failed switched " << stop_controller_name << " to " << start_controller_name << endl;
-            return false;
-        }
-    }
-};
 
 class Ros_PVS 
 {
@@ -91,7 +51,7 @@ class Ros_PVS
         bool                flag_success_;
         Mat                 joint_angle_initial_VS_;
         bool                start_PVS;
-        ControlSwitcher_PVS control_switcher_;
+        ControlSwitcher_UR control_switcher_;
         string name_link0_, name_camera_frame_, name_effector_;
 
     public:

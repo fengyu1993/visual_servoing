@@ -2,9 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <ros/ros.h>
 #include "direct_visual_servoing.h"
-#include "ros_PVS.h"
-#include <moveit/move_group_interface/move_group_interface.h>
-#include <moveit/planning_scene_interface/planning_scene_interface.h>
+#include "ros_ur_PVS.h"
 #include "key.h"
 
 int main(int argc, char** argv)
@@ -19,7 +17,7 @@ int main(int argc, char** argv)
     Ros_PVS PVS_control;
     // 机械臂移动到起始位姿
     PVS_control.control_switcher_.switch_controllers("position", "twist");
-    std::vector<double> joint_group_positions_start= {-73.9*CV_PI/180.0, -86.36*CV_PI/180.0, -98.73*CV_PI/180.0, 5.08*CV_PI/180.0, 72.22*CV_PI/180.0, 176.42*CV_PI/180.0};
+    std::vector<double> joint_group_positions_start= {-73.9*CV_PI/180.0, -86.36*CV_PI/180.0, -98.73*CV_PI/180.0, -96.0*CV_PI/180.0, 72.22*CV_PI/180.0, -176.42*CV_PI/180.0};
     cout << "Move to initial pose ... " << endl;
     cout << "Press Enter to start..." << endl;
     cin.ignore();

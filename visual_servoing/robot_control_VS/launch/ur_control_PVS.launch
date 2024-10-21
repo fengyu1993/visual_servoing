@@ -1,12 +1,12 @@
 <?xml version="1.0" ?>
 <launch>
 
-<rosparam file= "$(find robot_control_VS)/param/parameters_PVS.yaml" command= "load"/>
+<rosparam file= "$(find robot_control_VS)/param/parameters_ur_PVS.yaml" command= "load"/>
 
 <include file="$(dirname)/camera_ur_calibration.launch" />
 
-<include file="$(find cartesian_controllers_ur_robots)/launch/robot.launch" />
-<!-- <include file="$(dirname)/ur_demo.launch" />  -->
+<!-- <include file="$(find cartesian_controllers_ur_robots)/launch/robot.launch" /> -->
+<include file="$(dirname)/ur_demo.launch" /> 
  
 <node name="PVS" pkg="robot_control_VS"  type="ur_control_PVS"  output="screen"/>
 

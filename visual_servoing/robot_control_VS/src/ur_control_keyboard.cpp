@@ -14,9 +14,9 @@
 #include <controller_manager_msgs/ListControllers.h>
 #include <map>
 #include <string>
+#include <control_switcher_ur.h>
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <thread>
-#include "ros_PVS.h"
 #include <cartesian_interface/cartesian_command_interface.h>
 #include <twist_controller/TwistControllerConfig.h>
 #include "key.h"
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     goal.trajectory.joint_names.push_back("wrist_2_joint");
     goal.trajectory.joint_names.push_back("wrist_3_joint");
     // 机械臂移动到起始位姿
-    ControlSwitcher_PVS     control_switcher;
+    ControlSwitcher_UR     control_switcher;
     cout << "Move to initial pose ... " << endl;
     cout << "Press Enter to start..." << endl;
     cin.ignore();
