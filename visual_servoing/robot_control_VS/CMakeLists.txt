@@ -56,7 +56,8 @@ add_library(robot_control_VS src/ros_VS.cpp
                               src/ros_TM_VS.cpp
                               src/ros_KM_VS.cpp
                               src/ros_HM_VS.cpp
-                              src/ros_PVS.cpp) 
+                              src/ros_PVS.cpp
+                              src/ros_ur_DVS.cpp) 
 
 
 include_directories(${THIS_PACKAGE_INCLUDE_DIRS})
