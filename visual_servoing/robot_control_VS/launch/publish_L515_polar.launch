@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <launch>
 
-<rosparam file= "$(find robot_control_VS)/param/parameters_PVS.yaml" command= "load"/>
+<rosparam file= "$(find robot_control_VS)/param/parameters_ur_PVS.yaml" command= "load"/>
 
 <node name="rviz" pkg="rviz" type="rviz" args="-d $(find robot_control_VS)/rviz/publish_l515_polar.rviz" required="true" />
 
@@ -10,7 +10,5 @@
 <node name="publish_LUCID" pkg="robot_control_VS"  type="publish_LUCID"  output="screen"/> 
 
 <node name="publish_L515_LUCID" pkg="robot_control_VS"  type="publish_L515_LUCID"  output="screen"/> 
-
-<!-- <node name="publish_l515_polar" pkg="robot_control_VS"  type="publish_l515_polar"  output="screen"/> -->
 
 </launch>

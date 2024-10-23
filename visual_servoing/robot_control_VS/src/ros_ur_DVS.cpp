@@ -27,13 +27,13 @@ Ros_ur_DVS::Ros_ur_DVS()
     ROS_INFO("Server started, sending goal.");
 }
 
-void Ros_ur_DVS::Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg)
+void Ros_ur_DVS::Callback(const ImageConstPtr& image_polar_msg, const ImageConstPtr& image_depth_msg)
 {
     if(this->start_DVS)
     {      
         // 数据转换
         Mat depth_new, img_new;
-        get_image_data_convert(image_color_msg, image_depth_msg, img_new, depth_new);
+        get_image_data_convert(image_polar_msg, image_depth_msg, img_new, depth_new);
         // 获取相机位姿
         Mat camera_pose = get_camera_pose(); 
         // 计算相机速度并保存数据
@@ -182,12 +182,15 @@ void Ros_ur_DVS::get_parameters_DVS(double& lambda, double& epsilon, Mat& image_
     pose_desired = get_parameter_Matrix("pose_desired", 4, 4);
 }
 
-void Ros_ur_DVS::get_image_data_convert(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg, Mat& gray_img, Mat& depth_img)
+void Ros_ur_DVS::get_image_data_convert(const ImageConstPtr& image_polar_msg, const ImageConstPtr& image_depth_msg, Mat& gray_img, Mat& depth_img)
 {
     // rgb转灰度 [0,255]->[1,0]
-    cv_bridge::CvImagePtr cv_ptr_color = cv_bridge::toCvCopy(image_color_msg, sensor_msgs::image_encodings::BGR8);
-    Mat img_new_rgb = cv_ptr_color->image;
-    gray_img = rgb_image_operate(img_new_rgb);
+    cv_bridge::CvImagePtr cv_ptr_polar = cv_bridge::toCvCopy(image_polar_msg, sensor_msgs::image_encodings::BGR8);
+    Mat img_new_polar = cv_ptr_polar->image;
+    // gray_img = rgb_image_operate(img_new_rgb); % realsense camera
+    vector<Mat> channels;
+    split(img_new_polar, channels); // 将图像分割成多个通道
+    gray_img = channels[0];
     // 深度图
     cv_bridge::CvImagePtr cv_ptr_depth = cv_bridge::toCvCopy(image_depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
     Mat depth_img_temp = cv_ptr_depth->image;

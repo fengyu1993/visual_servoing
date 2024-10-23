@@ -40,6 +40,7 @@ image_transport::Publisher image_polar_pub;
 image_transport::Publisher image_polar_offset_pub;
 image_transport::Publisher image_gray_pub;
 image_transport::Publisher image_depth_pub;
+image_transport::Publisher image_polar_depth_pub;
 Keyboard_ctrl KBC; 
 
 Mat get_polar_offest(const ImageConstPtr& image_polar_msg)
@@ -151,6 +152,7 @@ int main(int argc, char** argv)
 	image_polar_offset_pub = it.advertise("/VS/polarized_offset_image", 1); 
     image_gray_pub = it.advertise("/VS/color_image", 1);
 	image_depth_pub = it.advertise("/VS/depth_image", 1);
+	image_polar_depth_pub = it.advertise("/VS/polarized_depth_image", 1);
 
 	get_Param(nh);
 

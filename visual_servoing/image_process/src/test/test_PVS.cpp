@@ -35,7 +35,7 @@ int main()
     double phi_pol = 0.0; 
     double k = 2.0;
 
-    Mat pose = (Mat_<double>(7,1) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5, 0.8);
+    Mat pose = (Mat_<double>(6,1) << 1.0, 5.0, 9.0, 0.25, 0.36, 0.5);
 
     Polarimetric_Visual_Servoing PVS(image_I_0_desired.cols, image_I_0_desired.rows);
 

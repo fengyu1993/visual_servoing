@@ -49,11 +49,11 @@ class Ros_ur_DVS
 
     public:
         Ros_ur_DVS();
-        void Callback(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg);     
+        void Callback(const ImageConstPtr& image_polar_msg, const ImageConstPtr& image_depth_msg);     
         void get_parameters_resolution(int& resolution_x, int& resolution_y);
         Mat get_parameter_Matrix(string str, int row, int col);
         void initialize_time_sync();
-        void get_image_data_convert(const ImageConstPtr& image_color_msg, const ImageConstPtr& image_depth_msg, Mat& color_img, Mat& depth_img);
+        void get_image_data_convert(const ImageConstPtr& image_polar_msg, const ImageConstPtr& image_depth_msg, Mat& color_img, Mat& depth_img);
         Mat rgb_image_operate(Mat& image_rgb);
         Mat depth_image_operate(Mat& image_depth);
         Mat get_T(tf::StampedTransform  transform);
