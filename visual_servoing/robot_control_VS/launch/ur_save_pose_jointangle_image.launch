@@ -8,7 +8,11 @@
 <!-- <include file="$(find cartesian_controllers_ur_robots)/launch/robot.launch" /> -->
 <include file="$(find ur5_moveit_config)/launch/demo.launch"/>
 
-<include file="$(dirname)/publish_L515_polar.launch"/>
+<node name="publish_L515" pkg="robot_control_VS"  type="publish_L515"  output="screen"/> 
+
+<node name="publish_LUCID" pkg="robot_control_VS"  type="publish_LUCID"  output="screen"/> 
+
+<node name="publish_L515_LUCID" pkg="robot_control_VS"  type="publish_L515_LUCID"  output="screen"/> 
 
 <node name="save_pose_image" pkg="robot_control_VS"  type="ur_save_pose_jointangle_image"  output="screen"/>
 

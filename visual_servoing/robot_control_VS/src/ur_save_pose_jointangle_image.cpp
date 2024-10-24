@@ -223,6 +223,7 @@ void save_camera_pose()
 
 void Callback(const ImageConstPtr& image_polar_msg, const ImageConstPtr& image_depth_msg)
 {
+
     // Æ«ÕñÊý¾Ý
     cv_bridge::CvImagePtr cv_ptr_polar = cv_bridge::toCvCopy(image_polar_msg, sensor_msgs::image_encodings::BGR8);
 	img_polar = cv_ptr_polar->image;
@@ -235,6 +236,12 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "save_pose_image");
     ros::NodeHandle nh;
+	
+	int resolution_x, resolution_y;
+	nh.getParam("resolution_x", resolution_x);
+    nh.getParam("resolution_y", resolution_y);
+	img_polar = Mat::zeros(resolution_y, resolution_x, CV_64FC1);
+	img_depth = Mat::zeros(resolution_y, resolution_x, CV_64FC1);
 
 	static const std::string PLANNING_GROUP = "manipulator";
     moveit::planning_interface::MoveGroupInterface move_group_interface(PLANNING_GROUP);
@@ -243,8 +250,8 @@ int main(int argc, char** argv)
     message_filters::Subscriber<Image>      image_depth_sub;
 	TimeSynchronizer<Image, Image>          *sync;
 
-	image_polar_sub.subscribe(nh,"/camera/polarized_image", 1);
-    image_depth_sub.subscribe(nh,"/camera/depth_image", 1);
+	image_polar_sub.subscribe(nh,"/VS/polarized_image", 1);
+    image_depth_sub.subscribe(nh,"/VS/depth_image", 1);
     sync = new TimeSynchronizer<Image, Image>(image_polar_sub, image_depth_sub, 1);
     sync->registerCallback(boost::bind(&Callback, _1, _2));
 
@@ -252,6 +259,9 @@ int main(int argc, char** argv)
 
     ros::AsyncSpinner spinner(1);
     spinner.start();
+
+	cv::namedWindow("Polar", cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("Depth", cv::WINDOW_AUTOSIZE);
 
 	while (ros::ok())
     {
