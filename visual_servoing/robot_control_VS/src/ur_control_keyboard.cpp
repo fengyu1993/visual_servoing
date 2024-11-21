@@ -64,8 +64,7 @@ int main(int argc, char** argv)
     cout << "Press Enter to start..." << endl;
     cin.ignore();
     control_switcher.switch_controllers("position", "twist");
-    // std::vector<double> joint_group_positions_start= {0, -CV_PI/3.0, CV_PI/3.0, -CV_PI/2.0, -CV_PI/2.0, 0};
-    std::vector<double> joint_group_positions_start= {-62.34*CV_PI/180.0, -79.66*CV_PI/180.0, -87.52*CV_PI/180.0, -199.25*CV_PI/180.0, -55.19*CV_PI/180.0, 84.33*CV_PI/180.0};
+    std::vector<double> joint_group_positions_start= {1.0*CV_PI/180.0, -80*CV_PI/180.0, 75*CV_PI/180.0, -75*CV_PI/180.0, -90*CV_PI/180.0, 80*CV_PI/180.0};
     cout << "Press Enter to start..." << endl;
     cin.ignore();
     robot_move_to_target_joint_angle(client, goal, joint_group_positions_start);
