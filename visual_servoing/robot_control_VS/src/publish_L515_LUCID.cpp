@@ -40,7 +40,6 @@ image_transport::Publisher image_polar_pub;
 image_transport::Publisher image_polar_offset_pub;
 image_transport::Publisher image_gray_pub;
 image_transport::Publisher image_depth_pub;
-Keyboard_ctrl KBC; 
 
 Mat get_polar_offest(const ImageConstPtr& image_polar_msg)
 {
@@ -106,8 +105,8 @@ void Callback(const ImageConstPtr& image_polar_msg, const ImageConstPtr& image_d
  	Mat depth_image_resize_temp = depth_image.rowRange(gray_row_init, depth_image.rows-gray_row_end).colRange(gray_col_init, depth_image.cols - gray_col_end); 
 	Mat polar_offset_image_resize_temp = polar_offset_image.rowRange(polar_row_init, polar_offset_image.rows - polar_row_end).colRange(polar_col_init, polar_offset_image.cols - polar_col_end);
 	Mat polar_image_resize_temp = polar_image.rowRange(polar_row_init, polar_image.rows - polar_row_end).colRange(polar_col_init, polar_image.cols - polar_col_end);
-
-    cv::Size targetSize(resolution_x, resolution_y); 
+   	
+	cv::Size targetSize(resolution_x, resolution_y); 
     cv::Mat gray_image_resize, depth_image_resize, polar_offset_image_resize, polar_image_resize;
     cv::resize(gray_image_resize_temp, gray_image_resize, targetSize, 0, 0, cv::INTER_LINEAR);
 	cv::resize(depth_image_resize_temp, depth_image_resize, targetSize, 0, 0, cv::INTER_LINEAR);
@@ -154,8 +153,6 @@ int main(int argc, char** argv)
 
 	get_Param(nh);
 
-	KBC = Keyboard_ctrl();
-
 	message_filters::Subscriber<Image>   image_polar_sub(nh,"/LUCID/polarized_image_raw", 1);
 	message_filters::Subscriber<Image>   image_depth_sub(nh,"/L515/depth_image_raw", 1);
 	message_filters::Subscriber<Image>   image_color_sub(nh,"/L515/color_image_raw", 1);
@@ -164,7 +161,9 @@ int main(int argc, char** argv)
 	message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), image_polar_sub, image_depth_sub, image_color_sub);
     sync.registerCallback(boost::bind(&Callback, _1, _2, _3));
 
+	
 	ros::spin();
+
 	
     return 0;
 }
