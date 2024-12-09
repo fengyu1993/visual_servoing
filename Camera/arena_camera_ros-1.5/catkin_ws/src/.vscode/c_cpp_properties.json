@@ -1,0 +1,34 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/chr/ROS/WorkSpace/catkin_ws/devel/include/**",
+        "/home/chr/ROS/WorkSpace/Realsense_WS/devel/include/**",
+        "/home/chr/ROS/WorkSpace/Camera_WS/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/chr/ROS/WorkSpace/catkin_ws/src/arena_camera/include/**",
+        "/home/chr/ROS/WorkSpace/arena_ws/src/flir_pol_cam/include/**",
+        "/home/chr/ROS/WorkSpace/Demo_WS/src/helloworld/include/**",
+        "/home/chr/ROS/WorkSpace/arena_ws/src/img_acquisition_pkg/include/**",
+        "/home/chr/ROS/WorkSpace/Camera_WS/src/opencv_demo_pkg/include/**",
+        "/home/chr/ROS/WorkSpace/arena_ws/src/pub_polarized_img_pkg/include/**",
+        "/home/chr/ROS/WorkSpace/Demo_WS/src/pubdemo_pkg/include/**",
+        "/home/chr/ROS/WorkSpace/Realsense_WS/src/realsense_pkg/include/**",
+        "/home/chr/ROS/WorkSpace/arena_ws/src/sub_polarized_img_pkg/include/**",
+        "/home/chr/ROS/WorkSpace/Demo_WS/src/subdemo_pkg/include/**",
+        "/home/chr/ROS/WorkSpace/Demo_WS/src/wpr_simulation/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

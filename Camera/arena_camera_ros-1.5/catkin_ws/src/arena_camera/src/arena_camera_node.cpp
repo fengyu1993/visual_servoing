@@ -38,6 +38,10 @@
 #include <sensor_msgs/RegionOfInterest.h>
 #include "boost/multi_array.hpp"
 
+// OpenCV
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 // Arena
 #include <ArenaApi.h>
 #include <GenApi/GenApi.h>
@@ -371,6 +375,7 @@ bool ArenaCameraNode::setImageEncoding(const std::string& ros_encoding)
     GenApi::CEnumerationPtr pPixelFormat = pDevice_->GetNodeMap()->GetNode("PixelFormat");
     if (GenApi::IsWritable(pPixelFormat))
     {
+      // std::cout << gen_api_encoding.c_str();
       Arena::SetNodeValue<GenICam::gcstring>(pDevice_->GetNodeMap(), "PixelFormat", gen_api_encoding.c_str());
       if (currentROSEncoding() == "16UC3" || currentROSEncoding() == "16UC4")
         ROS_WARN_STREAM("ROS grabbing image data from 3D pixel format, unable to display in image viewer");
@@ -744,26 +749,67 @@ void ArenaCameraNode::spin()
 
     if (img_raw_pub_.getNumSubscribers() > 0)
     {
+      uint8_t I_0 = 0;
+      uint8_t I_45 = 0;
+      uint8_t I_90 = 0;
+      uint8_t I_135 = 0;
+      uint8_t O = 0;
+      double A = 0;
+      double phi0 = 0;
+      uint8_t Dolp = 0;
+      uint8_t Aolp = 0;
       // get actual cam_info-object in every frame, because it might have
       // changed due to a 'set_camera_info'-service call
       sensor_msgs::CameraInfoPtr cam_info(new sensor_msgs::CameraInfo(camera_info_manager_->getCameraInfo()));
       cam_info->header.stamp = img_raw_msg_.header.stamp;
 
+      img_raw_msg_.height = 1024;
+      img_raw_msg_.width = 1224;
+      img_raw_msg_.step = img_raw_msg_.width * 3;
+
+      uint32_t size = img_raw_msg_.height * img_raw_msg_.step;
+      uint8_t pDst[size];
+
+      for (int i = 0; i < img_raw_msg_.height * img_raw_msg_.width; i++)
+      {
+        I_0   = img_raw_msg_.data[i * 2 + int(i / 1224) * 2448];
+        I_45  = img_raw_msg_.data[i * 2 + 1 + int(i / 1224) * 2448];
+        I_90  = img_raw_msg_.data[i * 2 + 2448 + int(i / 1224) * 2448];
+        I_135 = img_raw_msg_.data[i * 2 + 2448 + 1 + int(i / 1224) * 2448];
+
+        A = sqrt(((I_0 - I_90) * (I_0 - I_90) + (I_45 - I_135) * (I_45 - I_135)) / 4.0);
+        phi0 = 0.5 * atan2(I_45 - I_135, I_0 - I_90); // 使用atan2来处理象限问题
+        O = MAX((I_0 + I_90), (I_45 + I_135)) / 2.0;
+        Dolp = (A * 255.0) / (O + 0.001);
+        Aolp = (phi0 + CV_PI) * 180.0 / CV_PI;
+
+        pDst[i * 3 + 0] = O;
+        pDst[i * 3 + 1] = Dolp;
+        pDst[i * 3 + 2] = Aolp;
+      }
+      img_raw_msg_.data.resize(size);
+      memcpy(&img_raw_msg_.data[0], pDst, size);
+      img_raw_msg_.encoding = sensor_msgs::image_encodings::BGR8;
       // Publish via image_transport
       img_raw_pub_.publish(img_raw_msg_, *cam_info);
       ROS_INFO_ONCE("Number subscribers received");
+
+      img_raw_msg_.height = 2048;
+      img_raw_msg_.width = 2448;
+      img_raw_msg_.step = img_raw_msg_.width * 1;
+
     }
 
-    if (getNumSubscribersRect() > 0 && camera_info_manager_->isCalibrated())
-    {
-      cv_bridge_img_rect_->header.stamp = img_raw_msg_.header.stamp;
-      assert(pinhole_model_->initialized());
-      cv_bridge::CvImagePtr cv_img_raw = cv_bridge::toCvCopy(img_raw_msg_, img_raw_msg_.encoding);
-      pinhole_model_->fromCameraInfo(camera_info_manager_->getCameraInfo());
-      pinhole_model_->rectifyImage(cv_img_raw->image, cv_bridge_img_rect_->image);
-      img_rect_pub_->publish(*cv_bridge_img_rect_);
-      ROS_INFO_ONCE("Number subscribers rect received");
-    }
+    // if (getNumSubscribersRect() > 0 && camera_info_manager_->isCalibrated())
+    // {
+    //   cv_bridge_img_rect_->header.stamp = img_raw_msg_.header.stamp;
+    //   assert(pinhole_model_->initialized());
+    //   cv_bridge::CvImagePtr cv_img_raw = cv_bridge::toCvCopy(img_raw_msg_, img_raw_msg_.encoding);
+    //   pinhole_model_->fromCameraInfo(camera_info_manager_->getCameraInfo());
+    //   pinhole_model_->rectifyImage(cv_img_raw->image, cv_bridge_img_rect_->image);
+    //   img_rect_pub_->publish(*cv_bridge_img_rect_);
+    //   ROS_INFO_ONCE("Number subscribers rect received");
+    // }
   }
 }
 

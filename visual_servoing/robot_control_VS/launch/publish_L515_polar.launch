@@ -7,8 +7,9 @@
 
 <node name="publish_L515" pkg="robot_control_VS"  type="publish_L515"  output="screen"/> 
 
-<node name="publish_LUCID" pkg="robot_control_VS"  type="publish_LUCID"  output="screen"/> 
+<!-- 169.254.71.119 -->
+<include file="$(find arena_camera)/launch/arena_camera_node.launch" /> 
 
 <node name="publish_L515_LUCID" pkg="robot_control_VS"  type="publish_L515_LUCID"  output="screen"/> 
 
-</launch>
+</launch>  

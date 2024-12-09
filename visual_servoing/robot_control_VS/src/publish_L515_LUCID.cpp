@@ -153,7 +153,7 @@ int main(int argc, char** argv)
 
 	get_Param(nh);
 
-	message_filters::Subscriber<Image>   image_polar_sub(nh,"/LUCID/polarized_image_raw", 1);
+	message_filters::Subscriber<Image>   image_polar_sub(nh,"/arena_camera_node/image_raw", 1);
 	message_filters::Subscriber<Image>   image_depth_sub(nh,"/L515/depth_image_raw", 1);
 	message_filters::Subscriber<Image>   image_color_sub(nh,"/L515/color_image_raw", 1);
 

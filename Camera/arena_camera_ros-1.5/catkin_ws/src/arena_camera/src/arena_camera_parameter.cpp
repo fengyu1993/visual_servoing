@@ -41,7 +41,7 @@ namespace arena_camera
 ArenaCameraParameter::ArenaCameraParameter()
   : camera_frame_("arena_camera")
   , device_user_id_("")
-  , frame_rate_(5.0)
+  , frame_rate_(15.0)
   , camera_info_url_("")
   , image_encoding_("")
   , image_encoding_given_(false)
@@ -55,16 +55,16 @@ ArenaCameraParameter::ArenaCameraParameter()
   //  image intensity settings
   // ##########################
   exposure_(10000.0)
-  , exposure_given_(false)
-  , gain_(0.5)
+  , exposure_given_(true)
+  , gain_(0.1)
   , gain_given_(false)
   , gamma_(1.0)
   , gamma_given_(false)
-  , brightness_(100)
+  , brightness_(5)
   , brightness_given_(false)
   , brightness_continuous_(false)
-  , exposure_auto_(true)
-  , gain_auto_(true)
+  , exposure_auto_(false)
+  , gain_auto_(false)
   ,
   // #########################
   exposure_search_timeout_(5.)
@@ -158,7 +158,6 @@ void ArenaCameraParameter::readFromRosParameterServer(const ros::NodeHandle& nh)
   // ##########################
   //  image intensity settings
   // ##########################
-
   gamma_given_ = nh.hasParam("gamma");
   if (gamma_given_)
   {
@@ -170,6 +169,8 @@ void ArenaCameraParameter::readFromRosParameterServer(const ros::NodeHandle& nh)
   exposure_given_ = nh.hasParam("exposure");
   brightness_given_ = nh.hasParam("brightness");
   gain_given_ = nh.hasParam("gain");
+
+  std::cout << "cyh: " << "exposure_given_ = " << exposure_given_ << std::endl;
   if (exposure_given_)
   {
     nh.getParam("exposure", exposure_);
@@ -187,6 +188,7 @@ void ArenaCameraParameter::readFromRosParameterServer(const ros::NodeHandle& nh)
   }
 
   // ignore brightness?
+
   auto ignoreBrightness = brightness_given_ && gain_given_ && exposure_given_;
   if (ignoreBrightness)
   {

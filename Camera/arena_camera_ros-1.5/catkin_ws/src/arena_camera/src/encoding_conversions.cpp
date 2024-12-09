@@ -46,7 +46,7 @@ bool ros2GenAPI(const std::string& ros_enc, std::string& gen_api_enc)
   */
   if (ros_enc == sensor_msgs::image_encodings::MONO8)
   {
-    gen_api_enc = "Mono8";
+    gen_api_enc = "PolarizeMono8";
   }
   else if (ros_enc == sensor_msgs::image_encodings::MONO16)
   {
@@ -119,7 +119,7 @@ bool ros2GenAPI(const std::string& ros_enc, std::string& gen_api_enc)
 
 bool genAPI2Ros(const std::string& gen_api_enc, std::string& ros_enc)
 {
-  if (gen_api_enc == "Mono8")
+  if (gen_api_enc == "PolarizeMono8")
   {
     ros_enc = sensor_msgs::image_encodings::MONO8;
   }

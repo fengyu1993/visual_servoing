@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<launch>
+
+<rosparam file= "$(find robot_control_VS)/param/parameters_ur_PVS.yaml" command= "load"/>
+
+<!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find robot_control_VS)/rviz/publish_l515_polar.rviz" required="true" /> -->
+
+<node name="publish_L515" pkg="robot_control_VS"  type="publish_L515"  output="screen"/> 
+
+<node name="publish_LUCID" pkg="arena_camera"  type="arena_camera_node"  output="screen"/> 
+
+<node name="publish_L515_LUCID" pkg="robot_control_VS"  type="publish_L515_LUCID"  output="screen"/> 
+
+<node name="cameracalibrator" pkg="camera_calibration" type="cameracalibrator.py" args="--size 7x10 --square 0.025 image:=/VS/polarized_offset_image camera:=/camera --no-service-check" output="screen"/>
+
+
+</launch>
