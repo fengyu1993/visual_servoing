@@ -55,6 +55,9 @@ using diagnostic_msgs::DiagnosticStatus;
 
 namespace arena_camera
 {
+int resolution_x = 1224;
+int resolution_y = 1024;
+
 Arena::ISystem* pSystem_ = nullptr;
 Arena::IDevice* pDevice_ = nullptr;
 Arena::IImage* pImage_ = nullptr;
@@ -749,10 +752,11 @@ void ArenaCameraNode::spin()
 
     if (img_raw_pub_.getNumSubscribers() > 0)
     {
-      uint8_t I_0 = 0;
-      uint8_t I_45 = 0;
-      uint8_t I_90 = 0;
-      uint8_t I_135 = 0;
+      ros::NodeHandle nh;
+      double I_0 = 0;
+      double I_45 = 0;
+      double I_90 = 0;
+      double I_135 = 0;
       uint8_t O = 0;
       double A = 0;
       double phi0 = 0;
@@ -763,30 +767,56 @@ void ArenaCameraNode::spin()
       sensor_msgs::CameraInfoPtr cam_info(new sensor_msgs::CameraInfo(camera_info_manager_->getCameraInfo()));
       cam_info->header.stamp = img_raw_msg_.header.stamp;
 
-      img_raw_msg_.height = 1024;
-      img_raw_msg_.width = 1224;
+      nh.getParam("resolution_x", resolution_x);
+      nh.getParam("resolution_y", resolution_y);
+
+      img_raw_msg_.height = resolution_y;
+      img_raw_msg_.width = resolution_x;
       img_raw_msg_.step = img_raw_msg_.width * 3;
 
       uint32_t size = img_raw_msg_.height * img_raw_msg_.step;
       uint8_t pDst[size];
 
-      for (int i = 0; i < img_raw_msg_.height * img_raw_msg_.width; i++)
+      int cnt = 0;
+      for (int j = 0; j < img_raw_msg_.height; j++)
       {
-        I_0   = img_raw_msg_.data[i * 2 + int(i / 1224) * 2448];
-        I_45  = img_raw_msg_.data[i * 2 + 1 + int(i / 1224) * 2448];
-        I_90  = img_raw_msg_.data[i * 2 + 2448 + int(i / 1224) * 2448];
-        I_135 = img_raw_msg_.data[i * 2 + 2448 + 1 + int(i / 1224) * 2448];
+        for (int i = 0; i < img_raw_msg_.width; i++)
+        {
+          int idx = 2*i + j*1224*4;
+          I_0   = img_raw_msg_.data[idx];
+          I_45  = img_raw_msg_.data[idx + 1];
+          I_90  = img_raw_msg_.data[idx + 2448];
+          I_135 = img_raw_msg_.data[idx + 2448 + 1];
 
-        A = sqrt(((I_0 - I_90) * (I_0 - I_90) + (I_45 - I_135) * (I_45 - I_135)) / 4.0);
-        phi0 = 0.5 * atan2(I_45 - I_135, I_0 - I_90); // 使用atan2来处理象限问题
-        O = MAX((I_0 + I_90), (I_45 + I_135)) / 2.0;
-        Dolp = (A * 255.0) / (O + 0.001);
-        Aolp = (phi0 + CV_PI) * 180.0 / CV_PI;
+          A = sqrt(((I_0 - I_90) * (I_0 - I_90) + (I_45 - I_135) * (I_45 - I_135)) / 4.0);
+          phi0 = 0.5 * atan2(I_45 - I_135, I_0 - I_90); // 使用atan2来处理象限问题
+          O = MAX((I_0 + I_90), (I_45 + I_135)) / 2.0;
+          Dolp = (A * 255.0) / O;
+          Aolp = (phi0 + CV_PI) * 180.0 / CV_PI;        
 
-        pDst[i * 3 + 0] = O;
-        pDst[i * 3 + 1] = Dolp;
-        pDst[i * 3 + 2] = Aolp;
+          cnt++;
+          pDst[cnt * 3 + 0] = O;
+          pDst[cnt * 3 + 1] = Dolp;
+          pDst[cnt * 3 + 2] = Aolp;
+        }
       }
+      // for (int i = 0; i < img_raw_msg_.height * img_raw_msg_.width; i++)
+      // {
+      //   I_0   = img_raw_msg_.data[i * 2 + int(i / 1224) * 2448];
+      //   I_45  = img_raw_msg_.data[i * 2 + 1 + int(i / 1224) * 2448];
+      //   I_90  = img_raw_msg_.data[i * 2 + 2448 + int(i / 1224) * 2448];
+      //   I_135 = img_raw_msg_.data[i * 2 + 2448 + 1 + int(i / 1224) * 2448];
+
+      //   A = sqrt(((I_0 - I_90) * (I_0 - I_90) + (I_45 - I_135) * (I_45 - I_135)) / 4.0);
+      //   phi0 = 0.5 * atan2(I_45 - I_135, I_0 - I_90); // 使用atan2来处理象限问题
+      //   O = MAX((I_0 + I_90), (I_45 + I_135)) / 2.0;
+      //   Dolp = (A * 255.0) / (O + 0.001);
+      //   Aolp = (phi0 + CV_PI) * 180.0 / CV_PI;
+
+      //   pDst[i * 3 + 0] = O;
+      //   pDst[i * 3 + 1] = Dolp;
+      //   pDst[i * 3 + 2] = Aolp;
+      // }
       img_raw_msg_.data.resize(size);
       memcpy(&img_raw_msg_.data[0], pDst, size);
       img_raw_msg_.encoding = sensor_msgs::image_encodings::BGR8;

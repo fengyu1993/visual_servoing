@@ -35,6 +35,20 @@ Mat get_T(tf::StampedTransform  transform);
 Mat velocity_effector_to_base(Mat velocity, Mat camera_to_base);
 Mat get_effector_velocity_base(Mat camera_velocity, Mat effector_to_camera);
 
+Mat joint_group_positions;
+
+void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg) {
+    joint_group_positions = (Mat_<double>(1,6) << msg->position[0], msg->position[1], 
+                            msg->position[2], msg->position[3], msg->position[4], 
+                            msg->position[5]);
+    joint_group_positions = joint_group_positions * 180.0 / CV_PI;
+    // ROS_INFO("Joint Positions:");
+    // for(size_t i = 0; i < msg->position.size(); ++i) {
+    //     ROS_INFO("Joint %d position: %f", static_cast<int>(i), msg->position[i]);
+    // }
+}
+
+
 int main(int argc, char** argv)
 {
     // 准备
@@ -44,6 +58,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh; 
     Mat camera_velocity_base;
     ros::Publisher pub_camera_twist = nh.advertise<geometry_msgs::Twist>("/twist_controller/command", 5); 
+    ros::Subscriber sub = nh.subscribe("/joint_states", 1000, jointStateCallback);
     tf::TransformListener listener_pose;
     // 创建动作客户端，连接到名为"pos_joint_traj_controller/follow_joint_trajectory"的动作服务器
     Client client("pos_joint_traj_controller/follow_joint_trajectory", true);
@@ -122,6 +137,9 @@ int main(int argc, char** argv)
                 flag_finish = true;
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
                 break;
+            case KEYCODE_J: // Output joint variables
+                cout << "joint_angle = \n" <<  joint_group_positions << endl;
+                break;
             case KEYCODE_W_CAP: // W: wx+
                 cout << "Move to wx+ ..." << endl; 
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, vel_angle, 0.0, 0.0);
@@ -147,11 +165,14 @@ int main(int argc, char** argv)
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, -vel_angle);
                 break; 
             case KEYCODE_Q_CAP: // Q: stop
-            cout << "Stop ..." << endl; 
+                cout << "Stop ..." << endl; 
                 flag_finish = true;
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
                 break;
-            default :
+            case KEYCODE_J_CAP: // Output joint variables
+                cout << "joint_angle = \n" <<  joint_group_positions << endl;
+                break;
+            default:
                 camera_velocity = (Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
                 break;   
         }

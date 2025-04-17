@@ -313,8 +313,6 @@ int main(int argc, char *argv[])
 
 		GenICam::gcstring pixelFormatInitial = Device_Init(pDevice);
 
-
-
 		// run example
 		std::cout << TAB2 << "Creat New Image\n";
 		// dst info
@@ -327,10 +325,7 @@ int main(int argc, char *argv[])
 		uint8_t* pDst = new uint8_t[dstBytesPerPixel * dstWidth * dstHeight];
 		std::cout << TAB2 << "dstWidth:" << dstWidth << "\t\tdstHeight:" << dstHeight << "\t\tdstBytesPerPixel:" 
 		<< dstBytesPerPixel << "\t\tdstStride:" << dstStride << "\t\tdstDataSize:" << dstDataSize << "\n";
-
-
-		
-		
+	
 		// retrieve image
 		std::cout << TAB2 << "Acquire PolarizedAngles_0d_45d_90d_135d_BayerRG8 image\n";
 		pDevice->StartStream();
@@ -344,12 +339,6 @@ int main(int argc, char *argv[])
 				1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f,
                 1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f,
                 1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f);
-
-
-
-		
-
-
 
 		while (nh.ok())
 		{
@@ -366,10 +355,6 @@ int main(int argc, char *argv[])
 			}
 			// cv::imwrite(FILE_NAME, srcImage);
 
-
-			
-
-
 			// ??????Mat????????????
 			// cv::Mat image;
 			// ??cv::resize????????
@@ -383,11 +368,6 @@ int main(int argc, char *argv[])
 			// cv::filter2D(srcImage, highpassImage, -1, kernel, cv::Point(-1, -1), 0, cv::BORDER_DEFAULT);
 			// cv::imshow("view", srcImage);
 			// cv::imshow("view1", image);
-
-			
-			
-			
-			
 
 			
 			sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", srcImage).toImageMsg();
