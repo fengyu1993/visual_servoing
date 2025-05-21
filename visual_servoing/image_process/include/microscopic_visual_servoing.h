@@ -39,6 +39,7 @@ class Microscopic_Visual_Servoing
         bool flag_first_;
         int iteration_num_;
         clock_t start_VS_time_;
+        double cost_function_value_;
         struct data
         {
             Mat velocity_;
@@ -55,11 +56,11 @@ class Microscopic_Visual_Servoing
 
         void init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_gray_initial, camera_intrinsic camera_parameters, Mat pose_desired);
 
-        // Mat get_camera_velocity();
+        Mat get_object_velocity();
 
-        // virtual bool is_success();
+        virtual bool is_success();
 
-        // virtual void get_feature_error_interaction_matrix() = 0;
+        virtual void get_feature_error_interaction_matrix() = 0;
 
         void set_camera_intrinsic(camera_intrinsic camera_parameters);
 
@@ -69,43 +70,37 @@ class Microscopic_Visual_Servoing
 
         void set_image_gray_initial(Mat& image_gray_initial);
 
-        // void set_pose_desired(Mat& pose_desired);
+        void set_pose_desired(Mat& pose_desired);
 
-        // void set_pose_initial(Mat& pose_initial);
+        void save_pose_desired();
 
-        // void save_pose_desired();
+        void save_data_image();
 
-        // void save_data_image();
+        void save_data_camera_velocity();
 
-        // void save_data_image_gray_desired();
+        void save_data_error_feature();
 
-        // void save_data_image_gray_initial();
+        void save_data_camera_pose(Mat& pose);
 
-        // void save_data_camera_velocity();
+        void save_data_vs_time();
 
-        // virtual void save_data_error_feature();
+        virtual void save_data_other_parameter() {};
 
-        // void save_data_camera_pose(Mat& pose);
+        void save_all_data(Mat pose);
 
-        // void save_data_vs_time();
+        void write_data();
 
-        // virtual void save_data_other_parameter() {};
+        void write_visual_servoing_data(ofstream& oFile);
 
-        // void save_data(Mat pose);
+        virtual void write_other_data(ofstream& oFile){};
 
-        // void write_data();
+        string get_save_file_name(); 
 
-        // void write_visual_servoing_data(ofstream& oFile);
+        string get_date_time();
 
-        // virtual void write_other_data(ofstream& oFile){};
+        virtual string get_method_name();
 
-        // string get_save_file_name(); 
-
-        // string get_date_time();
-
-        // virtual string get_method_name();
-
-        // void write_to_excel(Mat data, ofstream& oFile);
+        void write_to_excel(Mat data, ofstream& oFile);
 };
 
 

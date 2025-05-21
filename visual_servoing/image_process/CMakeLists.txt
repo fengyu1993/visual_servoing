@@ -34,7 +34,8 @@ add_library(image_process src/direct_visual_servoing.cpp
                           src/Krawtchouk_moments_vs.cpp
                           src/Hahn_moments_vs.cpp
                           src/polarimetric_visual_servoing.cpp
-                          src/microscopic_visual_servoing.cpp) 
+                          src/microscopic_visual_servoing.cpp
+                          src/direct_microscopic_visual_servoing.cpp) 
 
 include_directories(${THIS_PACKAGE_INCLUDE_DIRS})
 include_directories(SYSTEM  ${catkin_INCLUDE_DIRS} 
