@@ -14,8 +14,8 @@ class Direct_Microscopic_Visual_Servoing: public Microscopic_Visual_Servoing
         Mat div_col_;
         Mat div_row_;
         double Phi_;
-
-    public:
+        Mat Mat_u_, Mat_x_;
+        Mat Mat_v_, Mat_y_;
         double A_;
         double B_;
         double C_;
@@ -25,7 +25,7 @@ class Direct_Microscopic_Visual_Servoing: public Microscopic_Visual_Servoing
 
         virtual void get_feature_error_interaction_matrix();
 
-        Mat get_interaction_matrix_gray();
+        void get_interaction_matrix_gray();
 
         void get_image_gradient_x(const Mat& image, Mat& I_x);
 
