@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<launch>
+ 
+<node name="test_DMVS" pkg="image_process"  type="test_DMVS"  output="screen"/>
+
+</launch>

@@ -10,6 +10,16 @@ using namespace std;
 
 class Direct_Microscopic_Visual_Servoing: public Microscopic_Visual_Servoing
 {
+    private:
+        Mat div_col_;
+        Mat div_row_;
+        double Phi_;
+
+    public:
+        double A_;
+        double B_;
+        double C_;
+
     public: 
         Direct_Microscopic_Visual_Servoing(int resolution_x=640, int resolution_y=480);
 
@@ -17,11 +27,9 @@ class Direct_Microscopic_Visual_Servoing: public Microscopic_Visual_Servoing
 
         Mat get_interaction_matrix_gray();
 
-        // void get_image_gradient(Mat& image, Mat& Camera_Intrinsic, Mat& I_x, Mat& I_y);
+        void get_image_gradient_x(const Mat& image, Mat& I_x);
 
-        // Mat get_image_gradient_x(Mat& image);
-
-        // Mat get_image_gradient_y(Mat& image);
+        void get_image_gradient_y(const Mat& image, Mat& I_y);
 
         virtual string get_method_name();
 };

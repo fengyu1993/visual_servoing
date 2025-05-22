@@ -11,6 +11,16 @@ Direct_Microscopic_Visual_Servoing::Direct_Microscopic_Visual_Servoing(int resol
 {
     this->L_e_ = Mat::zeros(resolution_x*resolution_y, 6, CV_64FC1); 
     this->error_s_ = Mat::zeros(resolution_x*resolution_y, 1, CV_64FC1);
+
+    this->div_col_ = Mat::ones(resolution_y, resolution_x, CV_64FC1) * 2;
+    this->div_col_.col(0).setTo(cv::Scalar(1.0));
+    this->div_col_.col(this->div_col_.cols-1).setTo(cv::Scalar(1.0));
+
+    this->div_row_ = Mat::ones(resolution_y, resolution_x, CV_64FC1) * 2;
+    this->div_row_.row(0).setTo(cv::Scalar(1.0));
+    this->div_row_.row(this->div_row_.rows-1).setTo(cv::Scalar(1.0));
+
+    this->Phi_ = (pow(this->camera_intrinsic_.R_f,2) * this->camera_intrinsic_.D_f) / (9*this->camera_intrinsic_.Z_f);
 }
 
 // 计算直接显微视觉伺服特征误差 交互矩阵
@@ -23,7 +33,6 @@ void Direct_Microscopic_Visual_Servoing::get_feature_error_interaction_matrix()
 
 Mat Direct_Microscopic_Visual_Servoing::get_interaction_matrix_gray()
 {
-    Mat I_x, I_y;
     int cnt = 0;
     Mat point_image = Mat::ones(3, 1, CV_64FC1);
     Mat xy = Mat::zeros(3, 1, CV_64FC1);
@@ -31,7 +40,15 @@ Mat Direct_Microscopic_Visual_Servoing::get_interaction_matrix_gray()
     double Z_inv;
     Mat L_e = Mat::zeros(this->image_gray_current_.rows * this->image_gray_current_.cols, 6, CV_64FC1); 
 
-    // get_image_gradient(image_gray, Camera_Intrinsic, I_x, I_y);
+    Mat I_x, I_y, I_xx, I_yy, Delta_I;
+    get_image_gradient_x(this->image_gray_current_, I_x);
+    get_image_gradient_y(this->image_gray_current_, I_y);
+    get_image_gradient_x(I_x, I_xx);
+    get_image_gradient_y(I_y, I_yy);  
+    cv::add(I_xx, I_yy, Delta_I);
+
+
+    
 
     // for(int i = 0; i < image_gray.rows; i++)
     // {
@@ -58,48 +75,27 @@ Mat Direct_Microscopic_Visual_Servoing::get_interaction_matrix_gray()
     return L_e;
 }
 
-// // 计算图像梯度
-// void Direct_Microscopic_Visual_Servoing::get_image_gradient(Mat& image, Mat& Camera_Intrinsic, Mat& I_x, Mat& I_y)
-// {
-//     I_x = get_image_gradient_x(image) * Camera_Intrinsic.at<double>(0, 0);
-//     I_y = get_image_gradient_y(image) * Camera_Intrinsic.at<double>(1, 1);
-// }
+// 计算矩阵x方向上的梯度
+void Direct_Microscopic_Visual_Servoing::get_image_gradient_x(const Mat& image, Mat& I_x)
+{
+    I_x = cv::Mat::zeros(image.rows, image.cols, CV_64FC1);
+    // 中间部分：(i+1)列 - (i-1)列
+    cv::subtract(image.colRange(2, image.cols), image.colRange(0, image.cols - 2), I_x.colRange(1, image.cols - 1)); // 中间部分直接相减
+    cv::subtract(image.col(1), image.col(0), I_x.col(0));
+    cv::subtract(image.col(image.cols - 1), image.col(image.cols - 2), I_x.col(image.cols - 1));
+    cv::divide(I_x, this->div_col_, I_x);
+}
 
-// // 计算矩阵x方向上的梯度
-// Mat Direct_Microscopic_Visual_Servoing::get_image_gradient_x(Mat& image)
-// {
-//     Mat I_x = Mat::zeros(image.rows, image.cols, CV_64FC1);
-//     int up, down;
-//     for(int i = 0; i < image.cols; i++)
-//     {
-//         up = i+1;
-//         down = i-1;
-//         if (up > image.cols-1) 
-//             up = image.cols-1;
-//         if (down < 0) 
-//             down = 0;
-//         I_x.col(i) = (image.col(up) - image.col(down)) / (up - down); 
-//     }
-//     return I_x;
-// }
-
-// // 计算矩阵y方向上的梯度
-// Mat Direct_Microscopic_Visual_Servoing::get_image_gradient_y(Mat& image)
-// {
-//     Mat I_y = Mat::zeros(image.rows, image.cols, CV_64FC1);
-//     int up, down;
-//     for(int i = 0; i < image.rows; i++)
-//     {
-//         up = i+1;
-//         down = i-1;
-//         if (up > image.rows-1) 
-//             up = image.rows-1;
-//         if (down < 0) 
-//             down = 0;
-//         I_y.row(i) = (image.row(up) - image.row(down)) / (up - down); 
-//     }
-//     return I_y;
-// }
+// 计算矩阵y方向上的梯度
+void Direct_Microscopic_Visual_Servoing::get_image_gradient_y(const Mat& image, Mat& I_y)
+{
+    I_y = cv::Mat::zeros(image.rows, image.cols, CV_64FC1);
+    // 中间部分：(i+1)行 - (i-1)行
+    cv::subtract(image.rowRange(2, image.rows), image.rowRange(0, image.rows - 2), I_y.rowRange(1, image.rows - 1)); // 中间部分直接相减
+    cv::subtract(image.row(1), image.row(0), I_y.row(0));
+    cv::subtract(image.row(image.rows - 1), image.row(image.rows - 2), I_y.row(image.rows - 1));
+    cv::divide(I_y, this->div_row_, I_y);
+}
 
 
 string Direct_Microscopic_Visual_Servoing::get_method_name()
