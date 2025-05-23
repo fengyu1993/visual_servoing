@@ -28,7 +28,7 @@ class Microscopic_Visual_Servoing
         Mat image_gray_current_; 
         Mat image_gray_initial_;
         camera_intrinsic camera_intrinsic_;
-        Mat camera_velocity_; // vx vy vz wx wy wz
+        Mat object_velocity_; // vx vy vz wx wy wz
         Mat pose_desired_;
         double lambda_;
         double epsilon_; 
@@ -36,6 +36,7 @@ class Microscopic_Visual_Servoing
         int resolution_y_;
         Mat L_e_;
         Mat error_s_;
+        Mat Ad_Toc_;
         bool flag_first_;
         int iteration_num_;
         clock_t start_VS_time_;
@@ -54,15 +55,15 @@ class Microscopic_Visual_Servoing
     public: 
         Microscopic_Visual_Servoing(int resolution_x, int resolution_y);
 
-        void init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_gray_initial, camera_intrinsic camera_parameters, Mat pose_desired);
+        void init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_gray_initial, camera_intrinsic& camera_parameters, Mat pose_desired, Mat& Toc);
 
-        Mat get_object_velocity();
+        Mat skewSymmetric(const Mat& v);
+
+        void get_object_velocity();
 
         virtual bool is_success();
 
         virtual void get_feature_error_interaction_matrix() = 0;
-
-        void set_camera_intrinsic(camera_intrinsic camera_parameters);
 
         void set_image_gray_desired(Mat& image_gray_desired);
 
@@ -76,7 +77,7 @@ class Microscopic_Visual_Servoing
 
         void save_data_image();
 
-        void save_data_camera_velocity();
+        void save_data_object_velocity();
 
         void save_data_error_feature();
 

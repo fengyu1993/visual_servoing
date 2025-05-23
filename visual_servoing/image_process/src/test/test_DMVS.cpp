@@ -8,10 +8,37 @@ void get_image_gradient_x(const Mat& image, Mat& I_x);
 void get_image_gradient_x_old(const Mat& image, Mat& I_x);
 void get_image_gradient_y(const Mat& image, Mat& I_x);
 void get_image_gradient_y_old(const Mat& image, Mat& I_x);
+Mat skewSymmetric(const Mat& v);
 
 int main()
 {
+    Mat Toc = (cv::Mat_<double>(4, 4) << 
+        1, 2, 3, 1,
+        4, 5, 6, 2,
+        7, 8, 9, 5,
+        0, 0, 0, 1);
+    Mat Ad_Toc = Mat::zeros(6, 6, CV_64F);
+    Toc(cv::Rect(0, 0, 3, 3)).copyTo(Ad_Toc(cv::Rect(0, 0, 3, 3)));
+	Toc(cv::Rect(0, 0, 3, 3)).copyTo(Ad_Toc(cv::Rect(3, 3, 3, 3)));
+	cv::Mat t_x_R = skewSymmetric(Toc(cv::Rect(3, 0, 1, 3))) * Toc(cv::Rect(0, 0, 3, 3));
+    // cv::gemm(skewSymmetric(Toc(cv::Rect(3, 0, 1, 3))), Toc(cv::Rect(0, 0, 3, 3)), 1, cv::noArray(), 0, t_x_R); 
+ 	
+    t_x_R.copyTo(Ad_Toc(cv::Rect(3, 0, 3, 3))); 
 
+    cout << "Toc" << endl << Toc << endl;
+    cout << "Ad_Toc" << endl << Ad_Toc << endl;
+
+    Mat D = (cv::Mat_<double>(3, 3) << 
+        1, 2, 3,
+        4, 5, 6,
+        7, 8, 9);
+    Mat F = (cv::Mat_<double>(3, 3) << 
+        1, 2, 3,
+        4, 5, 6,
+        7, 8, 9);
+
+    cout << "D * F" << endl << D * F << endl;
+    
     int rows = 6;
     int cols = 5;
 
@@ -99,6 +126,22 @@ int main()
 
 
     return 1;
+}
+
+Mat skewSymmetric(const Mat& v) {
+    CV_Assert(v.rows == 3 && v.cols == 1);
+
+    double vx = v.at<double>(0);
+    double vy = v.at<double>(1);
+    double vz = v.at<double>(2);
+
+    cv::Mat skew = cv::Mat::zeros(3, 3, CV_64FC1);
+
+    skew.at<double>(0, 0) = 0;     skew.at<double>(0, 1) = -vz;   skew.at<double>(0, 2) = vy;
+    skew.at<double>(1, 0) = vz;    skew.at<double>(1, 1) = 0;     skew.at<double>(1, 2) = -vx;
+    skew.at<double>(2, 0) = -vy;   skew.at<double>(2, 1) = vx;    skew.at<double>(2, 2) = 0;
+
+    return skew;
 }
 
 void get_image_gradient_x(const Mat& image, Mat& I_x)

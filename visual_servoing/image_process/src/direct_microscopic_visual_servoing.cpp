@@ -64,19 +64,19 @@ void Direct_Microscopic_Visual_Servoing::get_interaction_matrix_gray()
 
     Mat Mat_div_Z = this->A_ * this->Mat_x_ + this->B_ * this->Mat_y_ + this->C_;
     Mat Mat_div_Zf_Z = 1 / this->camera_intrinsic_.Z_f - Mat_div_Z;
-    Mat Mat_xIx_yIy = this->Mat_x_ * I_x + this->Mat_y_ * I_y;
+    Mat Mat_xIx_yIy = this->Mat_x_.mul(I_x) + this->Mat_y_.mul(I_y);
     Mat Mat_Phi_Delta_I = this->Phi_ * Delta_I;
 
-    Mat L_Ic_vx = -I_x * Mat_div_Z * this->camera_intrinsic_.D_f;
-    Mat L_Ic_vy = -I_y * Mat_div_Z * this->camera_intrinsic_.D_f;
-    Mat L_Ic_vz = Mat_xIx_yIy * Mat_div_Z 
-                    + this->camera_intrinsic_.D_f * Mat_Phi_Delta_I * Mat_div_Z * Mat_div_Zf_Z;
+    Mat L_Ic_vx = -I_x.mul(Mat_div_Z) * this->camera_intrinsic_.D_f;
+    Mat L_Ic_vy = -I_y.mul(Mat_div_Z) * this->camera_intrinsic_.D_f;
+    Mat L_Ic_vz = Mat_xIx_yIy.mul(Mat_div_Z) 
+                    + this->camera_intrinsic_.D_f * Mat_Phi_Delta_I.mul(Mat_div_Z).mul( Mat_div_Zf_Z);
     Mat L_Ic_wx = this->camera_intrinsic_.D_f * I_y 
-                    + Mat_xIx_yIy / this->camera_intrinsic_.D_f * this->Mat_y_
-                    + Mat_Phi_Delta_I * this->Mat_y_ * Mat_div_Zf_Z;
+                    + Mat_xIx_yIy.mul(this->Mat_y_) / this->camera_intrinsic_.D_f
+                    + Mat_Phi_Delta_I.mul(this->Mat_y_).mul(Mat_div_Zf_Z);
     Mat L_Ic_wy = -this->camera_intrinsic_.D_f * I_x
-                    - Mat_xIx_yIy / this->camera_intrinsic_.D_f * this->Mat_x_
-                    - Mat_Phi_Delta_I * this->Mat_x_ * Mat_div_Zf_Z;
+                    - Mat_xIx_yIy.mul(this->Mat_x_) / this->camera_intrinsic_.D_f
+                    - Mat_Phi_Delta_I.mul(this->Mat_x_).mul(Mat_div_Zf_Z);
     Mat L_Ic_wz = Mat_y_ * I_x - Mat_x_ * I_y;
 
     int totalElements = this->image_gray_current_.total();

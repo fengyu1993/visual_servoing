@@ -13,17 +13,24 @@ Microscopic_Visual_Servoing::Microscopic_Visual_Servoing(int resolution_x=640, i
     this->resolution_y_ = resolution_y;
     this->image_gray_desired_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
     this->image_gray_current_ = Mat::zeros(this->resolution_y_, this->resolution_x_, CV_64FC1);
-    this->camera_velocity_ = Mat::zeros(6, 1, CV_64FC1);
+    this->object_velocity_ = Mat::zeros(6, 1, CV_64FC1);
 	this->flag_first_ = true;
 	this->iteration_num_ = 0;
+	this->Ad_Toc_ = Mat::zeros(6, 6, CV_64FC1);
 }
 
 // 初始化
-void Microscopic_Visual_Servoing::init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_gray_initial, camera_intrinsic camera_parameters, Mat pose_desired)
+void Microscopic_Visual_Servoing::init_VS(double lambda, double epsilon, Mat& image_gray_desired, Mat& image_gray_initial, camera_intrinsic& camera_parameters, Mat pose_desired, Mat& Toc)
 {
     this->lambda_ = lambda;
     this->epsilon_ = epsilon;
-    set_camera_intrinsic(camera_parameters);
+    this->camera_intrinsic_ = camera_parameters;
+
+	Toc(cv::Rect(0, 0, 3, 3)).copyTo(this->Ad_Toc_(cv::Rect(0, 0, 3, 3)));
+	Toc(cv::Rect(0, 0, 3, 3)).copyTo(this->Ad_Toc_(cv::Rect(3, 3, 3, 3)));
+	cv::Mat t_x_R = skewSymmetric(Toc(cv::Rect(3, 0, 1, 3))) * Toc(cv::Rect(0, 0, 3, 3));
+    t_x_R.copyTo(this->Ad_Toc_(cv::Rect(3, 0, 3, 3))); 
+
     set_image_gray_desired(image_gray_desired);
     set_image_gray_initial(image_gray_initial);
     set_pose_desired(pose_desired);
@@ -31,16 +38,32 @@ void Microscopic_Visual_Servoing::init_VS(double lambda, double epsilon, Mat& im
     save_pose_desired();
 }
 
+Mat Microscopic_Visual_Servoing::skewSymmetric(const Mat& v) {
+    CV_Assert(v.rows == 3 && v.cols == 1);
+
+    double vx = v.at<double>(0);
+    double vy = v.at<double>(1);
+    double vz = v.at<double>(2);
+
+    cv::Mat skew = cv::Mat::zeros(3, 3, CV_64FC1);
+
+    skew.at<double>(0, 0) = 0;     skew.at<double>(0, 1) = -vz;   skew.at<double>(0, 2) = vy;
+    skew.at<double>(1, 0) = vz;    skew.at<double>(1, 1) = 0;     skew.at<double>(1, 2) = -vx;
+    skew.at<double>(2, 0) = -vy;   skew.at<double>(2, 1) = vx;    skew.at<double>(2, 2) = 0;
+
+    return skew;
+}
+
 // 计算物体速度
-Mat Microscopic_Visual_Servoing::get_object_velocity()
+void Microscopic_Visual_Servoing::get_object_velocity()
 {
 	this->iteration_num_++;
     get_feature_error_interaction_matrix(); 
     Mat L_e_transpose = this->L_e_.t();
     Mat L_e_left_inverse = (L_e_transpose * this->L_e_).inv() * L_e_transpose;
     // invert(this->L_e_, L_e_left_inverse, DECOMP_SVD);
-    this->camera_velocity_ = -this->lambda_ * L_e_left_inverse * this->error_s_;
-    return this->camera_velocity_;
+	Mat camera_velocity = -this->lambda_ * L_e_left_inverse * this->error_s_;
+    this->object_velocity_ = this->Ad_Toc_ * camera_velocity;
 }
 
 // 判断是否伺服成功
@@ -58,12 +81,6 @@ bool Microscopic_Visual_Servoing::is_success()
 	{
 		return false;
 	}
-}
-
-// 设置相机内参
-void Microscopic_Visual_Servoing::set_camera_intrinsic(camera_intrinsic camera_parameters)
-{
-    this->camera_intrinsic_ = camera_parameters;
 }
 
 // 设置期望灰度图像
@@ -107,9 +124,9 @@ void Microscopic_Visual_Servoing::save_data_image()
 }
 
 // 保存相机速度
-void Microscopic_Visual_Servoing::save_data_camera_velocity()
+void Microscopic_Visual_Servoing::save_data_object_velocity()
 {
-    this->data_vs_.velocity_.push_back(this->camera_velocity_.t());
+    this->data_vs_.velocity_.push_back(this->object_velocity_.t());
 }
 
 // 保存特征误差
@@ -128,7 +145,7 @@ void Microscopic_Visual_Servoing::save_data_camera_pose(Mat& pose)
 // 保存所有数据
 void Microscopic_Visual_Servoing::save_all_data(Mat pose)
 {
-    save_data_camera_velocity();
+    save_data_object_velocity();
     save_data_camera_pose(pose);
     save_data_error_feature(); 
     save_data_vs_time();
