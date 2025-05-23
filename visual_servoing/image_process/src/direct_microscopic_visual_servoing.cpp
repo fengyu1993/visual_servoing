@@ -22,27 +22,27 @@ Direct_Microscopic_Visual_Servoing::Direct_Microscopic_Visual_Servoing(int resol
 
     this->Phi_ = (pow(this->camera_intrinsic_.R_f,2) * this->camera_intrinsic_.D_f) / (9*this->camera_intrinsic_.Z_f);
 
-    this->Mat_u_ = Mat::zeros(resolution_y, resolution_x, CV_64FC1);
-    cv::parallel_for_(cv::Range(0, this->Mat_u_.rows), [&](const cv::Range& range) {
+    Mat Mat_u = Mat::zeros(resolution_y, resolution_x, CV_64FC1);
+    cv::parallel_for_(cv::Range(0, Mat_u.rows), [&](const cv::Range& range) {
         for (int r = range.start; r < range.end; ++r) {
-            double* rowPtr = this->Mat_u_.ptr<double>(r);
-            for (int c = 0; c < this->Mat_u_.cols; ++c) {
+            double* rowPtr = Mat_u.ptr<double>(r);
+            for (int c = 0; c < Mat_u.cols; ++c) {
                 rowPtr[c] = c;
             }
         }
     });
-    this->Mat_x_ = (this->Mat_u_ - this->camera_intrinsic_.c_u) / this->camera_intrinsic_.k_u;
+    this->Mat_x_ = (Mat_u - this->camera_intrinsic_.c_u) / this->camera_intrinsic_.k_u;
 
-    this->Mat_v_ = Mat::zeros(resolution_y, resolution_x, CV_64FC1);
-    cv::parallel_for_(cv::Range(0, this->Mat_v_.rows), [&](const cv::Range& range) {
+    Mat Mat_v = Mat::zeros(resolution_y, resolution_x, CV_64FC1);
+    cv::parallel_for_(cv::Range(0, Mat_v.rows), [&](const cv::Range& range) {
         for (int r = range.start; r < range.end; ++r) {
-            double* rowPtr = this->Mat_v_.ptr<double>(r);
-            for (int c = 0; c < this->Mat_v_.cols; ++c) {
+            double* rowPtr = Mat_v.ptr<double>(r);
+            for (int c = 0; c < Mat_v.cols; ++c) {
                 rowPtr[c] = r;  // 每个元素赋值为行号
             }
         }
     });
-    this->Mat_y_ = (this->Mat_v_ - this->camera_intrinsic_.c_v) / this->camera_intrinsic_.k_v;
+    this->Mat_y_ = (Mat_v - this->camera_intrinsic_.c_v) / this->camera_intrinsic_.k_v;
 }
 
 // 计算直接显微视觉伺服特征误差 交互矩阵
