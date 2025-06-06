@@ -14,10 +14,8 @@ struct  camera_intrinsic
 {
     double c_u;
     double c_v;
-    double k_u;
-    double k_v;
     double Z_f;
-    double D_f;
+    double D_f_k_uv;
     double R_f;
 };
 

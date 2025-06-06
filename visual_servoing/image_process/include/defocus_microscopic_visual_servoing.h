@@ -1,5 +1,6 @@
-#ifndef DIRECT_MICROSCOPIC_VISUAL_SERVOING
-#define DIRECT_MICROSCOPIC_VISUAL_SERVOING
+// Defocus-Based Direct Visual Servoing--Guillaume Caron
+#ifndef DEFOCUS_MICROSCOPIC_VISUAL_SERVOING
+#define DEFOCUS_MICROSCOPIC_VISUAL_SERVOING
 
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
@@ -8,7 +9,7 @@
 using namespace cv;
 using namespace std;
 
-class Direct_Microscopic_Visual_Servoing: public Microscopic_Visual_Servoing
+class Defocus_Microscopic_Visual_Servoing: public Microscopic_Visual_Servoing
 {
     private:
         Mat div_col_;
@@ -21,7 +22,7 @@ class Direct_Microscopic_Visual_Servoing: public Microscopic_Visual_Servoing
         double C_;
 
     public: 
-        Direct_Microscopic_Visual_Servoing(int resolution_x=1600, int resolution_y=1200);
+        Defocus_Microscopic_Visual_Servoing(int resolution_x=1600, int resolution_y=1200);
 
         virtual void get_feature_error_interaction_matrix();
 

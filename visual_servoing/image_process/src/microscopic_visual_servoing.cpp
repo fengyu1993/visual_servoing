@@ -7,7 +7,7 @@
 #include <ctime> 
 #include <chrono>
 
-Microscopic_Visual_Servoing::Microscopic_Visual_Servoing(int resolution_x=640, int resolution_y=480)
+Microscopic_Visual_Servoing::Microscopic_Visual_Servoing(int resolution_x=1600, int resolution_y=1200)
 {
     this->resolution_x_ = resolution_x;
     this->resolution_y_ = resolution_y;

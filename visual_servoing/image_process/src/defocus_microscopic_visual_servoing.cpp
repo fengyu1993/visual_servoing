@@ -1,4 +1,4 @@
-#include "direct_microscopic_visual_servoing.h"
+#include "defocus_microscopic_visual_servoing.h"
 #include <opencv2/imgproc.hpp>
 #include <math.h>
 #include <iostream>
@@ -7,7 +7,7 @@
 #include <ctime> 
 #include <chrono>
 
-Direct_Microscopic_Visual_Servoing::Direct_Microscopic_Visual_Servoing(int resolution_x, int resolution_y) : Microscopic_Visual_Servoing(resolution_x, resolution_y)
+Defocus_Microscopic_Visual_Servoing::Defocus_Microscopic_Visual_Servoing(int resolution_x, int resolution_y) : Microscopic_Visual_Servoing(resolution_x, resolution_y)
 {
     this->L_e_ = Mat::zeros(resolution_x*resolution_y, 6, CV_64FC1); 
     this->error_s_ = Mat::zeros(resolution_x*resolution_y, 1, CV_64FC1);
@@ -20,7 +20,7 @@ Direct_Microscopic_Visual_Servoing::Direct_Microscopic_Visual_Servoing(int resol
     this->div_row_.row(0).setTo(cv::Scalar(1.0));
     this->div_row_.row(this->div_row_.rows-1).setTo(cv::Scalar(1.0));
 
-    this->Phi_ = (pow(this->camera_intrinsic_.R_f,2) * this->camera_intrinsic_.D_f_k_uv) / (9*this->camera_intrinsic_.Z_f);
+    this->Phi_ = this->camera_intrinsic_.R_f / (3*this->camera_intrinsic_.Z_f);
 
     Mat Mat_u = Mat::zeros(resolution_y, resolution_x, CV_64FC1);
     cv::parallel_for_(cv::Range(0, Mat_u.rows), [&](const cv::Range& range) {
@@ -46,14 +46,14 @@ Direct_Microscopic_Visual_Servoing::Direct_Microscopic_Visual_Servoing(int resol
 }
 
 // 计算直接显微视觉伺服特征误差 交互矩阵
-void Direct_Microscopic_Visual_Servoing::get_feature_error_interaction_matrix()
+void Defocus_Microscopic_Visual_Servoing::get_feature_error_interaction_matrix()
 {
     this->error_s_ = this->image_gray_current_.reshape(0, this->image_gray_current_.rows*this->image_gray_current_.cols)
                 - this->image_gray_desired_.reshape(0, this->image_gray_desired_.rows*this->image_gray_desired_.cols);  
     get_interaction_matrix_gray();
 }
 
-void Direct_Microscopic_Visual_Servoing::get_interaction_matrix_gray()
+void Defocus_Microscopic_Visual_Servoing::get_interaction_matrix_gray()
 {
     Mat I_u, I_v, I_uu, I_vv, Delta_I;
     get_image_gradient_u(this->image_gray_current_, I_u);
@@ -63,20 +63,19 @@ void Direct_Microscopic_Visual_Servoing::get_interaction_matrix_gray()
     cv::add(I_uu, I_vv, Delta_I);
 
     Mat Mat_div_Z = this->A_ * this->Mat_u_ + this->B_ * this->Mat_v_ + this->C_;
-    Mat Mat_div_Zf_Z = 1 / this->camera_intrinsic_.Z_f - Mat_div_Z;
     Mat Mat_uIu_vIv = this->Mat_u_.mul(I_u) + this->Mat_v_.mul(I_v);
     Mat Mat_Phi_Delta_I = this->Phi_ * Delta_I;
 
     Mat L_Ic_vx = -I_u.mul(Mat_div_Z) * this->camera_intrinsic_.D_f_k_uv;
     Mat L_Ic_vy = -I_v.mul(Mat_div_Z) * this->camera_intrinsic_.D_f_k_uv;
     Mat L_Ic_vz = Mat_uIu_vIv.mul(Mat_div_Z) 
-                    + this->camera_intrinsic_.D_f_k_uv * Mat_Phi_Delta_I.mul(Mat_div_Z).mul( Mat_div_Zf_Z);
+                    + this->camera_intrinsic_.D_f_k_uv * Mat_Phi_Delta_I.mul(Mat_div_Z);
     Mat L_Ic_wx = this->camera_intrinsic_.D_f_k_uv * I_v 
                     + Mat_uIu_vIv.mul(this->Mat_v_) / this->camera_intrinsic_.D_f_k_uv
-                    + Mat_Phi_Delta_I.mul(this->Mat_v_).mul(Mat_div_Zf_Z);
+                    + Mat_Phi_Delta_I.mul(this->Mat_v_);
     Mat L_Ic_wy = -this->camera_intrinsic_.D_f_k_uv * I_u
                     - Mat_uIu_vIv.mul(this->Mat_u_) / this->camera_intrinsic_.D_f_k_uv
-                    - Mat_Phi_Delta_I.mul(this->Mat_u_).mul(Mat_div_Zf_Z);
+                    - Mat_Phi_Delta_I.mul(this->Mat_u_);
     Mat L_Ic_wz = this->Mat_v_ * I_u - this->Mat_u_ * I_v;
 
     int totalElements = this->image_gray_current_.total();
@@ -121,7 +120,7 @@ void Direct_Microscopic_Visual_Servoing::get_interaction_matrix_gray()
 }
 
 // 计算矩阵u方向上的梯度
-void Direct_Microscopic_Visual_Servoing::get_image_gradient_u(const Mat& image, Mat& I_u)
+void Defocus_Microscopic_Visual_Servoing::get_image_gradient_u(const Mat& image, Mat& I_u)
 {
     I_u = cv::Mat::zeros(image.rows, image.cols, CV_64FC1);
     // 中间部分：(i+1)列 - (i-1)列
@@ -132,7 +131,7 @@ void Direct_Microscopic_Visual_Servoing::get_image_gradient_u(const Mat& image, 
 }
 
 // 计算矩阵v方向上的梯度
-void Direct_Microscopic_Visual_Servoing::get_image_gradient_v(const Mat& image, Mat& I_v)
+void Defocus_Microscopic_Visual_Servoing::get_image_gradient_v(const Mat& image, Mat& I_v)
 {
     I_v = cv::Mat::zeros(image.rows, image.cols, CV_64FC1);
     // 中间部分：(i+1)行 - (i-1)行
@@ -142,9 +141,9 @@ void Direct_Microscopic_Visual_Servoing::get_image_gradient_v(const Mat& image, 
     cv::divide(I_v, this->div_row_, I_v);
 }
 
-string Direct_Microscopic_Visual_Servoing::get_method_name()
+string Defocus_Microscopic_Visual_Servoing::get_method_name()
 {
-    return "Direct_Microscopic_Visual_Servoing";
+    return "Defocus_Microscopic_Visual_Servoing";
 }
 
 

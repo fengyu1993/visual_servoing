@@ -91,38 +91,43 @@ int main()
     std::cout << "结果矩阵：\n" << mat << std::endl;
 
 
-    // cv::Mat I(2000, 2000, CV_64FC1);
-    // cv::randn(I, cv::Scalar(0), cv::Scalar(1));
+    cv::Mat I(2000, 2000, CV_64FC1);
+    cv::randn(I, cv::Scalar(0), cv::Scalar(1));
 
-    // Mat I_x_matlab;
-    // auto start = std::chrono::high_resolution_clock::now();
-    // get_image_gradient_x_old(I, I_x_matlab);
-    // auto end = std::chrono::high_resolution_clock::now();
-    // auto duration_matlab_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    Mat I_x_matlab;
+    auto start = std::chrono::high_resolution_clock::now();
+    get_image_gradient_x_old(I, I_x_matlab);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration_matlab_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    // cv::Mat I_x_mat;
-    // start = std::chrono::high_resolution_clock::now();
-    // get_image_gradient_x(I, I_x_mat);
-    // end = std::chrono::high_resolution_clock::now();
-    // auto duration_mat_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    cv::Mat I_x_mat;
+    start = std::chrono::high_resolution_clock::now();
+    get_image_gradient_x(I, I_x_mat);
+    end = std::chrono::high_resolution_clock::now();
+    auto duration_mat_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    // Mat I_y_matlab;
-    // start = std::chrono::high_resolution_clock::now();
-    // get_image_gradient_y_old(I, I_y_matlab);
-    // end = std::chrono::high_resolution_clock::now();
-    // duration_matlab_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    cout << "Ix" << endl;
+    cout << "duration_matlab_ms = " << duration_matlab_ms << endl;
+    cout << "duration_mat_ms = " << duration_mat_ms << endl;
 
-    // cv::Mat I_y_mat;
-    // start = std::chrono::high_resolution_clock::now();
-    // get_image_gradient_y(I, I_y_mat);
-    // end = std::chrono::high_resolution_clock::now();
-    // duration_mat_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    Mat I_y_matlab;
+    start = std::chrono::high_resolution_clock::now();
+    get_image_gradient_y_old(I, I_y_matlab);
+    end = std::chrono::high_resolution_clock::now();
+    duration_matlab_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    cv::Mat I_y_mat;
+    start = std::chrono::high_resolution_clock::now();
+    get_image_gradient_y(I, I_y_mat);
+    end = std::chrono::high_resolution_clock::now();
+    duration_mat_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
 
     // cout << "I = " << endl << I << endl;
     // cout << "error = " << endl << I_y_mat - I_y_matlab << endl;
-    // cout << "duration_matlab_ms = " << duration_matlab_ms << endl;
-    // cout << "duration_mat_ms = " << duration_mat_ms << endl;
+    cout << "Iy" << endl;
+    cout << "duration_matlab_ms = " << duration_matlab_ms << endl;
+    cout << "duration_mat_ms = " << duration_mat_ms << endl;
 
 
     return 1;
@@ -227,7 +232,7 @@ void get_image_gradient_y_old(const Mat& image, Mat& I_y)
         // resize(img_old, img_old, dsize, 0, 0, INTER_AREA);
         // img_old.resize(512, 512);
 	    // Mat img_new = img_old.clone();
-        // Mat affine_matrix = getRotationMatrix2D(Point2f(img_new.cols / 2, img_new.rows / 2), 90 * -1, 1.0);//ÇóµÃÐý×ª¾ØÕó
+        // Mat affine_matrix = getRotationMatrix2D(Point2f(img_new.cols / 2, img_new.rows / 2), 90 * -1, 1.0);//?0?5ó?0?8?0?1?0?4?0?5×?0?9?0?6?0?1?0?9ó
 	    // warpAffine(img_old, img_new, affine_matrix, img_new.size());
 
         // imshow("grey", img_old);
