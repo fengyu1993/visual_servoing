@@ -38,13 +38,3 @@ name_camera_frame:  "camera_polar_frame"
 
 name_effector:      "tool0_controller"
 
-polar_row_init:   20
-polar_row_end:    60
-polar_col_init:   140
-polar_col_end:    140
-
-gray_row_init:    20
-gray_row_end:     0
-gray_col_init:    250
-gray_col_end:     205
-
