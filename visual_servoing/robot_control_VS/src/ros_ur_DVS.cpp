@@ -1,6 +1,6 @@
 #include "ros_ur_DVS.h"
 
-Ros_ur_DVS::Ros_ur_DVS()
+Ros_ur_DVS::Ros_ur_DVS(): it_(nh_) 
 {
     // 设置分辨率
     int resolution_x, resolution_y;
@@ -21,65 +21,105 @@ Ros_ur_DVS::Ros_ur_DVS()
     this->goal.trajectory.joint_names.push_back("wrist_1_joint");
     this->goal.trajectory.joint_names.push_back("wrist_2_joint");
     this->goal.trajectory.joint_names.push_back("wrist_3_joint");
-    this->client = new Client("pos_joint_traj_controller/follow_joint_trajectory", true);  
-    ROS_INFO("Waiting for action server to start.");
-    this->client->waitForServer();  // 将会一直等待直到动作服务器可用
-    ROS_INFO("Server started, sending goal.");
+
+    this->image_polarized_sub_ = this->it_.subscribe("camera/polarized_Iall_gray", 1, &Ros_ur_DVS::Callback, this);
+ 
+    // this->client = new Client("pos_joint_traj_controller/follow_joint_trajectory", true);  
+    // ROS_INFO("Waiting for action server to start.");
+    // this->client->waitForServer();  // 将会一直等待直到动作服务器可用
+    // ROS_INFO("Server started, sending goal.");
 }
 
-void Ros_ur_DVS::Callback(const ImageConstPtr& image_polar_msg, const ImageConstPtr& image_depth_msg)
+void Ros_ur_DVS::Callback(const ImageConstPtr& image_polar_msg)
 {
-    if(this->start_DVS)
-    {      
-        // 数据转换
-        Mat depth_new, img_new;
-        get_image_data_convert(image_polar_msg, image_depth_msg, img_new, depth_new);
-        // 获取相机位姿
-        Mat camera_pose = get_camera_pose(); 
-        // 计算相机速度并保存数据
-        this->DVS->set_image_depth_current(depth_new);
-        this->DVS->set_image_gray_current(img_new); 
-        // 准备
-        if(this->DVS->flag_first_)
-        {  
-            double lambda, epsilon;
-            Mat img_old, depth_old, camera_intrinsic, pose_desired;
-            // 获取参数
-            get_parameters_DVS(lambda, epsilon, img_old, depth_old, camera_intrinsic, pose_desired);
-            this->DVS->init_VS(lambda, epsilon, img_old, depth_old, img_new, camera_intrinsic, pose_desired);
-            this->DVS->flag_first_ = false;
+        try {
+        // 验证图像格式
+        if (image_polar_msg->encoding != sensor_msgs::image_encodings::TYPE_8UC4) {
+            ROS_WARN_THROTTLE(1.0, "Invalid encoding: %s (expected 8UC4)", 
+                            image_polar_msg->encoding.c_str());
+            return;
         }
-
-        Mat camera_velocity = this->DVS->get_camera_velocity(); 
-
-        this->DVS->save_data(camera_pose);
-        // ROS_INFO("cyh");  
-        // cout << "img_old = \n" <<  img_old.rowRange(0,10).colRange(0,5) << endl;
-        // cout << "img_new = \n" <<  img_new.rowRange(0,10).colRange(0,5) << endl;
-        // cout << "depth_old = \n" <<  depth_old.rowRange(0,10).colRange(0,5) << endl;
-        // cout << "depth_new = \n" <<  depth_new.rowRange(0,10).colRange(0,5) << endl;
-        // cout << "camera_velocity = \n" << camera_velocity << endl;
-        cout << "iteration_num = " << this->DVS->iteration_num_ << endl;
-        cout << "error = " << ((double)*(this->DVS->data_vs.error_feature_.end<double>() - 1)) << endl;
-
-        // 判断是否成功并做速度转换
-        if(this->DVS->is_success() || this->DVS->iteration_num_ > 2000)
-        {
-            this->flag_success_ = true;
-            this->DVS->write_data();  
-            camera_velocity = 0 * camera_velocity;
-            this->start_DVS = false;
+        // 转换为OpenCV格式
+        cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(image_polar_msg, sensor_msgs::image_encodings::TYPE_8UC4);
+        // 拆分为四个单通道图像
+        std::vector<cv::Mat> channels;
+        cv::split(cv_ptr->image, channels);      
+        if (channels.size() < 4) {
+            ROS_ERROR("Expected 4 channels, got %zu", channels.size());
+            return;
         }
-        else
-        {
-            this->flag_success_ = false;
-            // 速度转换
-            
+        // 重命名通道
+        cv::Mat gray_0 = channels[0];  
+        cv::Mat gray_45 = channels[1];   
+        cv::Mat gray_90 = channels[2];   
+        cv::Mat gray_135 = channels[3];  
+        // 显示
+        cv::imshow("I0", gray_0);
+        cv::imshow("I45", gray_45);
+        cv::imshow("I90", gray_90);
+        cv::imshow("I135", gray_135);
+        int key = cv::waitKey(1);
+        // 退出
+        if (key == 'q' || key == 27) {
+            ros::shutdown();
         }
-
-       // 发布速度信息
-        twist_publist(camera_velocity);
+    } catch (const cv_bridge::Exception& e) {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+    } catch (const std::exception& e) {
+        ROS_ERROR("Exception: %s", e.what());
     }
+
+    // if(this->start_DVS)
+    // {      
+    //     // 数据转换
+    //     Mat depth_new, img_new;
+    //     get_image_data_convert(image_polar_msg, image_depth_msg, img_new, depth_new);
+    //     // 获取相机位姿
+    //     Mat camera_pose = get_camera_pose(); 
+    //     // 计算相机速度并保存数据
+    //     this->DVS->set_image_depth_current(depth_new);
+    //     this->DVS->set_image_gray_current(img_new); 
+    //     // 准备
+    //     if(this->DVS->flag_first_)
+    //     {  
+    //         double lambda, epsilon;
+    //         Mat img_old, depth_old, camera_intrinsic, pose_desired;
+    //         // 获取参数
+    //         get_parameters_DVS(lambda, epsilon, img_old, depth_old, camera_intrinsic, pose_desired);
+    //         this->DVS->init_VS(lambda, epsilon, img_old, depth_old, img_new, camera_intrinsic, pose_desired);
+    //         this->DVS->flag_first_ = false;
+    //     }
+
+    //     Mat camera_velocity = this->DVS->get_camera_velocity(); 
+
+    //     this->DVS->save_data(camera_pose);
+    //     // ROS_INFO("cyh");  
+    //     // cout << "img_old = \n" <<  img_old.rowRange(0,10).colRange(0,5) << endl;
+    //     // cout << "img_new = \n" <<  img_new.rowRange(0,10).colRange(0,5) << endl;
+    //     // cout << "depth_old = \n" <<  depth_old.rowRange(0,10).colRange(0,5) << endl;
+    //     // cout << "depth_new = \n" <<  depth_new.rowRange(0,10).colRange(0,5) << endl;
+    //     // cout << "camera_velocity = \n" << camera_velocity << endl;
+    //     cout << "iteration_num = " << this->DVS->iteration_num_ << endl;
+    //     cout << "error = " << ((double)*(this->DVS->data_vs.error_feature_.end<double>() - 1)) << endl;
+
+    //     // 判断是否成功并做速度转换
+    //     if(this->DVS->is_success() || this->DVS->iteration_num_ > 2000)
+    //     {
+    //         this->flag_success_ = true;
+    //         this->DVS->write_data();  
+    //         camera_velocity = 0 * camera_velocity;
+    //         this->start_DVS = false;
+    //     }
+    //     else
+    //     {
+    //         this->flag_success_ = false;
+    //         // 速度转换
+            
+    //     }
+
+    //    // 发布速度信息
+    //     twist_publist(camera_velocity);
+    // }
 }
 
 
@@ -147,15 +187,6 @@ Mat Ros_ur_DVS::get_parameter_Matrix(string str, int row, int col)
     Mat Matrix_temp = Mat(row, col, CV_64FC1, data);
     Matrix_temp.copyTo(Matrix);   
     return Matrix;
-}
-
-
-void Ros_ur_DVS::initialize_time_sync()
-{
-    image_color_sub_.subscribe(this->nh_,"/camera/polarized_image", 1);
-    image_depth_sub_.subscribe(this->nh_,"/camera/depth_image", 1);
-    this->sync_ = new TimeSynchronizer<Image, Image>(image_color_sub_, image_depth_sub_, 1);
-    this->sync_->registerCallback(boost::bind(&Ros_ur_DVS::Callback, this, _1, _2));
 }
 
 

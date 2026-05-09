@@ -17,6 +17,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include "control_switcher_ur.h"
+#include <image_transport/image_transport.h>
 
 using namespace cv;
 using namespace std;
@@ -29,14 +30,14 @@ class Ros_ur_DVS
 {
     protected:
         ros::NodeHandle                         nh_; 
-        message_filters::Subscriber<Image>      image_color_sub_;
-        message_filters::Subscriber<Image>      image_depth_sub_;
+        image_transport::ImageTransport         it_;
+        image_transport::Subscriber             image_polarized_sub_;
         actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> *client;
         control_msgs::FollowJointTrajectoryGoal goal;
-        TimeSynchronizer<Image, Image>          *sync_;
         tf::TransformListener                   listener_pose_;
         Mat                                     effector_velocity_base_;
         ros::Publisher                          pub_twist_; 
+
 
     public:
         Direct_Visual_Servoing *DVS;
@@ -49,10 +50,9 @@ class Ros_ur_DVS
 
     public:
         Ros_ur_DVS();
-        void Callback(const ImageConstPtr& image_polar_msg, const ImageConstPtr& image_depth_msg);     
+        void Callback(const ImageConstPtr& image_polar_msg);     
         void get_parameters_resolution(int& resolution_x, int& resolution_y);
         Mat get_parameter_Matrix(string str, int row, int col);
-        void initialize_time_sync();
         void get_image_data_convert(const ImageConstPtr& image_polar_msg, const ImageConstPtr& image_depth_msg, Mat& color_img, Mat& depth_img);
         Mat rgb_image_operate(Mat& image_rgb);
         Mat depth_image_operate(Mat& image_depth);

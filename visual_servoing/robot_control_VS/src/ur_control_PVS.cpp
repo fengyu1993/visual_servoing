@@ -33,9 +33,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg) {
         cv::Mat gray_135 = channels[3];  
         // ÏÔÊ¾
         cv::imshow("I0", gray_0);
-        cv::imshow("I45", gray_0);
-        cv::imshow("I90", gray_0);
-        cv::imshow("I135", gray_0);
+        cv::imshow("I45", gray_45);
+        cv::imshow("I90", gray_90);
+        cv::imshow("I135", gray_135);
         int key = cv::waitKey(1);
         // ÍË³ö
         if (key == 'q' || key == 27) {
