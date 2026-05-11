@@ -9,6 +9,6 @@
 <!-- <include file="$(find arena_camera)/launch/arena_camera_node.launch" />  -->
 
 <node name="publish_LUCID" pkg="robot_control_VS"  type="publish_LUCID"  output="screen"/> 
-<node name="ur_control_PVS" pkg="robot_control_VS"  type="ur_control_PVS"  output="screen"/> 
+<node name="ur_control_DVS" pkg="robot_control_VS"  type="ur_control_DVS"  output="screen"/> 
 
 </launch>  

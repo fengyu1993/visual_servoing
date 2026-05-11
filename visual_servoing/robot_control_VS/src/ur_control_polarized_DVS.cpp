@@ -3,31 +3,42 @@
 
 int main(int argc, char** argv)
 {
-    ROS_INFO("cyh_1");
     ros::init(argc, argv, "visual_servoing_node");
-ROS_INFO("cyh_2");
+    ROS_INFO("cyh_2");
     Ros_ur_DVS DVS_control;
-ROS_INFO("cyh_3");
+    ROS_INFO("cyh_3");
 
-    // 【新增】预先创建窗口，防止回调中窗口闪烁
+    //       使用 AsyncSpinner 让 ROS 在后台线程处理回调
+    cv::namedWindow("VS_image", cv::WINDOW_AUTOSIZE);
+    ros::AsyncSpinner spinner(1); 
 
-    cv::namedWindow("Polarized_I0", cv::WINDOW_AUTOSIZE);
+    spinner.start();
+    ros::Rate rate(30); // 30Hz
+    cv::Mat display_img;
+    while (ros::ok()) {
 
-    cv::namedWindow("Polarized_I45", cv::WINDOW_AUTOSIZE);
+        if (!DVS_control.VS_image_.empty()) {
 
-    cv::namedWindow("Polarized_I90", cv::WINDOW_AUTOSIZE);
+            DVS_control.VS_image_.convertTo(display_img, CV_8U);
+            cv::imshow("VS_image", display_img);
 
-    cv::namedWindow("Polarized_I135", cv::WINDOW_AUTOSIZE);
+            int key = cv::waitKey(10); // 等待10ms，给人眼反应时间
 
+            if (key == 'q' || key == 27) {
 
-    ros::spin();
+                cv::destroyAllWindows();
 
-    
+                ros::shutdown();
 
-    // 销毁窗口
+                break;
 
-    cv::destroyAllWindows();
+            }
 
+        }
+
+        rate.sleep();
+
+    }
     return 0;
 
     // // 准备

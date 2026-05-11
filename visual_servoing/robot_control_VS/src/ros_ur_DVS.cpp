@@ -9,6 +9,7 @@ Ros_ur_DVS::Ros_ur_DVS(): it_(nh_)
     this->DVS = new Direct_Visual_Servoing(resolution_x, resolution_y);
     this->flag_success_ = false;
     this->nh_.getParam("control_rate", this->control_rate_);
+    this->nh_.getParam("itera_num_all", this->itera_num_all_);
     this->nh_.getParam("name_link0", this->name_link0_);
     this->nh_.getParam("name_camera_frame", this->name_camera_frame_);
     this->nh_.getParam("name_effector", this->name_effector_);
@@ -21,109 +22,112 @@ Ros_ur_DVS::Ros_ur_DVS(): it_(nh_)
     this->goal.trajectory.joint_names.push_back("wrist_1_joint");
     this->goal.trajectory.joint_names.push_back("wrist_2_joint");
     this->goal.trajectory.joint_names.push_back("wrist_3_joint");
-
     this->image_polarized_sub_ = this->it_.subscribe("camera/polarized_Iall_gray", 1, &Ros_ur_DVS::Callback, this);
- 
+    this->R_temp_ = Mat::eye(3, 3, CV_64FC1);
+    this->p_temp_= Mat::zeros(3, 1, CV_64FC1);
+    this->p_so3_temp_= Mat::zeros(3, 3, CV_64FC1);
+    this->effector_twist_ = Mat::zeros(6,1,CV_64FC1);
+    this->effector_twist_base_ = Mat::zeros(6,1,CV_64FC1);
+    this->T_effector_to_base_ = Mat::eye(4, 4, CV_64FC1);
+    this->T_camera_to_effector_ = Mat::eye(4, 4, CV_64FC1);
+    this->T_camera_to_base_ = Mat::eye(4, 4, CV_64FC1);
+    this->px_temp_ = 0; this->py_temp_ = 0; this->pz_temp_ = 0; 
+
+     cv::namedWindow("VS_image", cv::WINDOW_AUTOSIZE);
     // this->client = new Client("pos_joint_traj_controller/follow_joint_trajectory", true);  
     // ROS_INFO("Waiting for action server to start.");
     // this->client->waitForServer();  // 将会一直等待直到动作服务器可用
     // ROS_INFO("Server started, sending goal.");
 }
 
+
+
 void Ros_ur_DVS::Callback(const ImageConstPtr& image_polar_msg)
+{
+    if(this->start_DVS)
+    {   
+        // 计算视觉伺服的图像
+        if(~this->get_visual_servoing_image(image_polar_msg, this->VS_image_))
+            return;
+        // 数据转换
+        Mat depth_new, img_new;
+        // 获取相机位姿
+        this->get_camera_pose(this->T_camera_to_base_); 
+        // 计算相机速度并保存数据
+        this->DVS->set_image_depth_current(depth_new);
+        this->DVS->set_image_gray_current(img_new); 
+        // 准备
+        if(this->DVS->flag_first_)
+        {  
+            double lambda, epsilon;
+            Mat img_old, depth_old, camera_intrinsic, pose_desired;
+            // 获取参数
+            this->get_parameters_DVS(lambda, epsilon, img_old, depth_old, camera_intrinsic, pose_desired);
+            this->DVS->init_VS(lambda, epsilon, img_old, depth_old, img_new, camera_intrinsic, pose_desired);
+            this->DVS->flag_first_ = false;
+        }
+
+        Mat camera_velocity = this->DVS->get_camera_velocity(); 
+
+        this->DVS->save_data(this->T_camera_to_base_);
+        // 判断是否成功并做速度转换
+        if(this->DVS->is_success() || this->DVS->iteration_num_ > this->itera_num_all_)
+        {
+            this->flag_success_ = true;
+            this->DVS->write_data();  
+            camera_velocity = 0 * camera_velocity;
+            this->start_DVS = false;
+        }
+        else
+        {
+            this->flag_success_ = false;
+            
+        }
+       // 发布速度信息
+        this->twist_publist(camera_velocity);
+    }
+}
+
+
+
+
+bool Ros_ur_DVS::get_visual_servoing_image(const ImageConstPtr& image_polar_msg, cv::Mat& VS_image)
 {
         try {
         // 验证图像格式
         if (image_polar_msg->encoding != sensor_msgs::image_encodings::TYPE_8UC4) {
+            ROS_INFO("get_visual_servoing_image_cyh_1");
             ROS_WARN_THROTTLE(1.0, "Invalid encoding: %s (expected 8UC4)", 
                             image_polar_msg->encoding.c_str());
-            return;
+            return false;
         }
+        ROS_INFO("get_visual_servoing_image_cyh_4");
         // 转换为OpenCV格式
-        cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(image_polar_msg, sensor_msgs::image_encodings::TYPE_8UC4);
+        cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvShare(image_polar_msg, sensor_msgs::image_encodings::TYPE_8UC4);
+        // 将 8UC4 转换为 64FC4
+        cv::Mat img_double;
+        cv_ptr->image.convertTo(img_double, CV_64FC4); 
         // 拆分为四个单通道图像
-        std::vector<cv::Mat> channels;
-        cv::split(cv_ptr->image, channels);      
-        if (channels.size() < 4) {
-            ROS_ERROR("Expected 4 channels, got %zu", channels.size());
-            return;
-        }
-        // 重命名通道
-        cv::Mat gray_0 = channels[0];  
-        cv::Mat gray_45 = channels[1];   
-        cv::Mat gray_90 = channels[2];   
-        cv::Mat gray_135 = channels[3];  
-        // 显示
-        cv::imshow("I0", gray_0);
-        cv::imshow("I45", gray_45);
-        cv::imshow("I90", gray_90);
-        cv::imshow("I135", gray_135);
-        int key = cv::waitKey(1);
-        // 退出
-        if (key == 'q' || key == 27) {
-            ros::shutdown();
-        }
+        std::vector<cv::Mat> channels(4);
+        cv::split(img_double, channels);      
+        // 计算视觉伺服所需图像
+        VS_image = (channels[0] + channels[1] + channels[2] + channels[3]) / 4.0; 
+        return true;
+
     } catch (const cv_bridge::Exception& e) {
+        ROS_INFO("get_visual_servoing_image_cyh_2");
         ROS_ERROR("cv_bridge exception: %s", e.what());
+        return false;
     } catch (const std::exception& e) {
+        ROS_INFO("get_visual_servoing_image_cyh_3");
         ROS_ERROR("Exception: %s", e.what());
+        return false;
     }
-
-    // if(this->start_DVS)
-    // {      
-    //     // 数据转换
-    //     Mat depth_new, img_new;
-    //     get_image_data_convert(image_polar_msg, image_depth_msg, img_new, depth_new);
-    //     // 获取相机位姿
-    //     Mat camera_pose = get_camera_pose(); 
-    //     // 计算相机速度并保存数据
-    //     this->DVS->set_image_depth_current(depth_new);
-    //     this->DVS->set_image_gray_current(img_new); 
-    //     // 准备
-    //     if(this->DVS->flag_first_)
-    //     {  
-    //         double lambda, epsilon;
-    //         Mat img_old, depth_old, camera_intrinsic, pose_desired;
-    //         // 获取参数
-    //         get_parameters_DVS(lambda, epsilon, img_old, depth_old, camera_intrinsic, pose_desired);
-    //         this->DVS->init_VS(lambda, epsilon, img_old, depth_old, img_new, camera_intrinsic, pose_desired);
-    //         this->DVS->flag_first_ = false;
-    //     }
-
-    //     Mat camera_velocity = this->DVS->get_camera_velocity(); 
-
-    //     this->DVS->save_data(camera_pose);
-    //     // ROS_INFO("cyh");  
-    //     // cout << "img_old = \n" <<  img_old.rowRange(0,10).colRange(0,5) << endl;
-    //     // cout << "img_new = \n" <<  img_new.rowRange(0,10).colRange(0,5) << endl;
-    //     // cout << "depth_old = \n" <<  depth_old.rowRange(0,10).colRange(0,5) << endl;
-    //     // cout << "depth_new = \n" <<  depth_new.rowRange(0,10).colRange(0,5) << endl;
-    //     // cout << "camera_velocity = \n" << camera_velocity << endl;
-    //     cout << "iteration_num = " << this->DVS->iteration_num_ << endl;
-    //     cout << "error = " << ((double)*(this->DVS->data_vs.error_feature_.end<double>() - 1)) << endl;
-
-    //     // 判断是否成功并做速度转换
-    //     if(this->DVS->is_success() || this->DVS->iteration_num_ > 2000)
-    //     {
-    //         this->flag_success_ = true;
-    //         this->DVS->write_data();  
-    //         camera_velocity = 0 * camera_velocity;
-    //         this->start_DVS = false;
-    //     }
-    //     else
-    //     {
-    //         this->flag_success_ = false;
-    //         // 速度转换
-            
-    //     }
-
-    //    // 发布速度信息
-    //     twist_publist(camera_velocity);
-    // }
 }
 
 
-Mat Ros_ur_DVS::get_camera_pose()
+
+void Ros_ur_DVS::get_camera_pose(Mat& T_camera_to_base)
 {
     tf::StampedTransform transform;
     const int max_attempts = 5;
@@ -132,12 +136,10 @@ Mat Ros_ur_DVS::get_camera_pose()
     {
         try
         {
-            tf::StampedTransform transform; 
             // 尝试获取当前时刻的变换
-            this->listener_pose_.lookupTransform(this->name_link0_, this->name_camera_frame_, ros::Time(0), transform);
+            this->listener_pose_.lookupTransform(this->name_link0_, this->name_camera_frame_, ros::Time(0), this->transform_temp_);
             // this->listener_pose_.lookupTransform("base", "camera_polar_frame", ros::Time(0), transform);
-            Mat camera_to_base = get_T(transform);  
-            return camera_to_base;
+            get_T(this->transform_temp_, T_camera_to_base);  
         }
         catch (tf::TransformException &ex)
         {
@@ -146,26 +148,23 @@ Mat Ros_ur_DVS::get_camera_pose()
             ros::Duration(retry_delay).sleep();
         }
     }
-    return Mat::eye(4,4,CV_64FC1);
 }
 
 void Ros_ur_DVS::twist_publist(Mat camera_velocity)
 {
-    Mat T_effector_to_base = Mat::eye(4, 4, CV_64F);
-    Mat T_camera_to_effector = Mat::eye(4, 4, CV_64F);
-    get_camera_effector_pose(T_effector_to_base, T_camera_to_effector);
+    get_camera_effector_pose(this->T_effector_to_base_, this->T_camera_to_effector_);
     // 速度转换
-    Mat effector_twist = get_effector_velocity(camera_velocity, T_camera_to_effector);
-    this->effector_velocity_base_ = velocity_effector_to_base(effector_twist, T_effector_to_base);
+    get_effector_twist(camera_velocity, this->T_camera_to_effector_, this->effector_twist_);
+    velocity_effector_to_base(this->effector_twist_, this->T_effector_to_base_, this->effector_twist_base_);
     // 发布速度信息
-    geometry_msgs::Twist effector_Twist;
-    effector_Twist.linear.x = this->effector_velocity_base_.at<double>(0,0);
-    effector_Twist.linear.y = this->effector_velocity_base_.at<double>(1,0);
-    effector_Twist.linear.z = this->effector_velocity_base_.at<double>(2,0);
-    effector_Twist.angular.x = this->effector_velocity_base_.at<double>(3,0);
-    effector_Twist.angular.y = this->effector_velocity_base_.at<double>(4,0);
-    effector_Twist.angular.z = this->effector_velocity_base_.at<double>(5,0);
-    this->pub_twist_.publish(effector_Twist);
+    const double* vel_ptr = this->effector_velocity_base_.ptr<double>(0); 
+    msg_effector_twist_.linear.x = vel_ptr[0];
+    msg_effector_twist_.linear.y = vel_ptr[1];
+    msg_effector_twist_.linear.z = vel_ptr[2];
+    msg_effector_twist_.angular.x = vel_ptr[3];
+    msg_effector_twist_.angular.y = vel_ptr[4];
+    msg_effector_twist_.angular.z = vel_ptr[5];
+    this->pub_twist_.publish(msg_effector_twist_);
 }
 
 void Ros_ur_DVS::get_parameters_resolution(int& resolution_x, int& resolution_y)
@@ -202,102 +201,68 @@ void Ros_ur_DVS::get_parameters_DVS(double& lambda, double& epsilon, Mat& image_
     // 读彩色图
     this->nh_.getParam("image_rgb_desired_name", name);
     Mat image_rgb_desired = imread(loaction + name, IMREAD_COLOR);
-    image_gray_desired = rgb_image_operate(image_rgb_desired);
-    // 读深度图
-    this->nh_.getParam("image_depth_desired_name", name);
-    Mat image_depth_desired_temp = imread(loaction + name, IMREAD_UNCHANGED); 
-    image_depth_desired = depth_image_operate(image_depth_desired_temp);   
+    rgb_image_operate(image_rgb_desired, image_gray_desired);  
+    // 赋值深度图
+    double depth_desired;
+    this->nh_.getParam("depth_desired", depth_desired);
+    image_depth_desired = Mat::ones(image_rgb_desired.size(), CV_64F) * 1.5;
     // 相机内参
     camera_intrinsic = get_parameter_Matrix("camera_intrinsic", 3, 3);
     // 期望位姿
     pose_desired = get_parameter_Matrix("pose_desired", 4, 4);
 }
 
-void Ros_ur_DVS::get_image_data_convert(const ImageConstPtr& image_polar_msg, const ImageConstPtr& image_depth_msg, Mat& gray_img, Mat& depth_img)
-{
-    // rgb转灰度 [0,255]->[1,0]
-    cv_bridge::CvImagePtr cv_ptr_polar = cv_bridge::toCvCopy(image_polar_msg, sensor_msgs::image_encodings::BGR8);
-    Mat img_new_polar = cv_ptr_polar->image;
-    // gray_img = rgb_image_operate(img_new_rgb); % realsense camera
-    vector<Mat> channels;
-    split(img_new_polar, channels); // 将图像分割成多个通道
-    gray_img = channels[0];
-    // 深度图
-    cv_bridge::CvImagePtr cv_ptr_depth = cv_bridge::toCvCopy(image_depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
-    Mat depth_img_temp = cv_ptr_depth->image;
-    depth_img = depth_image_operate(depth_img_temp);
-}
 
-Mat Ros_ur_DVS::rgb_image_operate(Mat& image_rgb)
-{
-    Mat image_gray;
-    cvtColor(image_rgb, image_gray, CV_BGR2GRAY);
-    image_gray.convertTo(image_gray, CV_64FC1);
-    image_gray = image_gray/255.0; 
-    return image_gray;
-}
 
-Mat Ros_ur_DVS::depth_image_operate(Mat& image_depth)
+void Ros_ur_DVS::rgb_image_operate(Mat& image_rgb, Mat& image_gray)
 {
-    Mat image_depth_return;
-    image_depth.convertTo(image_depth_return, CV_64FC1);
-    image_depth_return = image_depth_return / 1000.0;
-    return image_depth_return;
-}
-
-Mat Ros_ur_DVS::velocity_effector_to_base(Mat velocity, Mat effector_to_base)
-{
-    Mat R_effector_to_base = effector_to_base.rowRange(0,3).colRange(0,3);
-    Mat V_effector_to_base = Mat::zeros(6,1,CV_64FC1);
-    V_effector_to_base.rowRange(0,3).colRange(0,1) = R_effector_to_base * velocity.rowRange(0,3).colRange(0,1);
-    V_effector_to_base.rowRange(3,6).colRange(0,1) = R_effector_to_base * velocity.rowRange(3,6).colRange(0,1);
-
-    return V_effector_to_base;
+    Mat temp_gray;
+    cvtColor(image_rgb, temp_gray, cv::COLOR_BGR2GRAY);
+    temp_gray.convertTo(image_gray, CV_64FC1);
 }
 
 
-Mat Ros_ur_DVS::get_T(tf::StampedTransform  transform)
+void Ros_ur_DVS::get_T(tf::StampedTransform  transform, Mat& T)
 {
     tf::Matrix3x3 rotation_matrix = transform.getBasis();
     tf::Vector3 translation_vector = transform.getOrigin();
 
-    Mat T = Mat::eye(4,4,CV_64FC1);
-    Mat p = (Mat_<double>(3,1) << translation_vector[0], translation_vector[1], translation_vector[2]);
-    p.copyTo(T.rowRange(0,3).colRange(3,4));
-    Mat R = (Mat_<double>(3,3) << rotation_matrix[0][0], rotation_matrix[0][1], rotation_matrix[0][2], 
-                                  rotation_matrix[1][0], rotation_matrix[1][1], rotation_matrix[1][2], 
-                                  rotation_matrix[2][0], rotation_matrix[2][1], rotation_matrix[2][2]);
-    R.copyTo(T.rowRange(0,3).colRange(0,3));
+    T.at<double>(0, 3) = translation_vector[0];
+    T.at<double>(1, 3) = translation_vector[1];
+    T.at<double>(2, 3) = translation_vector[2];
 
-    return T; 
+    T.at<double>(0, 0) = rotation_matrix[0][0]; T.at<double>(0, 1) = rotation_matrix[0][1]; T.at<double>(0, 2) = rotation_matrix[0][2];
+    T.at<double>(1, 0) = rotation_matrix[1][0]; T.at<double>(1, 1) = rotation_matrix[1][1]; T.at<double>(1, 2) = rotation_matrix[1][2];
+    T.at<double>(2, 0) = rotation_matrix[2][0]; T.at<double>(2, 1) = rotation_matrix[2][1]; T.at<double>(2, 2) = rotation_matrix[2][2];
 }
 
 
-void Ros_ur_DVS::robot_move_to_target_joint_angle(std::vector<double> joint_group_positions_target)
-{
-   // 添加轨迹点
-    trajectory_msgs::JointTrajectoryPoint point;
-    point.positions.resize(6); 
-    for (int i=0; i<6; i++)
-        point.positions[i] = joint_group_positions_target[i];
-    point.time_from_start = ros::Duration(5.0);
-    this->goal.trajectory.points.clear();
-    this->goal.trajectory.points.push_back(point);
-    this->goal.trajectory.header.stamp = ros::Time::now(); 
-    this->client->sendGoal(goal);
-    // 等待结果
-    bool finished_before_timeout = this->client->waitForResult(ros::Duration(6.0));
+// void Ros_ur_DVS::robot_move_to_target_joint_angle(std::vector<double> joint_group_positions_target)
+// {
+//    // 添加轨迹点
+//     trajectory_msgs::JointTrajectoryPoint point;
+//     point.positions.resize(6); 
+//     for (int i=0; i<6; i++)
+//         point.positions[i] = joint_group_positions_target[i];
+//     point.time_from_start = ros::Duration(5.0);
+//     this->goal.trajectory.points.clear();
+//     this->goal.trajectory.points.push_back(point);
+//     this->goal.trajectory.header.stamp = ros::Time::now(); 
+//     this->client->sendGoal(goal);
+//     // 等待结果
+//     bool finished_before_timeout = this->client->waitForResult(ros::Duration(6.0));
 
-    if (finished_before_timeout)
-    {
-        actionlib::SimpleClientGoalState state = this->client->getState();
-        ROS_INFO("Action finished: %s", state.toString().c_str());
-    }
-    else
-        ROS_INFO("Action did not finish before the time out.");
-}
+//     if (finished_before_timeout)
+//     {
+//         actionlib::SimpleClientGoalState state = this->client->getState();
+//         ROS_INFO("Action finished: %s", state.toString().c_str());
+//     }
+//     else
+//         ROS_INFO("Action did not finish before the time out.");
+// }
 
-void Ros_ur_DVS::get_camera_effector_pose(Mat& effector_to_base, Mat& camera_to_effector)
+
+void Ros_ur_DVS::get_camera_effector_pose(Mat& T_effector_to_base, Mat& T_camera_to_effector)
 {
     tf::StampedTransform transform;
     const int max_attempts = 5;
@@ -308,11 +273,11 @@ void Ros_ur_DVS::get_camera_effector_pose(Mat& effector_to_base, Mat& camera_to_
         {
             tf::StampedTransform transform; //"base" "tool0_controller" "camera_polar_frame"
             // 尝试获取当前时刻的变换
-            this->listener_pose_.lookupTransform(this->name_link0_, this->name_effector_, ros::Time(0), transform);
-            effector_to_base = get_T(transform);
+            this->listener_pose_.lookupTransform(this->name_link0_, this->name_effector_, ros::Time(0), this->transform_temp_);
+            this->get_T(this->transform_temp_, T_effector_to_base);
 
-            this->listener_pose_.lookupTransform(this->name_effector_, this->name_camera_frame_, ros::Time(0), transform);
-            camera_to_effector = get_T(transform);  
+            this->listener_pose_.lookupTransform(this->name_effector_, this->name_camera_frame_, ros::Time(0), this->transform_temp_);
+            this->get_T(this->transform_temp_, T_camera_to_effector);  
         }
         catch (tf::TransformException &ex)
         {
@@ -323,18 +288,25 @@ void Ros_ur_DVS::get_camera_effector_pose(Mat& effector_to_base, Mat& camera_to_
     }
 }
 
-Mat Ros_ur_DVS::get_effector_velocity(Mat camera_velocity, Mat camera_to_effector)
+void Ros_ur_DVS::get_effector_twist(const Mat& camera_velocity, const Mat& T_camera_to_effector, Mat& effector_twist)
 {
-    Mat AdT = Mat::zeros(6,6,CV_64FC1);
-    Mat R = camera_to_effector.rowRange(0,3).colRange(0,3);
-    Mat p = camera_to_effector.rowRange(0,3).colRange(3,4);
-    Mat effector_velocity_base= Mat::zeros(6,1,CV_64FC1);
-    Mat p_so3 = (Mat_<double>(3,3) << 0, -p.at<double>(2,0), p.at<double>(1,0), 
-                                p.at<double>(2,0), 0, -p.at<double>(0,0),
-                                 -p.at<double>(1,0), p.at<double>(0,0), 0);
-    effector_velocity_base.rowRange(0,3).colRange(0,1) = R * camera_velocity.rowRange(0,3).colRange(0,1) + 
-                        p_so3 * R * camera_velocity.rowRange(3,6).colRange(0,1);                   
-    effector_velocity_base.rowRange(3,6).colRange(0,1) = R * camera_velocity.rowRange(3,6).colRange(0,1);
+    this->R_temp_ = T_camera_to_effector(cv::Rect(0, 0, 3, 3));
+    this->p_temp_ = T_camera_to_effector(cv::Rect(3, 0, 1, 3));
+    this->px_temp_ = this->p_temp_.at<double>(0);
+    this->py_temp_ = this->p_temp_.at<double>(1);
+    this->pz_temp_ = this->p_temp_.at<double>(2);
 
-    return  effector_velocity_base;
+    this->p_so3_temp_.at<double>(0,1) = -this->pz_temp_;  this->p_so3_temp_.at<double>(0,2) = this->py_temp_;
+    this->p_so3_temp_.at<double>(1,0) = this->pz_temp_;   this->p_so3_temp_.at<double>(1,2) = -this->px_temp_;
+    this->p_so3_temp_.at<double>(2,0) = -this->py_temp_;  this->p_so3_temp_.at<double>(2,1) = this->px_temp_;   
+
+    effector_twist.rowRange(0,3).colRange(0,1) = this->R_temp_ * camera_velocity.rowRange(0,3).colRange(0,1) + 
+                        this->p_so3_temp_ * this->R_temp_ * camera_velocity.rowRange(3,6).colRange(0,1);                   
+    effector_twist.rowRange(3,6).colRange(0,1) = this->R_temp_ * camera_velocity.rowRange(3,6).colRange(0,1);
+}
+
+void Ros_ur_DVS::velocity_effector_to_base(const Mat& velocity, const Mat& effector_to_base, Mat& effector_twist_bast)
+{
+    effector_twist_bast.rowRange(0,3).colRange(0,1) = effector_to_base.rowRange(0,3).colRange(0,3) * velocity.rowRange(0,3).colRange(0,1);
+    effector_twist_bast.rowRange(3,6).colRange(0,1) = effector_to_base.rowRange(0,3).colRange(0,3) * velocity.rowRange(3,6).colRange(0,1);
 }

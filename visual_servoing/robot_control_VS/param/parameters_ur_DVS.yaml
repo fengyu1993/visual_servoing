@@ -1,7 +1,7 @@
 
-resolution_x:   640
+resolution_x:   1224
 
-resolution_y:   480
+resolution_y:   1024
 
 control_rate:   10
 
@@ -13,15 +13,15 @@ lambda:         0.03
 
 eta:            1.5
 
-phi_pol:        0.0
-
 k:              20
+
+depth_desired:  1.0
+
+itera_num_all:  2000.0
 
 resource_location:         "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/"
 
 image_polar_desired_name:  "image_polar_desired.png"
-
-image_depth_desired_name:  "image_depth_desired.png"
 
 camera_intrinsic: [ 605.689, 0.0, 324.855, 
                     0.0, 606.215, 236.483, 

@@ -17,10 +17,12 @@ int main(int argc, char** argv)
     // 使用 image_transport 发布图像，便于后续使用压缩传输或 rviz 查看
     image_transport::ImageTransport it(nh);
     image_transport::Publisher Iall_gray_pub = it.advertise("camera/polarized_Iall_gray", 1);
+    image_transport::Publisher S0_color_pub = it.advertise("camera/polarized_S0_color", 1);
     image_transport::Publisher I0_color_pub = it.advertise("camera/polarized_I0_color", 1);
     image_transport::Publisher I45_color_pub = it.advertise("camera/polarized_I45_color", 1);
     image_transport::Publisher I90_color_pub = it.advertise("camera/polarized_I90_color", 1);
     image_transport::Publisher I135_color_pub = it.advertise("camera/polarized_I135_color", 1);
+    image_transport::Publisher S0_gray_pub = it.advertise("camera/polarized_S0_gray", 1);
     image_transport::Publisher I0_gray_pub = it.advertise("camera/polarized_I0_gray", 1);
     image_transport::Publisher I45_gray_pub = it.advertise("camera/polarized_I45_gray", 1);
     image_transport::Publisher I90_gray_pub = it.advertise("camera/polarized_I90_gray", 1);
@@ -85,7 +87,7 @@ int main(int argc, char** argv)
                     cv::cvtColor(color_0, gray_0,  cv::COLOR_BGR2GRAY);
                     cv::cvtColor(color_45, gray_45, cv::COLOR_BGR2GRAY);
                     cv::cvtColor(color_90, gray_90, cv::COLOR_BGR2GRAY);
-                    cv::cvtColor(color_135, gray_135,cv::COLOR_BGR2GRAY);
+                    cv::cvtColor(color_135, gray_135,cv::COLOR_BGR2GRAY);                   
                     // 在生成四幅灰度图后立即执行, 将4个单通道合并为1个4通道图像
                     std::vector<cv::Mat> gray_channels = {gray_0, gray_45, gray_90, gray_135};
                     cv::Mat gray_4ch;       

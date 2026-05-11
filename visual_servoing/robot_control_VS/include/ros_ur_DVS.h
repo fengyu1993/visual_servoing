@@ -24,7 +24,7 @@ using namespace std;
 using namespace sensor_msgs;
 using namespace message_filters;
 
-typedef actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> Client;
+// typedef actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> Client;
 
 class Ros_ur_DVS 
 {
@@ -32,37 +32,49 @@ class Ros_ur_DVS
         ros::NodeHandle                         nh_; 
         image_transport::ImageTransport         it_;
         image_transport::Subscriber             image_polarized_sub_;
-        actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> *client;
+        // actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> *client;
         control_msgs::FollowJointTrajectoryGoal goal;
         tf::TransformListener                   listener_pose_;
         Mat                                     effector_velocity_base_;
         ros::Publisher                          pub_twist_; 
-
+        geometry_msgs::Twist                    msg_effector_twist_;
 
     public:
         Direct_Visual_Servoing *DVS;
         double              control_rate_;
+        double              itera_num_all_;
         bool                flag_success_;
         Mat                 joint_angle_initial_VS_;
+        Mat                 VS_image_;
         bool                start_DVS;
-        ControlSwitcher_UR control_switcher_;
+        // ControlSwitcher_UR control_switcher_;
         string name_link0_, name_camera_frame_, name_effector_;
+        Mat                 R_temp_;
+        Mat                 p_temp_;
+        double              px_temp_, py_temp_, pz_temp_;
+        Mat                 p_so3_temp_;
+        Mat                 effector_twist_;
+        Mat                 effector_twist_base_;
+        Mat                 T_effector_to_base_;
+        Mat                 T_camera_to_effector_;
+        Mat                 T_camera_to_base_;
+        tf::StampedTransform transform_temp_; 
+
 
     public:
         Ros_ur_DVS();
+        virtual bool get_visual_servoing_image(const ImageConstPtr& image_polar_msg, cv::Mat& VS_image);
         void Callback(const ImageConstPtr& image_polar_msg);     
         void get_parameters_resolution(int& resolution_x, int& resolution_y);
         Mat get_parameter_Matrix(string str, int row, int col);
-        void get_image_data_convert(const ImageConstPtr& image_polar_msg, const ImageConstPtr& image_depth_msg, Mat& color_img, Mat& depth_img);
-        Mat rgb_image_operate(Mat& image_rgb);
-        Mat depth_image_operate(Mat& image_depth);
-        Mat get_T(tf::StampedTransform  transform);
+        void rgb_image_operate(Mat& image_rgb, Mat& image_gray);
+        void get_T(tf::StampedTransform  transform, Mat& T);
         void get_parameters_DVS(double& lambda, double& epsilon, Mat& image_gray_desired, Mat& image_depth_desired, Mat& camera_intrinsic, Mat& pose_desired);    
-        void robot_move_to_target_joint_angle(std::vector<double> joint_group_positions_target);
+        // void robot_move_to_target_joint_angle(std::vector<double> joint_group_positions_target);
         void get_camera_effector_pose(Mat& effector_to_base, Mat& camera_to_effector);
-        Mat get_camera_pose();
-        Mat get_effector_velocity(Mat camera_velocity, Mat effector_to_camera);
-        Mat velocity_effector_to_base(Mat velocity, Mat effector_to_base);
+        void get_camera_pose(Mat& T_camera_to_base);
+        void get_effector_twist(const Mat& camera_velocity, const Mat& effector_to_camera, Mat& effector_twist);
+        void velocity_effector_to_base(const Mat& velocity, const Mat& effector_to_base, Mat& effector_twist_bast);
         void twist_publist(Mat camera_velocity);
 };
 
