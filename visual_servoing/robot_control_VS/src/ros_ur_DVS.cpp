@@ -237,29 +237,29 @@ void Ros_ur_DVS::get_T(tf::StampedTransform  transform, Mat& T)
 }
 
 
-// void Ros_ur_DVS::robot_move_to_target_joint_angle(std::vector<double> joint_group_positions_target)
-// {
-//    // 添加轨迹点
-//     trajectory_msgs::JointTrajectoryPoint point;
-//     point.positions.resize(6); 
-//     for (int i=0; i<6; i++)
-//         point.positions[i] = joint_group_positions_target[i];
-//     point.time_from_start = ros::Duration(5.0);
-//     this->goal.trajectory.points.clear();
-//     this->goal.trajectory.points.push_back(point);
-//     this->goal.trajectory.header.stamp = ros::Time::now(); 
-//     this->client->sendGoal(goal);
-//     // 等待结果
-//     bool finished_before_timeout = this->client->waitForResult(ros::Duration(6.0));
+void Ros_ur_DVS::robot_move_to_target_joint_angle(std::vector<double> joint_group_positions_target)
+{
+   // 添加轨迹点
+    trajectory_msgs::JointTrajectoryPoint point;
+    point.positions.resize(6); 
+    for (int i=0; i<6; i++)
+        point.positions[i] = joint_group_positions_target[i];
+    point.time_from_start = ros::Duration(5.0);
+    this->goal.trajectory.points.clear();
+    this->goal.trajectory.points.push_back(point);
+    this->goal.trajectory.header.stamp = ros::Time::now(); 
+    this->client->sendGoal(goal);
+    // 等待结果
+    bool finished_before_timeout = this->client->waitForResult(ros::Duration(6.0));
 
-//     if (finished_before_timeout)
-//     {
-//         actionlib::SimpleClientGoalState state = this->client->getState();
-//         ROS_INFO("Action finished: %s", state.toString().c_str());
-//     }
-//     else
-//         ROS_INFO("Action did not finish before the time out.");
-// }
+    if (finished_before_timeout)
+    {
+        actionlib::SimpleClientGoalState state = this->client->getState();
+        ROS_INFO("Action finished: %s", state.toString().c_str());
+    }
+    else
+        ROS_INFO("Action did not finish before the time out.");
+}
 
 
 void Ros_ur_DVS::get_camera_effector_pose(Mat& T_effector_to_base, Mat& T_camera_to_effector)
