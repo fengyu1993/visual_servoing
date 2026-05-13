@@ -7,8 +7,8 @@
         <arg name="debug" default="false" />
 
         <!-- Please adjust these for your network -->
-        <arg if="$(arg sim)" name="robot_ip" value="192.168.1.9" doc="IP address of the URSim VirtualBox"/>
-        <arg unless="$(arg sim)" name="robot_ip" value="169.254.138.15" doc="IP address of the real robot"/>
+        <arg if="$(arg sim)" name="robot_ip" value="192.168.10.102" doc="IP address of the URSim VirtualBox"/>
+        <arg unless="$(arg sim)" name="robot_ip" value="192.168.10.102" doc="IP address of the real robot"/>
 
         <!-- The robot driver -->
         <include file="$(find cartesian_controllers_ur_robots)/launch/driver.xml">

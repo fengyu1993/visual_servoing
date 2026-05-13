@@ -23,8 +23,8 @@ resource_location:         "/home/cyh/Work/visual_servoing_ws/src/visual_servoin
 
 image_polar_desired_name:  "image_polar_desired.png"
 
-camera_intrinsic: [ 605.689, 0.0, 324.855, 
-                    0.0, 606.215, 236.483, 
+camera_intrinsic: [ 1235.34583, 0.0, 616.76057, 
+                    0.0, 1239.99866, 503.20869, 
                     0.0, 0.0, 1.0]
 
 pose_desired: [0.124625,-0.311249,0.942121,0.261991,

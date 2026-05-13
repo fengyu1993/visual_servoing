@@ -15,6 +15,7 @@ Ros_ur_DVS::Ros_ur_DVS(): it_(nh_)
     this->nh_.getParam("name_effector", this->name_effector_);
     this->joint_angle_initial_VS_ = get_parameter_Matrix("joint_angle_initial_VS", 6, 1);
     this->pub_twist_ = this->nh_.advertise<geometry_msgs::Twist>("/twist_controller/command", 5);
+    this->image_polarized_sub_ = this->it_.subscribe("camera/polarized_Iall_gray", 1, &Ros_ur_DVS::Callback, this);
     this->start_DVS = false;
     this->goal.trajectory.joint_names.push_back("shoulder_pan_joint");
     this->goal.trajectory.joint_names.push_back("shoulder_lift_joint");
@@ -22,7 +23,6 @@ Ros_ur_DVS::Ros_ur_DVS(): it_(nh_)
     this->goal.trajectory.joint_names.push_back("wrist_1_joint");
     this->goal.trajectory.joint_names.push_back("wrist_2_joint");
     this->goal.trajectory.joint_names.push_back("wrist_3_joint");
-    this->image_polarized_sub_ = this->it_.subscribe("camera/polarized_Iall_gray", 1, &Ros_ur_DVS::Callback, this);
     this->R_temp_ = Mat::eye(3, 3, CV_64FC1);
     this->p_temp_= Mat::zeros(3, 1, CV_64FC1);
     this->p_so3_temp_= Mat::zeros(3, 3, CV_64FC1);

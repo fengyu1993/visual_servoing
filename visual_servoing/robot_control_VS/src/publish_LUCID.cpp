@@ -5,6 +5,7 @@
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
 #include <ArenaApi.h>
+#include <robot_control_VS/PolarizedImages.h> 
 
 #define IMAGE_TIMEOUT 2000
 #define SYSTEM_TIMEOUT 100
@@ -13,30 +14,48 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "lucid_camera_node");
     ros::NodeHandle nh;
+    sensor_msgs::ImagePtr msg_color_0, msg_color_45, msg_color_90, msg_color_135;
+    sensor_msgs::ImagePtr msg_gray_0, msg_gray_45, msg_gray_90, msg_gray_135;
+    image_transport::Publisher I0_color_pub, I45_color_pub, I90_color_pub, I135_color_pub;
+    image_transport::Publisher I0_gray_pub, I45_gray_pub, I90_gray_pub, I135_gray_pub;
+    size_t width, height, bpp;
+    cv::Mat color_0, color_45, color_90, color_135;
+    cv::Mat gray_0, gray_45, gray_90, gray_135;  
+    cv::Mat plane_0, plane_45, plane_90, plane_135;
+    size_t plane_size; 
+    uint8_t* data_ptr;
 
-    // 使用 image_transport 发布图像，便于后续使用压缩传输或 rviz 查看
-    image_transport::ImageTransport it(nh);
-    image_transport::Publisher Iall_gray_pub = it.advertise("camera/polarized_Iall_gray", 1);
-    image_transport::Publisher S0_color_pub = it.advertise("camera/polarized_S0_color", 1);
-    image_transport::Publisher I0_color_pub = it.advertise("camera/polarized_I0_color", 1);
-    image_transport::Publisher I45_color_pub = it.advertise("camera/polarized_I45_color", 1);
-    image_transport::Publisher I90_color_pub = it.advertise("camera/polarized_I90_color", 1);
-    image_transport::Publisher I135_color_pub = it.advertise("camera/polarized_I135_color", 1);
-    image_transport::Publisher S0_gray_pub = it.advertise("camera/polarized_S0_gray", 1);
-    image_transport::Publisher I0_gray_pub = it.advertise("camera/polarized_I0_gray", 1);
-    image_transport::Publisher I45_gray_pub = it.advertise("camera/polarized_I45_gray", 1);
-    image_transport::Publisher I90_gray_pub = it.advertise("camera/polarized_I90_gray", 1);
-    image_transport::Publisher I135_gray_pub = it.advertise("camera/polarized_I135_gray", 1);
 
+    bool flag = true;
+    // 自定义消息发布
+    ros::Publisher Iall_color_pub = nh.advertise<robot_control_VS::PolarizedImages>("camera/polarized_Iall_color", 1);
+    ros::Publisher Iall_gray_pub = nh.advertise<robot_control_VS::PolarizedImages>("camera/polarized_Iall_gray", 1);
+    
+    if(flag){
+        // 使用 image_transport 发布图像，便于后续使用压缩传输或 rviz 查看
+        image_transport::ImageTransport it(nh);
+        I0_color_pub = it.advertise("camera/polarized_I0_color", 1);
+        I45_color_pub = it.advertise("camera/polarized_I45_color", 1);
+        I90_color_pub = it.advertise("camera/polarized_I90_color", 1);
+        I135_color_pub = it.advertise("camera/polarized_I135_color", 1);
+        I0_gray_pub = it.advertise("camera/polarized_I0_gray", 1);
+        I45_gray_pub = it.advertise("camera/polarized_I45_gray", 1);
+        I90_gray_pub = it.advertise("camera/polarized_I90_gray", 1);
+        I135_gray_pub = it.advertise("camera/polarized_I135_gray", 1);
+    }
+ 
     Arena::ISystem* pSystem = nullptr;
     Arena::IDevice* pDevice = nullptr;
-
+    Arena::IImage* pImage; 
+    std::vector<Arena::DeviceInfo> deviceInfos;
+    std::vector<cv::Mat> planes;
+    GenICam::gcstring anglesFormat = "PolarizedAngles_0d_45d_90d_135d_BayerRG8";
     try
     {
         ROS_INFO("Initialize Arena SDK, Search for camera");
         pSystem = Arena::OpenSystem();
         pSystem->UpdateDevices(SYSTEM_TIMEOUT);
-        std::vector<Arena::DeviceInfo> deviceInfos = pSystem->GetDevices();
+        deviceInfos = pSystem->GetDevices();
 
         if (deviceInfos.empty())
         {
@@ -49,7 +68,6 @@ int main(int argc, char** argv)
         ROS_INFO("Connected camera: %s", Arena::GetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "DeviceModelName").c_str());
 
         // 设置偏振图像输出格式
-        GenICam::gcstring anglesFormat = "PolarizedAngles_0d_45d_90d_135d_BayerRG8";
         Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "PixelFormat", anglesFormat);
         // 优化网络传输
         Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamAutoNegotiatePacketSize", true);
@@ -57,27 +75,28 @@ int main(int argc, char** argv)
         // 启动视频流
         pDevice->StartStream();
         ROS_INFO("Video stream has started, starting to post topics: /camera/polarized_raw");
-        std::vector<cv::Mat> I_all;
         while (ros::ok())
         {
-            Arena::IImage* pImage = pDevice->GetImage(IMAGE_TIMEOUT);
+            pImage = pDevice->GetImage(IMAGE_TIMEOUT);
             if (pImage)
             {
-                size_t width = pImage->GetWidth();
-                size_t height = pImage->GetHeight();
-                size_t bpp = Arena::GetBitsPerPixel(pImage->GetPixelFormat());
+                width = pImage->GetWidth();
+                height = pImage->GetHeight();
+                bpp = Arena::GetBitsPerPixel(pImage->GetPixelFormat());
                 // 判断是否为 4 个字节 (0, 45, 90, 135)
                 if (bpp == 32) 
                 {
+                    // plane_size = height * width; 
+                    // data_ptr = (uint8_t*)pImage->GetData();
+                    // plane_0 = cv::Mat(height, width, CV_8UC4, data_ptr);
+                    // plane_45 = cv::Mat(height, width, CV_8UC1, data_ptr + plane_size);
+                    // plane_90 = cv::Mat(height, width, CV_8UC1, data_ptr + plane_size * 2);
+                    // plane_135 = cv::Mat(height, width, CV_8UC1, data_ptr + plane_size * 3);
+
                     // 创建 OpenCV Mat，不拷贝数据，直接映射
                     cv::Mat raw_mat(height, width, CV_8UC4, (void*)pImage->GetData());
                     // 拆分四个角度的通道
-                    std::vector<cv::Mat> planes;
-                    cv::split(raw_mat, planes); 
-                    // 准备存储彩色图的容器
-                    cv::Mat color_0, color_45, color_90, color_135;
-                    // 准备存储灰度图的容器
-                    cv::Mat gray_0, gray_45, gray_90, gray_135;                  
+                    cv::split(raw_mat, planes);                
                     // 对每个角度进行 Bayer -> BGR 转换
                     cv::cvtColor(planes[0], color_0,  cv::COLOR_BayerBG2BGR);
                     cv::cvtColor(planes[1], color_45, cv::COLOR_BayerBG2BGR);
@@ -87,36 +106,62 @@ int main(int argc, char** argv)
                     cv::cvtColor(color_0, gray_0,  cv::COLOR_BGR2GRAY);
                     cv::cvtColor(color_45, gray_45, cv::COLOR_BGR2GRAY);
                     cv::cvtColor(color_90, gray_90, cv::COLOR_BGR2GRAY);
-                    cv::cvtColor(color_135, gray_135,cv::COLOR_BGR2GRAY);                   
-                    // 在生成四幅灰度图后立即执行, 将4个单通道合并为1个4通道图像
-                    std::vector<cv::Mat> gray_channels = {gray_0, gray_45, gray_90, gray_135};
-                    cv::Mat gray_4ch;       
-                    cv::merge(gray_channels, gray_4ch);  
-                    // 转换为 ROS Image 消息 (使用 8UC4 编码)
+                    cv::cvtColor(color_135, gray_135,cv::COLOR_BGR2GRAY);                    
+                    // 转换为 ROS Image 消息 
                     std_msgs::Header header;
-                    header.stamp = ros::Time::now();
                     header.frame_id = "camera_optical_frame";
-                    sensor_msgs::ImagePtr msg_gray_4ch = cv_bridge::CvImage(header, "8UC4", gray_4ch).toImageMsg();
-                    Iall_gray_pub.publish(msg_gray_4ch);
-                    // 彩色图消息
-                    sensor_msgs::ImagePtr msg_color_0 = cv_bridge::CvImage(header, "bgr8", color_0).toImageMsg();
-                    sensor_msgs::ImagePtr msg_color_45 = cv_bridge::CvImage(header, "bgr8", color_45).toImageMsg();
-                    sensor_msgs::ImagePtr msg_color_90 = cv_bridge::CvImage(header, "bgr8", color_90).toImageMsg();
-                    sensor_msgs::ImagePtr msg_color_135 = cv_bridge::CvImage(header, "bgr8", color_135).toImageMsg();
-                    // 灰度图消息
-                    sensor_msgs::ImagePtr msg_gray_0 = cv_bridge::CvImage(header, "mono8", gray_0).toImageMsg();
-                    sensor_msgs::ImagePtr msg_gray_45 = cv_bridge::CvImage(header, "mono8", gray_45).toImageMsg();
-                    sensor_msgs::ImagePtr msg_gray_90 = cv_bridge::CvImage(header, "mono8", gray_90).toImageMsg();
-                    sensor_msgs::ImagePtr msg_gray_135 = cv_bridge::CvImage(header, "mono8", gray_135).toImageMsg();
+                    // 用自定义的消息
+                    robot_control_VS::PolarizedImagesPtr msg_polarized_color(new robot_control_VS::PolarizedImages());
+                    robot_control_VS::PolarizedImagesPtr msg_polarized_gray(new robot_control_VS::PolarizedImages());
+                    // 填充彩色图 (bgr8)
+                    msg_polarized_color->image_0 = *(cv_bridge::CvImage(header, "bgr8", color_0).toImageMsg());
+                    msg_polarized_color->image_45 = *(cv_bridge::CvImage(header, "bgr8", color_45).toImageMsg());
+                    msg_polarized_color->image_90 = *(cv_bridge::CvImage(header, "bgr8", color_90).toImageMsg());
+                    msg_polarized_color->image_135 = *(cv_bridge::CvImage(header, "bgr8", color_135).toImageMsg());
+                    // 填充灰度图 (mono8)
+                    msg_polarized_gray->image_0 = *(cv_bridge::CvImage(header, "mono8", gray_0).toImageMsg());
+                    msg_polarized_gray->image_45 = *(cv_bridge::CvImage(header, "mono8", gray_45).toImageMsg());
+                    msg_polarized_gray->image_90 = *(cv_bridge::CvImage(header, "mono8", gray_90).toImageMsg());
+                    msg_polarized_gray->image_135 = *(cv_bridge::CvImage(header, "mono8", gray_135).toImageMsg());
+                    if(flag){
+                        // 彩色图消息
+                        msg_color_0 = cv_bridge::CvImage(header, "bgr8", color_0).toImageMsg();
+                        msg_color_45 = cv_bridge::CvImage(header, "bgr8", color_45).toImageMsg();
+                        msg_color_90 = cv_bridge::CvImage(header, "bgr8", color_90).toImageMsg();
+                        msg_color_135 = cv_bridge::CvImage(header, "bgr8", color_135).toImageMsg();
+                        // 灰度图消息
+                        msg_gray_0 = cv_bridge::CvImage(header, "mono8", gray_0).toImageMsg();
+                        msg_gray_45 = cv_bridge::CvImage(header, "mono8", gray_45).toImageMsg();
+                        msg_gray_90 = cv_bridge::CvImage(header, "mono8", gray_90).toImageMsg();
+                        msg_gray_135 = cv_bridge::CvImage(header, "mono8", gray_135).toImageMsg();
+                    }
+                    // 时间戳
+                    header.stamp = ros::Time::now();
+                    msg_polarized_color->header = header;
+                    msg_polarized_gray->header = header;
+                    if(flag){
+                        msg_color_0->header = header;
+                        msg_color_45->header = header;
+                        msg_color_90->header = header;
+                        msg_color_135->header = header;
+                        msg_gray_0->header = header;
+                        msg_gray_45->header = header;
+                        msg_gray_90->header = header;
+                        msg_gray_135->header = header;
+                    }
                     // 发布
-                    I0_color_pub.publish(msg_color_0);
-                    I45_color_pub.publish(msg_color_45);
-                    I90_color_pub.publish(msg_color_90);
-                    I135_color_pub.publish(msg_color_135);
-                    I0_gray_pub.publish(msg_gray_0);
-                    I45_gray_pub.publish(msg_gray_45);
-                    I90_gray_pub.publish(msg_gray_90);
-                    I135_gray_pub.publish(msg_gray_135);
+                    Iall_color_pub.publish(msg_polarized_color);
+                    Iall_gray_pub.publish(msg_polarized_gray);
+                    if(flag){
+                        I0_color_pub.publish(msg_color_0);
+                        I45_color_pub.publish(msg_color_45);
+                        I90_color_pub.publish(msg_color_90);
+                        I135_color_pub.publish(msg_color_135);
+                        I0_gray_pub.publish(msg_gray_0);
+                        I45_gray_pub.publish(msg_gray_45);
+                        I90_gray_pub.publish(msg_gray_90);
+                        I135_gray_pub.publish(msg_gray_135);
+                    }
                 }
                 else
                 {

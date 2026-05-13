@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  sensor_msgs
   rosbag
   geometry_msgs
   message_filters
@@ -21,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_visual_tools
   tf
   tf_conversions
+  message_generation
 )
 
 find_package(Eigen3 REQUIRED)
@@ -45,13 +47,19 @@ set(THIS_PACKAGE_INCLUDE_DIRS
   ./include
 )
 
+add_message_files(FILES PolarizedImages.msg)
+generate_messages(DEPENDENCIES std_msgs sensor_msgs)
+
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES robot_control_VS
 #  CATKIN_DEPENDS roscpp std_msgs message_runtime 
 #  DEPENDS system_lib
-CATKIN_DEPENDS roscpp tf 
+CATKIN_DEPENDS roscpp tf std_msgs sensor_msgs message_runtime
 )
+
+
+
 
 add_library(robot_control_VS src/ros_VS.cpp 
                               src/ros_DVS.cpp
@@ -83,7 +91,7 @@ add_executable(publish_LUCID                    src/publish_LUCID.cpp)
 add_executable(rosbag_record                    src/rosbag_record.cpp)
 add_executable(ur_control_PVS                   src/ur_control_PVS.cpp)
 add_executable(ur_control_polarized_DVS         src/ur_control_polarized_DVS.cpp)
-add_executable(ur_save_pose_jointangle_image    src/ur_save_pose_jointangle_image.cpp)
+add_executable(ur_save_pose_jointangle_polarized_image    src/ur_save_pose_jointangle_polarized_image.cpp)
 add_executable(ur_control_keyboard              src/ur_control_keyboard.cpp)
 add_executable(robot_twist_controller           src/robot_twist_controller.cpp)
 
@@ -100,7 +108,7 @@ target_link_libraries(publish_LUCID             robot_control_VS ${catkin_LIBRAR
 target_link_libraries(rosbag_record             robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES}) 
 target_link_libraries(ur_control_PVS            robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES}) 
 target_link_libraries(ur_control_polarized_DVS  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES}) 
-target_link_libraries(ur_save_pose_jointangle_image  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES}) 
+target_link_libraries(ur_save_pose_jointangle_polarized_image  robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES}) 
 target_link_libraries(ur_control_keyboard       robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES}) 
 target_link_libraries(robot_twist_controller    robot_control_VS ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_LIBRARIES} ${Franka_LIBRARIES} ${realsense2_LIBRARY} ${arena_sdk_LIBRARIES}) 
 
@@ -117,7 +125,7 @@ install(TARGETS publish_LUCID                   DESTINATION ${CATKIN_PACKAGE_BIN
 install(TARGETS rosbag_record                   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(TARGETS ur_control_PVS                  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(TARGETS ur_control_polarized_DVS        DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-install(TARGETS ur_save_pose_jointangle_image   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+install(TARGETS ur_save_pose_jointangle_polarized_image   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(TARGETS ur_control_keyboard             DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(TARGETS robot_twist_controller          DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
