@@ -21,7 +21,7 @@ Mat joint_group_positions;
 Mat T_base_camera;
 Mat img_polar_color_0, img_polar_color_45, img_polar_color_90, img_polar_color_135;
 Mat img_polar_gray_0, img_polar_gray_45, img_polar_gray_90, img_polar_gray_135;
-Mat S0_color, S0_gray;
+Mat S0_color, S0_gray, S0_color_display, S0_gray_display;
 
 void write_to_excel(Mat data, ofstream& oFile)
 {
@@ -141,11 +141,16 @@ void write_data()
     oFile.close();
 }
 
-// void write_image()
-// {
-//     // 保存彩色图
-//     imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/image_polar_init.png", img_polar_color_0);
-// }
+void write_image()
+{
+    // 保存彩色图
+    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/DVS_Polarized/image_polar_init.png", S0_color);
+    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/DVS_Polarized/image_polar_color_0.png", img_polar_color_0);
+    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/DVS_Polarized/image_polar_color_45.png", img_polar_color_45);
+    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/DVS_Polarized/image_polar_color_90.png", img_polar_color_90);
+    imwrite("/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/DVS_Polarized/image_polar_color_135.png", img_polar_color_135);
+
+}
 
 cv::Mat Quaternion2Matrix (cv::Mat q)
 {
@@ -226,6 +231,7 @@ void save_camera_pose()
 
 void Callback(const robot_control_VS::PolarizedImagesConstPtr& image_polar_color_msg, const robot_control_VS::PolarizedImagesConstPtr& image_polar_gray_msg)
 {
+    ROS_INFO("cyh");
     try {
         cv_bridge::CvImagePtr cv_ptr_color_0 = cv_bridge::toCvCopy(image_polar_color_msg->image_0, "bgr8");
         cv_bridge::CvImagePtr cv_ptr_color_45 = cv_bridge::toCvCopy(image_polar_color_msg->image_45, "bgr8");
@@ -246,35 +252,45 @@ void Callback(const robot_control_VS::PolarizedImagesConstPtr& image_polar_color
         img_polar_gray_90 = cv_ptr_gray_90->image.clone();
         img_polar_gray_135 = cv_ptr_gray_135->image.clone();
 
-        S0_color = (img_polar_color_0 + img_polar_color_45 + img_polar_color_90 + img_polar_color_135) / 4.0;
-        S0_gray = (img_polar_gray_0 + img_polar_gray_45 + img_polar_gray_90 + img_polar_gray_135) / 4.0;
-        
-        imshow("Polar_color", S0_color);
-        imshow("Polar_gray", S0_gray);
+        cv::Mat temp;
+        img_polar_color_0.convertTo(S0_color, CV_64FC3); 
+        img_polar_color_45.convertTo(temp, CV_64FC3); S0_color += temp;
+        img_polar_color_90.convertTo(temp, CV_64FC3); S0_color += temp;
+        img_polar_color_135.convertTo(temp, CV_64FC3); S0_color += temp;
+        S0_color = S0_color / 4.0;
+        S0_color.convertTo(S0_color_display, CV_8UC3);
+
+
+        img_polar_gray_0.convertTo(S0_gray, CV_64FC1);
+        img_polar_gray_45.convertTo(temp, CV_64FC1); S0_gray += temp;
+        img_polar_gray_90.convertTo(temp, CV_64FC1); S0_gray += temp;
+        img_polar_gray_135.convertTo(temp, CV_64FC1); S0_gray += temp;
+        S0_gray = S0_gray / 4.0;
+        S0_gray.convertTo(S0_gray_display, CV_8UC1);          
     }
     catch (cv_bridge::Exception& e) {
         ROS_ERROR("cv_bridge 转换异常: %s", e.what());
     }
 }
 
+
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "save_pose_image");
     ros::NodeHandle nh;
-	
+
 	int resolution_x, resolution_y;
 	nh.getParam("resolution_x", resolution_x);
     nh.getParam("resolution_y", resolution_y);
+	// S0_color = Mat::zeros(resolution_y, resolution_x, CV_64FC3);
+	// S0_gray = Mat::zeros(resolution_y, resolution_x, CV_64FC1);
 
-	static const std::string PLANNING_GROUP = "manipulator";
-    moveit::planning_interface::MoveGroupInterface move_group_interface(PLANNING_GROUP);
+	// static const std::string PLANNING_GROUP = "manipulator";
+    // moveit::planning_interface::MoveGroupInterface move_group_interface(PLANNING_GROUP);
 
-	message_filters::Subscriber<robot_control_VS::PolarizedImages>      image_polar_color_sub;
-    message_filters::Subscriber<robot_control_VS::PolarizedImages>      image_polar_gray_sub;
+	message_filters::Subscriber<robot_control_VS::PolarizedImages>      image_polar_color_sub(nh,"camera/polarized_Iall_color", 1);
+    message_filters::Subscriber<robot_control_VS::PolarizedImages>      image_polar_gray_sub(nh,"camera/polarized_Iall_gray", 1);
 	TimeSynchronizer<robot_control_VS::PolarizedImages, robot_control_VS::PolarizedImages>  *sync;
-
-	image_polar_color_sub.subscribe(nh,"camera/polarized_Iall_color", 1);
-    image_polar_gray_sub.subscribe(nh,"camera/polarized_Iall_gray", 1);
     sync = new TimeSynchronizer<robot_control_VS::PolarizedImages, robot_control_VS::PolarizedImages>(image_polar_color_sub, image_polar_gray_sub, 1);
     sync->registerCallback(boost::bind(&Callback, _1, _2));
 
@@ -288,20 +304,22 @@ int main(int argc, char** argv)
 	while (ros::ok())
     {
         ros::spinOnce();
+        // imshow("Polar_color", S0_color_display);
+        // imshow("Polar_gray", S0_gray_display);
 
-        if((char)waitKey(10) == 32) // Spacebar
-        {
-            save_joint_positions(move_group_interface);
-            save_camera_pose();
-            std::cout << "Save data successfully" << endl;
-            std::cout << "Press space to start write ..." << std::endl;
-            if((char)waitKey() == 32)
-            {
-                write_data();
-                // write_image();
-                std::cout << "Save image successfully" << endl;
-            }
-        }
+        // if((char)waitKey(10) == 32) // Spacebar
+        // {
+        //     save_joint_positions(move_group_interface);
+        //     save_camera_pose();
+        //     std::cout << "Save data successfully" << endl;
+        //     std::cout << "Press space to start write ..." << std::endl;
+        //     if((char)waitKey() == 32)
+        //     {
+        //         write_data();
+        //         write_image();
+        //         std::cout << "Save image successfully" << endl;
+        //     }
+        // }
 
         loop_rate.sleep();		
 	}
