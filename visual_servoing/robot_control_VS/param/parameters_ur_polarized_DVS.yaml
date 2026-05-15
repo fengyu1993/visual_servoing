@@ -19,7 +19,7 @@ depth_desired:  1.0
 
 itera_num_all:  2000.0
 
-resource_location:         "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/"
+resource_location:         "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/DVS_Polarized/"
 
 image_polar_desired_name:  "image_polar_desired.png"
 
@@ -34,7 +34,7 @@ pose_desired: [0.124625,-0.311249,0.942121,0.261991,
 
 name_link0:         "base"
 
-name_camera_frame:  "camera_polar_frame"
+name_camera_frame:  "camera_optical_frame"
 
 name_effector:      "tool0_controller"
 
