@@ -32,13 +32,15 @@ private:
     
     message_filters::Subscriber<robot_control_VS::PolarizedImages> image_polar_color_sub_;
     message_filters::Subscriber<robot_control_VS::PolarizedImages> image_polar_gray_sub_;
+    
+    
 
     tf::TransformListener tf_listener_;
 
     std::unique_ptr<message_filters::Synchronizer<SyncPolicy>> sync_;
 
-    Mat img_polar_color_0, img_polar_color_45, img_polar_color_90, img_polar_color_135;
-    Mat img_polar_gray_0, img_polar_gray_45, img_polar_gray_90, img_polar_gray_135;
+    Mat img_polar_color_0, img_polar_color_45, img_polar_color_90, img_polar_color_135, img_polar_color_S0;
+    Mat img_polar_gray_0, img_polar_gray_45, img_polar_gray_90, img_polar_gray_135, img_polar_gray_S0;
 
     Mat S0_color_display_, S0_gray_display_, S0_color_save_; 
 
@@ -57,6 +59,7 @@ public:
 
         image_polar_color_sub_.subscribe(nh_, "camera/polarized_Iall_color", 1);
         image_polar_gray_sub_.subscribe(nh_, "camera/polarized_Iall_gray", 1);
+
         sync_.reset(new message_filters::Synchronizer<SyncPolicy>(SyncPolicy(10), image_polar_color_sub_, image_polar_gray_sub_));
         sync_->registerCallback(boost::bind(&PolarizedCameraNode::imageCallback, this, _1, _2));
 
@@ -212,31 +215,19 @@ public:
             img_polar_color_45 = cv_bridge::toCvCopy(color_msg->image_45, "bgr8")->image;
             img_polar_color_90 = cv_bridge::toCvCopy(color_msg->image_90, "bgr8")->image;
             img_polar_color_135 = cv_bridge::toCvCopy(color_msg->image_135, "bgr8")->image;
+            img_polar_color_S0 = cv_bridge::toCvCopy(color_msg->image_S0, "bgr8")->image;
 
             img_polar_gray_0 = cv_bridge::toCvCopy(gray_msg->image_0, "mono8")->image;
             img_polar_gray_45 = cv_bridge::toCvCopy(gray_msg->image_45, "mono8")->image;
             img_polar_gray_90 = cv_bridge::toCvCopy(gray_msg->image_90, "mono8")->image;
             img_polar_gray_135 = cv_bridge::toCvCopy(gray_msg->image_135, "mono8")->image;
-
-            Mat temp, S0_color_d, S0_gray_d;
-
-            img_polar_color_0.convertTo(S0_color_d, CV_64FC3); 
-            img_polar_color_45.convertTo(temp, CV_64FC3); S0_color_d += temp;
-            img_polar_color_90.convertTo(temp, CV_64FC3); S0_color_d += temp;
-            img_polar_color_135.convertTo(temp, CV_64FC3); S0_color_d += temp;
-            S0_color_d /= 4.0;
-
-            img_polar_gray_0.convertTo(S0_gray_d, CV_64FC1);
-            img_polar_gray_45.convertTo(temp, CV_64FC1); S0_gray_d += temp;
-            img_polar_gray_90.convertTo(temp, CV_64FC1); S0_gray_d += temp;
-            img_polar_gray_135.convertTo(temp, CV_64FC1); S0_gray_d += temp;
-            S0_gray_d /= 4.0;
+            img_polar_gray_S0 = cv_bridge::toCvCopy(gray_msg->image_S0, "mono8")->image;
+            
             {
                 std::lock_guard<std::mutex> lock(image_mutex_);
-                S0_color_d.convertTo(S0_color_display_, CV_8UC3);
-                S0_gray_d.convertTo(S0_gray_display_, CV_8UC1);
-                
-                S0_color_display_.copyTo(S0_color_save_); 
+                img_polar_color_S0.copyTo(S0_color_display_);
+                img_polar_gray_S0.copyTo(S0_gray_display_);               
+                img_polar_color_S0.copyTo(S0_color_save_); 
             }
         }
         catch (cv_bridge::Exception& e) {

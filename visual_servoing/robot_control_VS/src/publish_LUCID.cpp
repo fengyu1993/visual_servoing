@@ -14,14 +14,14 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "lucid_camera_node");
     ros::NodeHandle nh;
-    sensor_msgs::ImagePtr msg_color_0, msg_color_45, msg_color_90, msg_color_135, msg_color_S0;
+    sensor_msgs::ImagePtr msg_color_0, msg_color_45, msg_color_90, msg_color_135;
     sensor_msgs::ImagePtr msg_gray_0, msg_gray_45, msg_gray_90, msg_gray_135;
     image_transport::ImageTransport it(nh);
-    image_transport::Publisher I0_color_pub, I45_color_pub, I90_color_pub, I135_color_pub, S0_color_pub;
+    image_transport::Publisher I0_color_pub, I45_color_pub, I90_color_pub, I135_color_pub;
     image_transport::Publisher I0_gray_pub, I45_gray_pub, I90_gray_pub, I135_gray_pub;
     size_t width, height, bpp;
     cv::Mat color_0, color_45, color_90, color_135, color_S0_double, color_S0_8U;
-    cv::Mat gray_0, gray_45, gray_90, gray_135;  
+    cv::Mat gray_0, gray_45, gray_90, gray_135, gray_S0_double, gray_S0_8U;  
     cv::Mat plane_0, plane_45, plane_90, plane_135;
     size_t plane_size; 
     uint8_t* data_ptr;
@@ -31,7 +31,6 @@ int main(int argc, char** argv)
     // 自定义消息发布
     ros::Publisher Iall_color_pub = nh.advertise<robot_control_VS::PolarizedImages>("camera/polarized_Iall_color", 1);
     ros::Publisher Iall_gray_pub = nh.advertise<robot_control_VS::PolarizedImages>("camera/polarized_Iall_gray", 1);
-    S0_color_pub = it.advertise("camera/polarized_S0_color", 1);
     if(flag){
         I0_color_pub = it.advertise("camera/polarized_I0_color", 1);
         I45_color_pub = it.advertise("camera/polarized_I45_color", 1);
@@ -106,7 +105,14 @@ int main(int argc, char** argv)
                     cv::cvtColor(color_0, gray_0,  cv::COLOR_BGR2GRAY);
                     cv::cvtColor(color_45, gray_45, cv::COLOR_BGR2GRAY);
                     cv::cvtColor(color_90, gray_90, cv::COLOR_BGR2GRAY);
-                    cv::cvtColor(color_135, gray_135,cv::COLOR_BGR2GRAY);                    
+                    cv::cvtColor(color_135, gray_135,cv::COLOR_BGR2GRAY);   
+                    // 计算S0 灰度
+                    gray_0.convertTo(gray_S0_double, CV_64FC1);
+                    gray_45.convertTo(temp, CV_64FC1); gray_S0_double += temp;
+                    gray_90.convertTo(temp, CV_64FC1); gray_S0_double += temp;
+                    gray_135.convertTo(temp, CV_64FC1); gray_S0_double += temp;
+                    gray_S0_double /= 4.0;
+                    gray_S0_double.convertTo(gray_S0_8U, CV_8UC1);
                     // 转换为 ROS Image 消息 
                     std_msgs::Header header;
                     header.frame_id = "camera_optical_frame";
@@ -118,12 +124,13 @@ int main(int argc, char** argv)
                     msg_polarized_color->image_45 = *(cv_bridge::CvImage(header, "bgr8", color_45).toImageMsg());
                     msg_polarized_color->image_90 = *(cv_bridge::CvImage(header, "bgr8", color_90).toImageMsg());
                     msg_polarized_color->image_135 = *(cv_bridge::CvImage(header, "bgr8", color_135).toImageMsg());
-                    msg_color_S0 = cv_bridge::CvImage(header, "bgr8", color_S0_8U).toImageMsg();
+                    msg_polarized_color->image_S0 = *(cv_bridge::CvImage(header, "bgr8", color_S0_8U).toImageMsg());
                     // 填充灰度图 (mono8)
                     msg_polarized_gray->image_0 = *(cv_bridge::CvImage(header, "mono8", gray_0).toImageMsg());
                     msg_polarized_gray->image_45 = *(cv_bridge::CvImage(header, "mono8", gray_45).toImageMsg());
                     msg_polarized_gray->image_90 = *(cv_bridge::CvImage(header, "mono8", gray_90).toImageMsg());
                     msg_polarized_gray->image_135 = *(cv_bridge::CvImage(header, "mono8", gray_135).toImageMsg());
+                    msg_polarized_gray->image_S0 = *(cv_bridge::CvImage(header, "mono8", gray_S0_8U).toImageMsg());                    
                     if(flag){
                         // 彩色图消息
                         msg_color_0 = cv_bridge::CvImage(header, "bgr8", color_0).toImageMsg();
@@ -153,7 +160,6 @@ int main(int argc, char** argv)
                     // 发布
                     Iall_color_pub.publish(msg_polarized_color);
                     Iall_gray_pub.publish(msg_polarized_gray);
-                    S0_color_pub.publish(msg_color_S0);
                     if(flag){
                         I0_color_pub.publish(msg_color_0);
                         I45_color_pub.publish(msg_color_45);

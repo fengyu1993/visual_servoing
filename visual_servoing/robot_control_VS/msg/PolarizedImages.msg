@@ -7,3 +7,5 @@ sensor_msgs/Image image_45
 sensor_msgs/Image image_90
 
 sensor_msgs/Image image_135
+
+sensor_msgs/Image image_S0
