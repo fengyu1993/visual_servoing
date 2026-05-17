@@ -108,16 +108,27 @@ public:
     {
         sensor_msgs::JointStateConstPtr joint_msg = ros::topic::waitForMessage<sensor_msgs::JointState>("/joint_states", nh_, ros::Duration(1.0));
         if (joint_msg != nullptr && joint_msg->position.size() >= 6) {
-            joint_group_positions_.at<double>(0,0) = joint_msg->position[0];
-            joint_group_positions_.at<double>(0,1) = joint_msg->position[1];
-            joint_group_positions_.at<double>(0,2) = joint_msg->position[2];
-            joint_group_positions_.at<double>(0,3) = joint_msg->position[3];
-            joint_group_positions_.at<double>(0,4) = joint_msg->position[4];
-            joint_group_positions_.at<double>(0,5) = joint_msg->position[5];
-            cout << "joint_angle = \n" <<  joint_group_positions_ << endl;
-        }else {
-            ROS_WARN("获取关节角度失败：未能接收到 /joint_states 话题的消息！");
-        }
+                std::vector<std::string> target_joint_names = {
+                        "shoulder_pan_joint",
+                        "shoulder_lift_joint",
+                        "elbow_joint",
+                        "wrist_1_joint",
+                        "wrist_2_joint",
+                        "wrist_3_joint"
+                    };
+                    for (int i = 0; i < 6; ++i) {
+                        auto it = std::find(joint_msg->name.begin(), joint_msg->name.end(), target_joint_names[i]);
+                        if (it != joint_msg->name.end()) {
+                            int index = std::distance(joint_msg->name.begin(), it);
+                            joint_group_positions_.at<double>(0, i) = joint_msg->position[index];
+                        } else {
+                            ROS_ERROR_ONCE("No found joint angle: %s !!!", target_joint_names[i].c_str());
+                        }
+                    }
+                    std::cout << "joint_group_positions: \n" << joint_group_positions_ * 180.0 / M_PI << std::endl;
+                } else {
+                    ROS_WARN("!!! check /joint_states topic !!!");
+                }
     }
 
     Mat getTransformMatrix(const tf::StampedTransform& transform)

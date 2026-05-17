@@ -18,6 +18,7 @@
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include "control_switcher_ur.h"
 #include <image_transport/image_transport.h>
+#include <robot_control_VS/PolarizedImages.h>
 
 using namespace cv;
 using namespace std;
@@ -30,8 +31,7 @@ class Ros_ur_DVS
 {
     protected:
         ros::NodeHandle                         nh_; 
-        image_transport::ImageTransport         it_;
-        image_transport::Subscriber             image_polarized_sub_;
+        ros::Subscriber             image_polarized_sub_;
         Client                                  *client;
         control_msgs::FollowJointTrajectoryGoal goal;
         tf::TransformListener                   listener_pose_;
@@ -45,7 +45,9 @@ class Ros_ur_DVS
         double              itera_num_all_;
         bool                flag_success_;
         Mat                 joint_angle_initial_VS_;
-        Mat                 VS_image_;
+        Mat                 joint_angle_start_;    
+        Mat                 depth_new_;
+        Mat                 img_new_;
         bool                start_DVS;
         ControlSwitcher_UR  control_switcher_;
         string              name_link0_, name_camera_frame_, name_effector_;
@@ -63,8 +65,8 @@ class Ros_ur_DVS
 
     public:
         Ros_ur_DVS();
-        virtual bool get_visual_servoing_image(const ImageConstPtr& image_polar_msg, cv::Mat& VS_image);
-        void Callback(const ImageConstPtr& image_polar_msg);     
+        virtual bool get_visual_servoing_image(const robot_control_VS::PolarizedImagesConstPtr& gray_msg, cv::Mat& VS_image);
+        void Callback(const robot_control_VS::PolarizedImagesConstPtr& gray_msg);    
         void get_parameters_resolution(int& resolution_x, int& resolution_y);
         Mat get_parameter_Matrix(string str, int row, int col);
         void rgb_image_operate(Mat& image_rgb, Mat& image_gray);

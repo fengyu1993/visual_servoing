@@ -14,12 +14,13 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "lucid_camera_node");
     ros::NodeHandle nh;
-    sensor_msgs::ImagePtr msg_color_0, msg_color_45, msg_color_90, msg_color_135;
+    sensor_msgs::ImagePtr msg_color_0, msg_color_45, msg_color_90, msg_color_135, msg_color_S0;
     sensor_msgs::ImagePtr msg_gray_0, msg_gray_45, msg_gray_90, msg_gray_135;
-    image_transport::Publisher I0_color_pub, I45_color_pub, I90_color_pub, I135_color_pub;
+    image_transport::ImageTransport it(nh);
+    image_transport::Publisher I0_color_pub, I45_color_pub, I90_color_pub, I135_color_pub, S0_color_pub;
     image_transport::Publisher I0_gray_pub, I45_gray_pub, I90_gray_pub, I135_gray_pub;
     size_t width, height, bpp;
-    cv::Mat color_0, color_45, color_90, color_135;
+    cv::Mat color_0, color_45, color_90, color_135, color_S0_double, color_S0_8U;
     cv::Mat gray_0, gray_45, gray_90, gray_135;  
     cv::Mat plane_0, plane_45, plane_90, plane_135;
     size_t plane_size; 
@@ -30,10 +31,8 @@ int main(int argc, char** argv)
     // 自定义消息发布
     ros::Publisher Iall_color_pub = nh.advertise<robot_control_VS::PolarizedImages>("camera/polarized_Iall_color", 1);
     ros::Publisher Iall_gray_pub = nh.advertise<robot_control_VS::PolarizedImages>("camera/polarized_Iall_gray", 1);
-    
+    S0_color_pub = it.advertise("camera/polarized_S0_color", 1);
     if(flag){
-        // 使用 image_transport 发布图像，便于后续使用压缩传输或 rviz 查看
-        image_transport::ImageTransport it(nh);
         I0_color_pub = it.advertise("camera/polarized_I0_color", 1);
         I45_color_pub = it.advertise("camera/polarized_I45_color", 1);
         I90_color_pub = it.advertise("camera/polarized_I90_color", 1);
@@ -86,13 +85,6 @@ int main(int argc, char** argv)
                 // 判断是否为 4 个字节 (0, 45, 90, 135)
                 if (bpp == 32) 
                 {
-                    // plane_size = height * width; 
-                    // data_ptr = (uint8_t*)pImage->GetData();
-                    // plane_0 = cv::Mat(height, width, CV_8UC4, data_ptr);
-                    // plane_45 = cv::Mat(height, width, CV_8UC1, data_ptr + plane_size);
-                    // plane_90 = cv::Mat(height, width, CV_8UC1, data_ptr + plane_size * 2);
-                    // plane_135 = cv::Mat(height, width, CV_8UC1, data_ptr + plane_size * 3);
-
                     // 创建 OpenCV Mat，不拷贝数据，直接映射
                     cv::Mat raw_mat(height, width, CV_8UC4, (void*)pImage->GetData());
                     // 拆分四个角度的通道
@@ -102,6 +94,14 @@ int main(int argc, char** argv)
                     cv::cvtColor(planes[1], color_45, cv::COLOR_BayerBG2BGR);
                     cv::cvtColor(planes[2], color_90, cv::COLOR_BayerBG2BGR);
                     cv::cvtColor(planes[3], color_135,cv::COLOR_BayerBG2BGR);
+                    // 计算S0彩色
+                    cv::Mat temp;
+                    color_0.convertTo(color_S0_double, CV_64FC3); 
+                    color_45.convertTo(temp, CV_64FC3); color_S0_double += temp;
+                    color_90.convertTo(temp, CV_64FC3); color_S0_double += temp;
+                    color_135.convertTo(temp, CV_64FC3); color_S0_double += temp;
+                    color_S0_double /= 4.0;
+                    color_S0_double.convertTo(color_S0_8U, CV_8UC3);
                     // 对每个角度进行 BGR -> gray 转换
                     cv::cvtColor(color_0, gray_0,  cv::COLOR_BGR2GRAY);
                     cv::cvtColor(color_45, gray_45, cv::COLOR_BGR2GRAY);
@@ -118,6 +118,7 @@ int main(int argc, char** argv)
                     msg_polarized_color->image_45 = *(cv_bridge::CvImage(header, "bgr8", color_45).toImageMsg());
                     msg_polarized_color->image_90 = *(cv_bridge::CvImage(header, "bgr8", color_90).toImageMsg());
                     msg_polarized_color->image_135 = *(cv_bridge::CvImage(header, "bgr8", color_135).toImageMsg());
+                    msg_color_S0 = cv_bridge::CvImage(header, "bgr8", color_S0_8U).toImageMsg();
                     // 填充灰度图 (mono8)
                     msg_polarized_gray->image_0 = *(cv_bridge::CvImage(header, "mono8", gray_0).toImageMsg());
                     msg_polarized_gray->image_45 = *(cv_bridge::CvImage(header, "mono8", gray_45).toImageMsg());
@@ -152,6 +153,7 @@ int main(int argc, char** argv)
                     // 发布
                     Iall_color_pub.publish(msg_polarized_color);
                     Iall_gray_pub.publish(msg_polarized_gray);
+                    S0_color_pub.publish(msg_color_S0);
                     if(flag){
                         I0_color_pub.publish(msg_color_0);
                         I45_color_pub.publish(msg_color_45);
@@ -190,3 +192,4 @@ int main(int argc, char** argv)
 
     return 0;
 }
+

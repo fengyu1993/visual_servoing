@@ -1,6 +1,6 @@
 #include "ros_ur_DVS.h"
 
-Ros_ur_DVS::Ros_ur_DVS(): it_(nh_) 
+Ros_ur_DVS::Ros_ur_DVS()
 {
     // 设置分辨率
     int resolution_x, resolution_y;
@@ -14,8 +14,10 @@ Ros_ur_DVS::Ros_ur_DVS(): it_(nh_)
     this->nh_.getParam("name_camera_frame", this->name_camera_frame_);
     this->nh_.getParam("name_effector", this->name_effector_);
     this->joint_angle_initial_VS_ = get_parameter_Matrix("joint_angle_initial_VS", 6, 1);
+    this->joint_angle_start_ = get_parameter_Matrix("joint_angle_start", 6, 1);
     this->pub_twist_ = this->nh_.advertise<geometry_msgs::Twist>("/twist_controller/command", 5);
-    this->image_polarized_sub_ = this->it_.subscribe("camera/polarized_Iall_gray", 1, &Ros_ur_DVS::Callback, this);
+    this->image_polarized_sub_ = this->nh_.subscribe("camera/polarized_Iall_gray", 10, &Ros_ur_DVS::Callback, this);
+     
     this->start_DVS = false;
     this->goal.trajectory.joint_names.push_back("shoulder_pan_joint");
     this->goal.trajectory.joint_names.push_back("shoulder_lift_joint");
@@ -33,93 +35,99 @@ Ros_ur_DVS::Ros_ur_DVS(): it_(nh_)
     this->T_camera_to_base_ = Mat::eye(4, 4, CV_64FC1);
     this->px_temp_ = 0; this->py_temp_ = 0; this->pz_temp_ = 0; 
 
-     cv::namedWindow("VS_image", cv::WINDOW_AUTOSIZE);
-    // this->client = new Client("pos_joint_traj_controller/follow_joint_trajectory", true);  
-    // ROS_INFO("Waiting for action server to start.");
-    // this->client->waitForServer();  // 将会一直等待直到动作服务器可用
-    // ROS_INFO("Server started, sending goal.");
+    cv::namedWindow("VS_image", cv::WINDOW_AUTOSIZE);
+    this->client = new Client("pos_joint_traj_controller/follow_joint_trajectory", true);  
+    ROS_INFO("Waiting for action server to start.");
+    this->client->waitForServer();  // 将会一直等待直到动作服务器可用
+    ROS_INFO("Server started, sending goal.");
 }
 
 
 
-void Ros_ur_DVS::Callback(const ImageConstPtr& image_polar_msg)
+void Ros_ur_DVS::Callback(const robot_control_VS::PolarizedImagesConstPtr& gray_msg)
 {
     if(this->start_DVS)
     {   
         // 计算视觉伺服的图像
-        if(~this->get_visual_servoing_image(image_polar_msg, this->VS_image_))
+        if(!this->get_visual_servoing_image(gray_msg, this->img_new_)){
+            ROS_INFO("get_visual_servoing_image error!!!");
             return;
-        // 数据转换
-        Mat depth_new, img_new;
-        // 获取相机位姿
-        this->get_camera_pose(this->T_camera_to_base_); 
-        // 计算相机速度并保存数据
-        this->DVS->set_image_depth_current(depth_new);
-        this->DVS->set_image_gray_current(img_new); 
-        // 准备
+        }
+        // 第一次伺服保存数据
         if(this->DVS->flag_first_)
         {  
+            ROS_INFO("first VS!!!");
             double lambda, epsilon;
             Mat img_old, depth_old, camera_intrinsic, pose_desired;
             // 获取参数
             this->get_parameters_DVS(lambda, epsilon, img_old, depth_old, camera_intrinsic, pose_desired);
-            this->DVS->init_VS(lambda, epsilon, img_old, depth_old, img_new, camera_intrinsic, pose_desired);
+            cout << "lambda: " << lambda << endl;
+            cout << "epsilon: " << epsilon << endl;
+            cout << "camera_intrinsic: " << camera_intrinsic << endl;
+            cout << "pose_desired: " << pose_desired << endl;
+            cout << "img_old: " << img_old.rowRange(0,5).colRange(0,5) << endl;
+            cout << "depth_old: " << depth_old.rowRange(0,5).colRange(0,5) << endl;
+            
+            this->DVS->init_VS(lambda, epsilon, img_old, depth_old, this->img_new_, camera_intrinsic, pose_desired);
             this->DVS->flag_first_ = false;
         }
 
-        Mat camera_velocity = this->DVS->get_camera_velocity(); 
+    
 
-        this->DVS->save_data(this->T_camera_to_base_);
-        // 判断是否成功并做速度转换
-        if(this->DVS->is_success() || this->DVS->iteration_num_ > this->itera_num_all_)
-        {
-            this->flag_success_ = true;
-            this->DVS->write_data();  
-            camera_velocity = 0 * camera_velocity;
-            this->start_DVS = false;
-        }
-        else
-        {
-            this->flag_success_ = false;
+        this->depth_new_ = Mat::ones(this->img_new_.size(), CV_64FC1) * 1.5;
+        this->DVS->set_image_depth_current(this->depth_new_);
+        this->DVS->set_image_gray_current(this->img_new_); 
+    //     // 获取相机位姿
+    //     this->get_camera_pose(this->T_camera_to_base_); 
+    //     // 计算相机速度并保存数据
+    //     // 准备
+
+
+    //     Mat camera_velocity = this->DVS->get_camera_velocity(); 
+
+        
+
+    //     this->DVS->save_data(this->T_camera_to_base_);
+    //     // 判断是否成功并做速度转换
+    //     if(this->DVS->is_success() || this->DVS->iteration_num_ > this->itera_num_all_)
+    //     {
+    //         this->flag_success_ = true;
+    //         this->DVS->write_data();  
+    //         camera_velocity = 0 * camera_velocity;
+    //         this->start_DVS = false;
+    //     }
+    //     else
+    //     {
+    //         this->flag_success_ = false;
             
-        }
-       // 发布速度信息
-        this->twist_publist(camera_velocity);
+    //     }
+    //    // 发布速度信息
+    //     this->twist_publist(camera_velocity);
     }
 }
 
 
 
 
-bool Ros_ur_DVS::get_visual_servoing_image(const ImageConstPtr& image_polar_msg, cv::Mat& VS_image)
+bool Ros_ur_DVS::get_visual_servoing_image(const robot_control_VS::PolarizedImagesConstPtr& gray_msg, cv::Mat& VS_image)
 {
-        try {
-        // 验证图像格式
-        if (image_polar_msg->encoding != sensor_msgs::image_encodings::TYPE_8UC4) {
-            ROS_INFO("get_visual_servoing_image_cyh_1");
-            ROS_WARN_THROTTLE(1.0, "Invalid encoding: %s (expected 8UC4)", 
-                            image_polar_msg->encoding.c_str());
-            return false;
-        }
-        ROS_INFO("get_visual_servoing_image_cyh_4");
-        // 转换为OpenCV格式
-        cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvShare(image_polar_msg, sensor_msgs::image_encodings::TYPE_8UC4);
-        // 将 8UC4 转换为 64FC4
-        cv::Mat img_double;
-        cv_ptr->image.convertTo(img_double, CV_64FC4); 
-        // 拆分为四个单通道图像
-        std::vector<cv::Mat> channels(4);
-        cv::split(img_double, channels);      
-        // 计算视觉伺服所需图像
-        VS_image = (channels[0] + channels[1] + channels[2] + channels[3]) / 4.0; 
+    try {
+        Mat img_polar_gray_0, img_polar_gray_45, img_polar_gray_90, img_polar_gray_135;
+        img_polar_gray_0 = cv_bridge::toCvCopy(gray_msg->image_0, "mono8")->image;
+        img_polar_gray_45 = cv_bridge::toCvCopy(gray_msg->image_45, "mono8")->image;
+        img_polar_gray_90 = cv_bridge::toCvCopy(gray_msg->image_90, "mono8")->image;
+        img_polar_gray_135 = cv_bridge::toCvCopy(gray_msg->image_135, "mono8")->image;
+        Mat temp;
+        img_polar_gray_0.convertTo(VS_image, CV_64FC1);
+        img_polar_gray_45.convertTo(temp, CV_64FC1); VS_image += temp;
+        img_polar_gray_90.convertTo(temp, CV_64FC1); VS_image += temp;
+        img_polar_gray_135.convertTo(temp, CV_64FC1); VS_image += temp;
+        VS_image /= 4.0;
         return true;
-
     } catch (const cv_bridge::Exception& e) {
-        ROS_INFO("get_visual_servoing_image_cyh_2");
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return false;
     } catch (const std::exception& e) {
-        ROS_INFO("get_visual_servoing_image_cyh_3");
         ROS_ERROR("Exception: %s", e.what());
         return false;
     }

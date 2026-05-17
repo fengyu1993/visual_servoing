@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <launch>
 
-<rosparam file= "$(find robot_control_VS)/param/parameters_ur_DVS.yaml" command= "load"/>
+<rosparam file= "$(find robot_control_VS)/param/parameters_ur_polarized_DVS.yaml" command= "load"/>
 
 <include file="$(dirname)/camera_ur_LUCID_calibration.launch" />
 
