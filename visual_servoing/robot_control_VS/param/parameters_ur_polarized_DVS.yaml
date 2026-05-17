@@ -7,7 +7,7 @@ control_rate:   10
 
 joint_angle_start: [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
 
-joint_angle_initial_VS: [ -3.477e-01, -1.64e+00, 1.3607e+00, -1.53e+00, -1.3043e+00, 1.19842e-05 ]
+joint_angle_initial_VS: [ -3.54e-01, -1.75e+00, 1.35e+00, -1.64e+00, -1.43e+00, -1.03e-02 ]
 
 epsilon:        10.0e-4
 
@@ -36,7 +36,7 @@ pose_desired: [0.124625,-0.311249,0.942121,0.261991,
 
 name_link0:         "base"
 
-name_camera_frame:  "camera_optical_frame"
+name_camera_frame:  "camera_polar_frame"
 
 name_effector:      "tool0_controller"
 

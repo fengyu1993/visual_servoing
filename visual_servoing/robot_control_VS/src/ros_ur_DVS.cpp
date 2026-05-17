@@ -60,34 +60,22 @@ void Ros_ur_DVS::Callback(const robot_control_VS::PolarizedImagesConstPtr& gray_
             double lambda, epsilon;
             Mat img_old, depth_old, camera_intrinsic, pose_desired;
             // 获取参数
-            this->get_parameters_DVS(lambda, epsilon, img_old, depth_old, camera_intrinsic, pose_desired);
-            cout << "lambda: " << lambda << endl;
-            cout << "epsilon: " << epsilon << endl;
-            cout << "camera_intrinsic: " << camera_intrinsic << endl;
-            cout << "pose_desired: " << pose_desired << endl;
-            cout << "img_old: " << img_old.rowRange(0,5).colRange(0,5) << endl;
-            cout << "depth_old: " << depth_old.rowRange(0,5).colRange(0,5) << endl;
-            
+            this->get_parameters_DVS(lambda, epsilon, img_old, depth_old, camera_intrinsic, pose_desired);         
             this->DVS->init_VS(lambda, epsilon, img_old, depth_old, this->img_new_, camera_intrinsic, pose_desired);
             this->DVS->flag_first_ = false;
         }
-
-    
-
         this->depth_new_ = Mat::ones(this->img_new_.size(), CV_64FC1) * 1.5;
         this->DVS->set_image_depth_current(this->depth_new_);
         this->DVS->set_image_gray_current(this->img_new_); 
-    //     // 获取相机位姿
-    //     this->get_camera_pose(this->T_camera_to_base_); 
+        // 获取相机位姿
+        this->get_camera_pose(this->T_camera_to_base_); 
     //     // 计算相机速度并保存数据
-    //     // 准备
-
-
+        // 准备
     //     Mat camera_velocity = this->DVS->get_camera_velocity(); 
 
         
 
-    //     this->DVS->save_data(this->T_camera_to_base_);
+        // this->DVS->save_data(this->T_camera_to_base_);
     //     // 判断是否成功并做速度转换
     //     if(this->DVS->is_success() || this->DVS->iteration_num_ > this->itera_num_all_)
     //     {
@@ -146,7 +134,6 @@ void Ros_ur_DVS::get_camera_pose(Mat& T_camera_to_base)
         {
             // 尝试获取当前时刻的变换
             this->listener_pose_.lookupTransform(this->name_link0_, this->name_camera_frame_, ros::Time(0), this->transform_temp_);
-            // this->listener_pose_.lookupTransform("base", "camera_polar_frame", ros::Time(0), transform);
             get_T(this->transform_temp_, T_camera_to_base);  
         }
         catch (tf::TransformException &ex)
@@ -205,9 +192,9 @@ void Ros_ur_DVS::get_parameters_DVS(double& lambda, double& epsilon, Mat& image_
     this->nh_.getParam("epsilon", epsilon);
     // 图像参数
     string loaction, name;
-    this->nh_.getParam("resource_location", loaction);
+    this->nh_.getParam("resource_location", loaction); 
     // 读彩色图
-    this->nh_.getParam("image_rgb_desired_name", name);
+    this->nh_.getParam("image_polar_desired_name", name);
     Mat image_rgb_desired = imread(loaction + name, IMREAD_COLOR);
     rgb_image_operate(image_rgb_desired, image_gray_desired);  
     // 赋值深度图

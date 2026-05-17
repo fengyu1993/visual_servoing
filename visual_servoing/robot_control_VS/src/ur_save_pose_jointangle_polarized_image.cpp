@@ -39,8 +39,8 @@ private:
 
     std::unique_ptr<message_filters::Synchronizer<SyncPolicy>> sync_;
 
-    Mat img_polar_color_0, img_polar_color_45, img_polar_color_90, img_polar_color_135, img_polar_color_S0;
-    Mat img_polar_gray_0, img_polar_gray_45, img_polar_gray_90, img_polar_gray_135, img_polar_gray_S0;
+    Mat img_polar_color_0_, img_polar_color_45_, img_polar_color_90_, img_polar_color_135_, img_polar_color_S0_;
+    Mat img_polar_gray_0_, img_polar_gray_45_, img_polar_gray_90_, img_polar_gray_135_, img_polar_gray_S0_;
 
     Mat S0_color_display_, S0_gray_display_, S0_color_save_; 
 
@@ -92,17 +92,18 @@ public:
     void writeImage()
     {
         std::lock_guard<std::mutex> lock(image_mutex_);
-        if (S0_color_save_.empty() || img_polar_color_0.empty()) {
+        if (S0_color_save_.empty() || img_polar_color_0_.empty()) {
             ROS_WARN("No images to save!");
             return;
         }
 
         string dir = save_path_ + file_name;
         imwrite(dir + "image_polar_init.png", S0_color_save_);
-        imwrite(dir + "image_polar_color_0.png", img_polar_color_0);
-        imwrite(dir + "image_polar_color_45.png", img_polar_color_45);
-        imwrite(dir + "image_polar_color_90.png", img_polar_color_90);
-        imwrite(dir + "image_polar_color_135.png", img_polar_color_135);
+        imwrite(dir + "image_polar_color_S0.png", S0_color_save_);
+        imwrite(dir + "image_polar_color_0.png", img_polar_color_0_);
+        imwrite(dir + "image_polar_color_45.png", img_polar_color_45_);
+        imwrite(dir + "image_polar_color_90.png", img_polar_color_90_);
+        imwrite(dir + "image_polar_color_135.png", img_polar_color_135_);
         
         ROS_INFO("Images saved to DVS_Polarized directory.");
     }
@@ -211,23 +212,23 @@ public:
                        const robot_control_VS::PolarizedImagesConstPtr& gray_msg)
     {
         try {
-            img_polar_color_0 = cv_bridge::toCvCopy(color_msg->image_0, "bgr8")->image;
-            img_polar_color_45 = cv_bridge::toCvCopy(color_msg->image_45, "bgr8")->image;
-            img_polar_color_90 = cv_bridge::toCvCopy(color_msg->image_90, "bgr8")->image;
-            img_polar_color_135 = cv_bridge::toCvCopy(color_msg->image_135, "bgr8")->image;
-            img_polar_color_S0 = cv_bridge::toCvCopy(color_msg->image_S0, "bgr8")->image;
+            img_polar_color_0_ = cv_bridge::toCvCopy(color_msg->image_0, "bgr8")->image;
+            img_polar_color_45_ = cv_bridge::toCvCopy(color_msg->image_45, "bgr8")->image;
+            img_polar_color_90_ = cv_bridge::toCvCopy(color_msg->image_90, "bgr8")->image;
+            img_polar_color_135_ = cv_bridge::toCvCopy(color_msg->image_135, "bgr8")->image;
+            img_polar_color_S0_ = cv_bridge::toCvCopy(color_msg->image_S0, "bgr8")->image;
 
-            img_polar_gray_0 = cv_bridge::toCvCopy(gray_msg->image_0, "mono8")->image;
-            img_polar_gray_45 = cv_bridge::toCvCopy(gray_msg->image_45, "mono8")->image;
-            img_polar_gray_90 = cv_bridge::toCvCopy(gray_msg->image_90, "mono8")->image;
-            img_polar_gray_135 = cv_bridge::toCvCopy(gray_msg->image_135, "mono8")->image;
-            img_polar_gray_S0 = cv_bridge::toCvCopy(gray_msg->image_S0, "mono8")->image;
+            img_polar_gray_0_ = cv_bridge::toCvCopy(gray_msg->image_0, "mono8")->image;
+            img_polar_gray_45_ = cv_bridge::toCvCopy(gray_msg->image_45, "mono8")->image;
+            img_polar_gray_90_ = cv_bridge::toCvCopy(gray_msg->image_90, "mono8")->image;
+            img_polar_gray_135_ = cv_bridge::toCvCopy(gray_msg->image_135, "mono8")->image;
+            img_polar_gray_S0_ = cv_bridge::toCvCopy(gray_msg->image_S0, "mono8")->image;
             
             {
                 std::lock_guard<std::mutex> lock(image_mutex_);
-                img_polar_color_S0.copyTo(S0_color_display_);
-                img_polar_gray_S0.copyTo(S0_gray_display_);               
-                img_polar_color_S0.copyTo(S0_color_save_); 
+                img_polar_color_S0_.copyTo(S0_color_display_);
+                img_polar_gray_S0_.copyTo(S0_gray_display_);               
+                img_polar_color_S0_.copyTo(S0_color_save_); 
             }
         }
         catch (cv_bridge::Exception& e) {
