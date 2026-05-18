@@ -35,9 +35,8 @@ class Ros_ur_DVS
         Client                                  *client;
         control_msgs::FollowJointTrajectoryGoal goal;
         tf::TransformListener                   listener_pose_;
-        Mat                                     effector_velocity_base_;
         ros::Publisher                          pub_twist_; 
-        geometry_msgs::Twist                    msg_effector_twist_;
+        geometry_msgs::Twist                    msg_camera_twist_;
 
     public:
         Direct_Visual_Servoing *DVS;
@@ -61,6 +60,8 @@ class Ros_ur_DVS
         Mat                 T_camera_to_effector_;
         Mat                 T_camera_to_base_;
         tf::StampedTransform transform_temp_; 
+        Mat                 camera_velocity_;
+        Mat                 camera_velocity_base_;
 
 
     public:
@@ -78,6 +79,7 @@ class Ros_ur_DVS
         void get_effector_twist(const Mat& camera_velocity, const Mat& effector_to_camera, Mat& effector_twist);
         void velocity_effector_to_base(const Mat& velocity, const Mat& effector_to_base, Mat& effector_twist_bast);
         void twist_publist(Mat camera_velocity);
+        Mat velocity_camera_to_base(Mat velocity, Mat pose);
 };
 
 #endif

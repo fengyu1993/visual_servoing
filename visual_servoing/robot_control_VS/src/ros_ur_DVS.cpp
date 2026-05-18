@@ -34,8 +34,8 @@ Ros_ur_DVS::Ros_ur_DVS()
     this->T_camera_to_effector_ = Mat::eye(4, 4, CV_64FC1);
     this->T_camera_to_base_ = Mat::eye(4, 4, CV_64FC1);
     this->px_temp_ = 0; this->py_temp_ = 0; this->pz_temp_ = 0; 
+    this->camera_velocity_ = Mat::zeros(6,1,CV_64FC1);
 
-    cv::namedWindow("VS_image", cv::WINDOW_AUTOSIZE);
     this->client = new Client("pos_joint_traj_controller/follow_joint_trajectory", true);  
     ROS_INFO("Waiting for action server to start.");
     this->client->waitForServer();  // 将会一直等待直到动作服务器可用
@@ -69,28 +69,37 @@ void Ros_ur_DVS::Callback(const robot_control_VS::PolarizedImagesConstPtr& gray_
         this->DVS->set_image_gray_current(this->img_new_); 
         // 获取相机位姿
         this->get_camera_pose(this->T_camera_to_base_); 
-    //     // 计算相机速度并保存数据
-        // 准备
-    //     Mat camera_velocity = this->DVS->get_camera_velocity(); 
-
-        
-
-        // this->DVS->save_data(this->T_camera_to_base_);
-    //     // 判断是否成功并做速度转换
-    //     if(this->DVS->is_success() || this->DVS->iteration_num_ > this->itera_num_all_)
-    //     {
-    //         this->flag_success_ = true;
-    //         this->DVS->write_data();  
-    //         camera_velocity = 0 * camera_velocity;
-    //         this->start_DVS = false;
-    //     }
-    //     else
-    //     {
-    //         this->flag_success_ = false;
-            
-    //     }
-    //    // 发布速度信息
-    //     this->twist_publist(camera_velocity);
+        // 计算相机速度
+        this->camera_velocity_ = this->DVS->get_camera_velocity(); 
+        this->camera_velocity_ = (cv::Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, 0.04); 
+        cout << "camera_velocity_" << this->camera_velocity_ << endl;
+        // 保存数据  
+        this->DVS->save_data(this->T_camera_to_base_);
+        // 判断是否成功并做速度转换
+        if(this->DVS->is_success() || this->DVS->iteration_num_ > this->itera_num_all_)
+        {
+            cout << "VS finish" << endl;
+            this->flag_success_ = true;
+            this->DVS->write_data();  
+            this->camera_velocity_ = 0 * this->camera_velocity_;
+            this->start_DVS = false;
+        }
+        else
+        {
+            this->flag_success_ = false;
+            this->camera_velocity_base_ = velocity_camera_to_base(this->camera_velocity_, this->T_camera_to_base_);
+        }
+       // 发布速度信息
+        // this->twist_publist(this->camera_velocity_);
+        // ROS_INFO("twist_publist finish");
+               // 发布速度信息
+        msg_camera_twist_.linear.x = this->camera_velocity_base_.at<double>(0,0);
+        msg_camera_twist_.linear.y = this->camera_velocity_base_.at<double>(1,0);
+        msg_camera_twist_.linear.z = this->camera_velocity_base_.at<double>(2,0);
+        msg_camera_twist_.angular.x = this->camera_velocity_base_.at<double>(3,0);
+        msg_camera_twist_.angular.y = this->camera_velocity_base_.at<double>(4,0);
+        msg_camera_twist_.angular.z = this->camera_velocity_base_.at<double>(5,0);
+        this->pub_twist_.publish(msg_camera_twist_);
     }
 }
 
@@ -100,17 +109,7 @@ void Ros_ur_DVS::Callback(const robot_control_VS::PolarizedImagesConstPtr& gray_
 bool Ros_ur_DVS::get_visual_servoing_image(const robot_control_VS::PolarizedImagesConstPtr& gray_msg, cv::Mat& VS_image)
 {
     try {
-        Mat img_polar_gray_0, img_polar_gray_45, img_polar_gray_90, img_polar_gray_135;
-        img_polar_gray_0 = cv_bridge::toCvCopy(gray_msg->image_0, "mono8")->image;
-        img_polar_gray_45 = cv_bridge::toCvCopy(gray_msg->image_45, "mono8")->image;
-        img_polar_gray_90 = cv_bridge::toCvCopy(gray_msg->image_90, "mono8")->image;
-        img_polar_gray_135 = cv_bridge::toCvCopy(gray_msg->image_135, "mono8")->image;
-        Mat temp;
-        img_polar_gray_0.convertTo(VS_image, CV_64FC1);
-        img_polar_gray_45.convertTo(temp, CV_64FC1); VS_image += temp;
-        img_polar_gray_90.convertTo(temp, CV_64FC1); VS_image += temp;
-        img_polar_gray_135.convertTo(temp, CV_64FC1); VS_image += temp;
-        VS_image /= 4.0;
+        cv_bridge::toCvCopy(gray_msg->image_S0, "mono8")->image.convertTo(VS_image, CV_64FC1);
         return true;
     } catch (const cv_bridge::Exception& e) {
         ROS_ERROR("cv_bridge exception: %s", e.what());
@@ -145,21 +144,34 @@ void Ros_ur_DVS::get_camera_pose(Mat& T_camera_to_base)
     }
 }
 
+Mat Ros_ur_DVS::velocity_camera_to_base(Mat velocity, Mat pose)
+{
+    Mat R_camera_to_base = pose.rowRange(0,3).colRange(0,3);
+    Mat V_effector_to_base = Mat::zeros(6,1,CV_64FC1);
+    V_effector_to_base.rowRange(0,3).colRange(0,1) = R_camera_to_base * velocity.rowRange(0,3).colRange(0,1);
+    V_effector_to_base.rowRange(3,6).colRange(0,1) = R_camera_to_base * velocity.rowRange(3,6).colRange(0,1);
+
+    return V_effector_to_base;
+}
+
 void Ros_ur_DVS::twist_publist(Mat camera_velocity)
 {
     get_camera_effector_pose(this->T_effector_to_base_, this->T_camera_to_effector_);
     // 速度转换
     get_effector_twist(camera_velocity, this->T_camera_to_effector_, this->effector_twist_);
     velocity_effector_to_base(this->effector_twist_, this->T_effector_to_base_, this->effector_twist_base_);
+    
+    
+    
     // 发布速度信息
-    const double* vel_ptr = this->effector_velocity_base_.ptr<double>(0); 
-    msg_effector_twist_.linear.x = vel_ptr[0];
-    msg_effector_twist_.linear.y = vel_ptr[1];
-    msg_effector_twist_.linear.z = vel_ptr[2];
-    msg_effector_twist_.angular.x = vel_ptr[3];
-    msg_effector_twist_.angular.y = vel_ptr[4];
-    msg_effector_twist_.angular.z = vel_ptr[5];
-    this->pub_twist_.publish(msg_effector_twist_);
+    const double* vel_ptr = this->effector_twist_base_.ptr<double>(0); 
+    msg_camera_twist_.linear.x = vel_ptr[0];
+    msg_camera_twist_.linear.y = vel_ptr[1];
+    msg_camera_twist_.linear.z = vel_ptr[2];
+    msg_camera_twist_.angular.x = vel_ptr[3];
+    msg_camera_twist_.angular.y = vel_ptr[4];
+    msg_camera_twist_.angular.z = vel_ptr[5];
+    this->pub_twist_.publish(msg_camera_twist_);
 }
 
 void Ros_ur_DVS::get_parameters_resolution(int& resolution_x, int& resolution_y)
@@ -193,7 +205,7 @@ void Ros_ur_DVS::get_parameters_DVS(double& lambda, double& epsilon, Mat& image_
     // 图像参数
     string loaction, name;
     this->nh_.getParam("resource_location", loaction); 
-    // 读彩色图
+    // 读偏振图
     this->nh_.getParam("image_polar_desired_name", name);
     Mat image_rgb_desired = imread(loaction + name, IMREAD_COLOR);
     rgb_image_operate(image_rgb_desired, image_gray_desired);  

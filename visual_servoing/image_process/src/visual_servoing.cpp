@@ -39,11 +39,12 @@ void Visual_Servoing::init_VS(double lambda, double epsilon, Mat& image_gray_des
 Mat Visual_Servoing::get_camera_velocity()
 {
 	// 计算相机速度
-    Mat L_e_inv;
 	this->iteration_num_++;
     get_feature_error_interaction_matrix(); 
-    invert(this->L_e_, L_e_inv, DECOMP_SVD);
-    this->camera_velocity_ = -this->lambda_ * L_e_inv * this->error_s_;
+    // invert(this->L_e_, this->L_e_inv_, DECOMP_SVD);
+	this->L_e_transpose_ = this->L_e_.t();
+	this->L_e_inv_ = (this->L_e_transpose_ * this->L_e_).inv(cv::DECOMP_LU) * this->L_e_transpose_;
+	this->camera_velocity_ = -this->lambda_ * this->L_e_inv_ * this->error_s_;
     return this->camera_velocity_;
 }
 
@@ -185,8 +186,15 @@ void Visual_Servoing::write_data()
     // 保存图像
     string saveImage_desired = location + file_name + "_desired_image.png";
     string saveImage_initial = location + file_name + "_initial_image.png";
-    imwrite(saveImage_desired, this->data_vs.image_gray_desired_*255);
-    imwrite(saveImage_initial, this->data_vs.image_gray_init_*255);
+	cv::Mat mask;
+	cv::compare(this->data_vs.image_gray_init_, 2, mask, cv::CMP_GT);
+	if(cv::countNonZero(mask) > 0){
+		imwrite(saveImage_desired, this->data_vs.image_gray_desired_);
+    	imwrite(saveImage_initial, this->data_vs.image_gray_init_);
+	}else{
+		imwrite(saveImage_desired, this->data_vs.image_gray_desired_*255);
+		imwrite(saveImage_initial, this->data_vs.image_gray_init_*255);
+	}
     // 保存数据
     ofstream oFile;
 	string excel_name = location + file_name + "_data.xls";

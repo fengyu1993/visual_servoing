@@ -26,6 +26,8 @@ class Visual_Servoing
         int resolution_x_;
         int resolution_y_;
         Mat L_e_;
+        Mat L_e_inv_;
+        Mat L_e_transpose_;
         Mat error_s_;
         bool flag_first_;
         int iteration_num_;

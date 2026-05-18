@@ -19,7 +19,7 @@ k:              20
 
 depth_desired:  1.0
 
-itera_num_all:  2000.0
+itera_num_all:  10.0
 
 resource_location:         "/home/cyh/Work/visual_servoing_ws/src/visual_servoing/robot_control_VS/param/DVS_Polarized/"
 
