@@ -61,7 +61,6 @@ class Ros_ur_DVS
         Mat                 T_camera_to_base_;
         tf::StampedTransform transform_temp_; 
         Mat                 camera_velocity_;
-        Mat                 camera_velocity_base_;
 
 
     public:

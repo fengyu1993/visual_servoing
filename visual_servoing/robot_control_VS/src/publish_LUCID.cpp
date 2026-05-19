@@ -27,7 +27,7 @@ int main(int argc, char** argv)
     uint8_t* data_ptr;
 
 
-    bool flag = false;
+    bool flag = true;
     // 自定义消息发布
     ros::Publisher Iall_color_pub = nh.advertise<robot_control_VS::PolarizedImages>("camera/polarized_Iall_color", 1);
     ros::Publisher Iall_gray_pub = nh.advertise<robot_control_VS::PolarizedImages>("camera/polarized_Iall_gray", 1);

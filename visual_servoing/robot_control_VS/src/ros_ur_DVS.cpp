@@ -71,8 +71,7 @@ void Ros_ur_DVS::Callback(const robot_control_VS::PolarizedImagesConstPtr& gray_
         this->get_camera_pose(this->T_camera_to_base_); 
         // 计算相机速度
         this->camera_velocity_ = this->DVS->get_camera_velocity(); 
-        this->camera_velocity_ = (cv::Mat_<double>(6,1) << 0.0, 0.0, 0.0, 0.0, 0.0, 0.04); 
-        cout << "camera_velocity_" << this->camera_velocity_ << endl;
+        this->camera_velocity_ = (cv::Mat_<double>(6,1) << 0.00, 0.00, 0.00, 0.04, 0.00, 0.00); 
         // 保存数据  
         this->DVS->save_data(this->T_camera_to_base_);
         // 判断是否成功并做速度转换
@@ -87,19 +86,9 @@ void Ros_ur_DVS::Callback(const robot_control_VS::PolarizedImagesConstPtr& gray_
         else
         {
             this->flag_success_ = false;
-            this->camera_velocity_base_ = velocity_camera_to_base(this->camera_velocity_, this->T_camera_to_base_);
-        }
+         }
        // 发布速度信息
-        // this->twist_publist(this->camera_velocity_);
-        // ROS_INFO("twist_publist finish");
-               // 发布速度信息
-        msg_camera_twist_.linear.x = this->camera_velocity_base_.at<double>(0,0);
-        msg_camera_twist_.linear.y = this->camera_velocity_base_.at<double>(1,0);
-        msg_camera_twist_.linear.z = this->camera_velocity_base_.at<double>(2,0);
-        msg_camera_twist_.angular.x = this->camera_velocity_base_.at<double>(3,0);
-        msg_camera_twist_.angular.y = this->camera_velocity_base_.at<double>(4,0);
-        msg_camera_twist_.angular.z = this->camera_velocity_base_.at<double>(5,0);
-        this->pub_twist_.publish(msg_camera_twist_);
+        this->twist_publist(this->camera_velocity_);
     }
 }
 
@@ -159,18 +148,15 @@ void Ros_ur_DVS::twist_publist(Mat camera_velocity)
     get_camera_effector_pose(this->T_effector_to_base_, this->T_camera_to_effector_);
     // 速度转换
     get_effector_twist(camera_velocity, this->T_camera_to_effector_, this->effector_twist_);
-    velocity_effector_to_base(this->effector_twist_, this->T_effector_to_base_, this->effector_twist_base_);
-    
-    
-    
+    velocity_effector_to_base(this->effector_twist_, this->T_effector_to_base_, this->effector_twist_base_);      
     // 发布速度信息
     const double* vel_ptr = this->effector_twist_base_.ptr<double>(0); 
-    msg_camera_twist_.linear.x = vel_ptr[0];
-    msg_camera_twist_.linear.y = vel_ptr[1];
-    msg_camera_twist_.linear.z = vel_ptr[2];
-    msg_camera_twist_.angular.x = vel_ptr[3];
-    msg_camera_twist_.angular.y = vel_ptr[4];
-    msg_camera_twist_.angular.z = vel_ptr[5];
+    this->msg_camera_twist_.linear.x = vel_ptr[0];
+    this->msg_camera_twist_.linear.y = vel_ptr[1];
+    this->msg_camera_twist_.linear.z = vel_ptr[2];
+    this->msg_camera_twist_.angular.x = vel_ptr[3];
+    this->msg_camera_twist_.angular.y = vel_ptr[4];
+    this->msg_camera_twist_.angular.z = vel_ptr[5];
     this->pub_twist_.publish(msg_camera_twist_);
 }
 
@@ -310,6 +296,7 @@ void Ros_ur_DVS::get_effector_twist(const Mat& camera_velocity, const Mat& T_cam
     effector_twist.rowRange(0,3).colRange(0,1) = this->R_temp_ * camera_velocity.rowRange(0,3).colRange(0,1) + 
                         this->p_so3_temp_ * this->R_temp_ * camera_velocity.rowRange(3,6).colRange(0,1);                   
     effector_twist.rowRange(3,6).colRange(0,1) = this->R_temp_ * camera_velocity.rowRange(3,6).colRange(0,1);
+
 }
 
 void Ros_ur_DVS::velocity_effector_to_base(const Mat& velocity, const Mat& effector_to_base, Mat& effector_twist_bast)
