@@ -71,7 +71,8 @@ void Ros_ur_DVS::Callback(const robot_control_VS::PolarizedImagesConstPtr& gray_
         this->get_camera_pose(this->T_camera_to_base_); 
         // 计算相机速度
         this->camera_velocity_ = this->DVS->get_camera_velocity(); 
-        this->camera_velocity_ = (cv::Mat_<double>(6,1) << 0.00, 0.00, 0.00, 0.04, 0.00, 0.00); 
+        cout << "camera_velocity = \n" << this->camera_velocity_ << endl;
+        // this->camera_velocity_ = (cv::Mat_<double>(6,1) << 0.00, 0.00, 0.00, 0.04, 0.00, 0.04); 
         // 保存数据  
         this->DVS->save_data(this->T_camera_to_base_);
         // 判断是否成功并做速度转换

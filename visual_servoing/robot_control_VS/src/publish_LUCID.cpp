@@ -27,12 +27,12 @@ int main(int argc, char** argv)
     uint8_t* data_ptr;
 
 
-    bool flag = true;
+    bool flag = false;
     // 自定义消息发布
     ros::Publisher Iall_color_pub = nh.advertise<robot_control_VS::PolarizedImages>("camera/polarized_Iall_color", 1);
     ros::Publisher Iall_gray_pub = nh.advertise<robot_control_VS::PolarizedImages>("camera/polarized_Iall_gray", 1);
+    I0_color_pub = it.advertise("camera/polarized_I0_color", 1);
     if(flag){
-        I0_color_pub = it.advertise("camera/polarized_I0_color", 1);
         I45_color_pub = it.advertise("camera/polarized_I45_color", 1);
         I90_color_pub = it.advertise("camera/polarized_I90_color", 1);
         I135_color_pub = it.advertise("camera/polarized_I135_color", 1);
@@ -131,9 +131,9 @@ int main(int argc, char** argv)
                     msg_polarized_gray->image_90 = *(cv_bridge::CvImage(header, "mono8", gray_90).toImageMsg());
                     msg_polarized_gray->image_135 = *(cv_bridge::CvImage(header, "mono8", gray_135).toImageMsg());
                     msg_polarized_gray->image_S0 = *(cv_bridge::CvImage(header, "mono8", gray_S0_8U).toImageMsg());                    
+                    msg_color_0 = cv_bridge::CvImage(header, "bgr8", color_0).toImageMsg();
                     if(flag){
                         // 彩色图消息
-                        msg_color_0 = cv_bridge::CvImage(header, "bgr8", color_0).toImageMsg();
                         msg_color_45 = cv_bridge::CvImage(header, "bgr8", color_45).toImageMsg();
                         msg_color_90 = cv_bridge::CvImage(header, "bgr8", color_90).toImageMsg();
                         msg_color_135 = cv_bridge::CvImage(header, "bgr8", color_135).toImageMsg();
@@ -147,8 +147,8 @@ int main(int argc, char** argv)
                     header.stamp = ros::Time::now();
                     msg_polarized_color->header = header;
                     msg_polarized_gray->header = header;
+                    msg_color_0->header = header;
                     if(flag){
-                        msg_color_0->header = header;
                         msg_color_45->header = header;
                         msg_color_90->header = header;
                         msg_color_135->header = header;
@@ -160,8 +160,8 @@ int main(int argc, char** argv)
                     // 发布
                     Iall_color_pub.publish(msg_polarized_color);
                     Iall_gray_pub.publish(msg_polarized_gray);
+                    I0_color_pub.publish(msg_color_0);
                     if(flag){
-                        I0_color_pub.publish(msg_color_0);
                         I45_color_pub.publish(msg_color_45);
                         I90_color_pub.publish(msg_color_90);
                         I135_color_pub.publish(msg_color_135);
