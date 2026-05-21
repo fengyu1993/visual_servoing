@@ -18,10 +18,11 @@ void Direct_Visual_Servoing::get_feature_error_interaction_matrix()
 {
     this->error_s_ = this->image_gray_current_.reshape(0, this->image_gray_current_.rows*this->image_gray_current_.cols)
                 - this->image_gray_desired_.reshape(0, this->image_gray_desired_.rows*this->image_gray_desired_.cols);  
-    cout << "error: " << this->error_s_.t() * this->error_s_ << endl;
     Mat Le_old = get_interaction_matrix_gray(this->image_gray_desired_, this->image_depth_desired_, this->camera_intrinsic_);
     Mat Le_new = get_interaction_matrix_gray(this->image_gray_current_, this->image_depth_current_, this->camera_intrinsic_);
     this->L_e_ = 0.5*(Le_new + Le_old);
+    // Mat temp = 0.5*(Le_new + Le_old);
+    // this->L_e_ = temp.colRange(0, 2).clone();
 }
 
 Mat Direct_Visual_Servoing::get_interaction_matrix_gray(Mat& image_gray, Mat& image_depth, Mat& Camera_Intrinsic)

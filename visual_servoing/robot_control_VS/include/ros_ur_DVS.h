@@ -31,12 +31,15 @@ class Ros_ur_DVS
 {
     protected:
         ros::NodeHandle                         nh_; 
-        ros::Subscriber             image_polarized_sub_;
+        ros::Subscriber                         image_polarized_sub_;
         Client                                  *client;
         control_msgs::FollowJointTrajectoryGoal goal;
         tf::TransformListener                   listener_pose_;
         ros::Publisher                          pub_twist_; 
         geometry_msgs::Twist                    msg_camera_twist_;
+        image_transport::ImageTransport         it_;
+        image_transport::Publisher              pub_image_error_;
+        sensor_msgs::ImagePtr                   msg_image_error_;
 
     public:
         Direct_Visual_Servoing *DVS;
@@ -61,6 +64,8 @@ class Ros_ur_DVS
         Mat                 T_camera_to_base_;
         tf::StampedTransform transform_temp_; 
         Mat                 camera_velocity_;
+        Mat                 image_error_;
+        Mat                 image_error_8U_;
 
 
     public:

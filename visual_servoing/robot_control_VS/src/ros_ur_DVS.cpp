@@ -1,6 +1,6 @@
 #include "ros_ur_DVS.h"
 
-Ros_ur_DVS::Ros_ur_DVS()
+Ros_ur_DVS::Ros_ur_DVS():it_(nh_)
 {
     // 设置分辨率
     int resolution_x, resolution_y;
@@ -40,6 +40,8 @@ Ros_ur_DVS::Ros_ur_DVS()
     ROS_INFO("Waiting for action server to start.");
     this->client->waitForServer();  // 将会一直等待直到动作服务器可用
     ROS_INFO("Server started, sending goal.");
+
+    this->pub_image_error_ = this->it_.advertise("VS/image_error", 1);
 }
 
 
@@ -64,15 +66,16 @@ void Ros_ur_DVS::Callback(const robot_control_VS::PolarizedImagesConstPtr& gray_
             this->DVS->init_VS(lambda, epsilon, img_old, depth_old, this->img_new_, camera_intrinsic, pose_desired);
             this->DVS->flag_first_ = false;
         }
-        this->depth_new_ = Mat::ones(this->img_new_.size(), CV_64FC1) * 1.5;
+        this->depth_new_ = this->DVS->image_depth_desired_;
         this->DVS->set_image_depth_current(this->depth_new_);
         this->DVS->set_image_gray_current(this->img_new_); 
         // 获取相机位姿
         this->get_camera_pose(this->T_camera_to_base_); 
         // 计算相机速度
         this->camera_velocity_ = this->DVS->get_camera_velocity(); 
-        cout << "camera_velocity = \n" << this->camera_velocity_ << endl;
+        // cout << "camera_velocity = \n" << this->camera_velocity_ << endl;
         // this->camera_velocity_ = (cv::Mat_<double>(6,1) << 0.00, 0.00, 0.00, 0.04, 0.00, 0.04); 
+        cout << "error: " << (this->DVS->error_s_.t() * this->DVS->error_s_) / this->DVS->error_s_.rows << endl;
         // 保存数据  
         this->DVS->save_data(this->T_camera_to_base_);
         // 判断是否成功并做速度转换
@@ -88,8 +91,14 @@ void Ros_ur_DVS::Callback(const robot_control_VS::PolarizedImagesConstPtr& gray_
         {
             this->flag_success_ = false;
          }
-       // 发布速度信息
+        // 发布速度信息
         this->twist_publist(this->camera_velocity_);
+        // 发送误差图像
+        this->image_error_ = cv::abs(this->DVS->image_gray_current_ - this->DVS->image_gray_desired_);
+        this->image_error_.convertTo(this->image_error_8U_, CV_8UC1);
+        this->msg_image_error_ = cv_bridge::CvImage(std_msgs::Header(), "mono8", this->image_error_8U_).toImageMsg();
+        this->msg_image_error_->header.stamp = ros::Time::now();
+        this->pub_image_error_.publish(this->msg_image_error_);
     }
 }
 

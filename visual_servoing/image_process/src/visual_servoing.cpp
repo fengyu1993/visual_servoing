@@ -41,7 +41,7 @@ Mat Visual_Servoing::get_camera_velocity()
 	// 计算相机速度
 	this->iteration_num_++;
     get_feature_error_interaction_matrix(); 
-    // invert(this->L_e_, this->L_e_inv_, DECOMP_SVD);
+    invert(this->L_e_, this->L_e_inv_, DECOMP_SVD);
 	this->L_e_transpose_ = this->L_e_.t();
 	this->L_e_inv_ = (this->L_e_transpose_ * this->L_e_).inv(cv::DECOMP_LU) * this->L_e_transpose_;
 	this->camera_velocity_ = -this->lambda_ * this->L_e_inv_ * this->error_s_;
