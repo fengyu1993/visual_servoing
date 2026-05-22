@@ -73,7 +73,8 @@ void Ros_ur_DVS::Callback(const robot_control_VS::PolarizedImagesConstPtr& gray_
         this->get_camera_pose(this->T_camera_to_base_); 
         // 计算相机速度
         this->camera_velocity_ = this->DVS->get_camera_velocity(); 
-        // cout << "camera_velocity = \n" << this->camera_velocity_ << endl;
+        // Mat velocity_temp = this->DVS->get_camera_velocity(); 
+        // velocity_temp.rowRange(0,2).copyTo(this->camera_velocity_.rowRange(0,2));
         // this->camera_velocity_ = (cv::Mat_<double>(6,1) << 0.00, 0.00, 0.00, 0.04, 0.00, 0.04); 
         cout << "error: " << (this->DVS->error_s_.t() * this->DVS->error_s_) / this->DVS->error_s_.rows << endl;
         // 保存数据  

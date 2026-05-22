@@ -10,6 +10,8 @@
 Direct_Visual_Servoing::Direct_Visual_Servoing(int resolution_x, int resolution_y):Visual_Servoing(resolution_x, resolution_y)
 {
     this->L_e_ = Mat::zeros(resolution_x*resolution_y, 6, CV_64FC1); 
+    this->L_e_new_ = Mat::zeros(resolution_x*resolution_y, 6, CV_64FC1); 
+    this->L_e_old_ = Mat::zeros(resolution_x*resolution_y, 6, CV_64FC1); 
     this->error_s_ = Mat::zeros(resolution_x*resolution_y, 1, CV_64FC1);
 }
 
@@ -18,14 +20,14 @@ void Direct_Visual_Servoing::get_feature_error_interaction_matrix()
 {
     this->error_s_ = this->image_gray_current_.reshape(0, this->image_gray_current_.rows*this->image_gray_current_.cols)
                 - this->image_gray_desired_.reshape(0, this->image_gray_desired_.rows*this->image_gray_desired_.cols);  
-    Mat Le_old = get_interaction_matrix_gray(this->image_gray_desired_, this->image_depth_desired_, this->camera_intrinsic_);
-    Mat Le_new = get_interaction_matrix_gray(this->image_gray_current_, this->image_depth_current_, this->camera_intrinsic_);
-    this->L_e_ = 0.5*(Le_new + Le_old);
-    // Mat temp = 0.5*(Le_new + Le_old);
+    get_interaction_matrix_gray(this->image_gray_desired_, this->image_depth_desired_, this->camera_intrinsic_, this->L_e_old_);
+    get_interaction_matrix_gray(this->image_gray_current_, this->image_depth_current_, this->camera_intrinsic_, this->L_e_new_);
+    this->L_e_ = 0.5*(this->L_e_new_ + this->L_e_old_);
+    // Mat temp = 0.5*(this->L_e_new_ + this->L_e_old_);
     // this->L_e_ = temp.colRange(0, 2).clone();
 }
 
-Mat Direct_Visual_Servoing::get_interaction_matrix_gray(Mat& image_gray, Mat& image_depth, Mat& Camera_Intrinsic)
+void Direct_Visual_Servoing::get_interaction_matrix_gray(Mat& image_gray, Mat& image_depth, Mat& Camera_Intrinsic, Mat& L_e)
 {
     Mat I_x, I_y;
     int cnt = 0;
@@ -33,7 +35,6 @@ Mat Direct_Visual_Servoing::get_interaction_matrix_gray(Mat& image_gray, Mat& im
     Mat xy = Mat::zeros(3, 1, CV_64FC1);
     double x, y, I_x_temp, I_y_temp;
     double Z_inv;
-    Mat L_e = Mat::zeros(image_gray.rows*image_gray.cols, 6, CV_64FC1); 
 
     get_image_gradient(image_gray, Camera_Intrinsic, I_x, I_y);
 
@@ -58,8 +59,6 @@ Mat Direct_Visual_Servoing::get_interaction_matrix_gray(Mat& image_gray, Mat& im
             cnt++;        
         }
     }
-
-    return L_e;
 }
 
 // º∆À„ÕºœÒÃ›∂»

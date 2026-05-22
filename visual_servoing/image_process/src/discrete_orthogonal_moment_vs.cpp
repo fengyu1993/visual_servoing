@@ -33,8 +33,8 @@ void Discrete_Orthogonal_Moment_VS::get_feature_error_interaction_matrix()
     // 计算离散正交矩所需矩阵 DOM_x_ DOM_y_
     get_DOM_matrix();
     // 计算灰度交互矩阵
-    Mat L_I_new = get_interaction_matrix_gray(this->image_gray_current_, this->image_depth_current_, this->camera_intrinsic_);
-    Mat L_I_old = get_interaction_matrix_gray(this->image_gray_desired_, this->image_depth_desired_, this->camera_intrinsic_);
+    get_interaction_matrix_gray(this->image_gray_current_, this->image_depth_current_, this->camera_intrinsic_, this->L_e_new_);
+    get_interaction_matrix_gray(this->image_gray_desired_, this->image_depth_desired_, this->camera_intrinsic_, this->L_e_old_);
     // 计算特征 交互矩阵
     for(int l = 0; l <= this->order_; l++)
     {
@@ -50,8 +50,8 @@ void Discrete_Orthogonal_Moment_VS::get_feature_error_interaction_matrix()
                 ((double*)feature_new.data)[cnt] = sum(DOM_XY.mul(this->image_gray_current_))[0];
                 ((double*)feature_old.data)[cnt] = sum(DOM_XY.mul(this->image_gray_desired_))[0];
                 // 计算交互矩阵
-                get_interaction_matrix_DOM_once(DOM_XY, L_I_new).copyTo(Le_new.row(cnt));
-                get_interaction_matrix_DOM_once(DOM_XY, L_I_old).copyTo(Le_old.row(cnt));
+                get_interaction_matrix_DOM_once(DOM_XY, this->L_e_new_).copyTo(Le_new.row(cnt));
+                get_interaction_matrix_DOM_once(DOM_XY, this->L_e_old_).copyTo(Le_old.row(cnt));
                 // 计数
                 cnt++;
             }

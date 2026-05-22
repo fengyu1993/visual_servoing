@@ -15,7 +15,7 @@ class Direct_Visual_Servoing: public Visual_Servoing
 
         virtual void get_feature_error_interaction_matrix();
 
-        Mat get_interaction_matrix_gray(Mat& image_gray, Mat& image_depth, Mat& Camera_Intrinsic);
+        void get_interaction_matrix_gray(Mat& image_gray, Mat& image_depth, Mat& Camera_Intrinsic, Mat& L_e);
 
         void get_image_gradient(Mat& image, Mat& Camera_Intrinsic, Mat& I_x, Mat& I_y);
 
@@ -26,6 +26,9 @@ class Direct_Visual_Servoing: public Visual_Servoing
         virtual void save_data_error_feature();
 
         virtual string get_method_name();
+
+        Mat L_e_new_;
+        Mat L_e_old_;
 };
 
 
